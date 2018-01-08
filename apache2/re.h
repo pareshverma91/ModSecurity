@@ -114,6 +114,8 @@ apr_status_t DSOLOCAL msre_ruleset_process_phase_internal(msre_ruleset *ruleset,
 
 msre_ruleset DSOLOCAL *msre_ruleset_create(msre_engine *engine, apr_pool_t *mp);
 
+msre_ruleset DSOLOCAL *msre_ruleset_create_and_copy(msre_engine *engine, apr_pool_t *mp, msre_ruleset *parent_ruleset);
+
 int DSOLOCAL msre_ruleset_rule_add(msre_ruleset *ruleset, msre_rule *rule, int phase);
 
 msre_rule DSOLOCAL *msre_ruleset_fetch_rule(msre_ruleset *ruleset, const char *id, int offset);

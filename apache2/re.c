@@ -1970,6 +1970,48 @@ msre_ruleset *msre_ruleset_create(msre_engine *engine, apr_pool_t *mp) {
 
     return ruleset;
 }
+/**
+
+
+ * Creates a ruleset by copy the parent ruleset.
+ *
+ * @param mp apr pool structure
+ * @param parent_ruleset Parent's msre_ruleset
+ *
+ * return the address of created ruleset if OK.
+ * return NULL if Something went wrong.
+ */
+
+msre_ruleset *msre_ruleset_create_and_copy(msre_engine *engine, apr_pool_t *mp, msre_ruleset *parent_ruleset) {
+    msre_ruleset *child_ruleset;
+
+    child_ruleset = apr_pcalloc(mp, sizeof(msre_ruleset));
+    if (child_ruleset == NULL) return NULL;
+    child_ruleset->mp = mp;
+    child_ruleset->engine = engine;
+
+    if (parent_ruleset == NULL) {
+        child_ruleset->phase_request_headers  = apr_array_make(mp, 25, sizeof(const msre_rule *));
+        child_ruleset->phase_request_body     = apr_array_make(mp, 25, sizeof(const msre_rule *));
+        child_ruleset->phase_response_headers = apr_array_make(mp, 25, sizeof(const msre_rule *));
+        child_ruleset->phase_response_body    = apr_array_make(mp, 25, sizeof(const msre_rule *));
+        child_ruleset->phase_logging          = apr_array_make(mp, 25, sizeof(const msre_rule *));
+        return child_ruleset;
+    }
+
+    child_ruleset->phase_request_headers  = apr_array_copy(mp, parent_ruleset->phase_request_headers);
+    child_ruleset->phase_request_body     = apr_array_copy(mp, parent_ruleset->phase_request_body);
+    child_ruleset->phase_response_headers = apr_array_copy(mp, parent_ruleset->phase_response_headers);
+    child_ruleset->phase_response_body    = apr_array_copy(mp, parent_ruleset->phase_response_body);
+    child_ruleset->phase_logging          = apr_array_copy(mp, parent_ruleset->phase_logging);
+
+    if((child_ruleset->phase_request_headers == NULL) || (child_ruleset->phase_request_body == NULL) || (child_ruleset->phase_response_headers == NULL)
+       || (child_ruleset->phase_response_body == NULL) || (child_ruleset->phase_logging == NULL)) {
+        return NULL;
+    }
+
+    return child_ruleset;
+}
 
 /**
  * Adds one rule to the given phase of the ruleset.

@@ -413,10 +413,14 @@ void *merge_directory_configs(apr_pool_t *mp, void *_parent, void *_child)
             ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_NOERRNO, 0, mp, "Using parent rules in this context.");
             #endif
 
-            /* Copy the rules from the parent context. */
-            merged->ruleset = msre_ruleset_create(parent->ruleset->engine, mp);
             /* TODO: copy_rules return code should be taken into consideration. */
-            copy_rules(mp, parent->ruleset, merged->ruleset, child->rule_exceptions);
+            if(child->rule_exceptions->nelts > 0) {
+                /* Copy the rules from the parent context. */
+                merged->ruleset = msre_ruleset_create(parent->ruleset->engine, mp);
+                copy_rules(mp, parent->ruleset, merged->ruleset, child->rule_exceptions);
+            } else {
+                merged->ruleset = msre_ruleset_create_and_copy(parent->ruleset->engine, mp, parent->ruleset);
+            }
         } else
         if (parent->ruleset == NULL) {
             #ifdef DEBUG_CONF
