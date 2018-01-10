@@ -32,6 +32,13 @@
 
 #include "winsock2.h"
 
+// Used to hold each chunk of request body that gets read before the full ModSec engine is invoked
+typedef struct preAllocBodyChunk {
+    preAllocBodyChunk* next;
+    size_t length;
+    void* data;
+} preAllocBodyChunk;
+
 class REQUEST_STORED_CONTEXT : public IHttpStoredContext
 {
  public:
@@ -82,7 +89,10 @@ class REQUEST_STORED_CONTEXT : public IHttpStoredContext
 	char				*m_pResponseBuffer;
 	ULONGLONG			m_pResponseLength;
 	ULONGLONG			m_pResponsePosition;
+
+    preAllocBodyChunk* head;
 };
+
 
 //----------------------------------------------------------------------------
 
@@ -752,6 +762,58 @@ CMyHttpModule::OnBeginRequest(
         goto Finished;
 	}
 
+    // Get request body without holding lock, because some clients may be slow at sending
+    LeaveCriticalSection(&m_csLock);
+    HTTP_REQUEST * pRawRequest = pRequest->GetRawHttpRequest();
+    preAllocBodyChunk* head = NULL;
+    preAllocBodyChunk* cur = NULL;
+    while (pRequest->GetRemainingEntityBytes() > 0)
+    {
+        // Allocate memory for the preAllocBodyChunk linked list structure, and also the actual body content
+        // HUGE_STRING_LEN is hardcoded because this is also hardcoded in apache2_io.c's call to ap_get_brigade
+        preAllocBodyChunk* chunk = (preAllocBodyChunk*)malloc(sizeof(preAllocBodyChunk) + HUGE_STRING_LEN);
+        chunk->next = NULL;
+
+        // Pointer to rest of allocated memory, for convenience
+        chunk->data = chunk + 1;
+
+        DWORD readcnt;
+        HRESULT hr = pRequest->ReadEntityBody(chunk->data, HUGE_STRING_LEN, false, &readcnt, NULL);
+        if (ERROR_HANDLE_EOF == (hr & 0x0000FFFF))
+        {
+            free(chunk);
+            break;
+        }
+        chunk->length = readcnt;
+
+        if (!head)
+        {
+            // Initialize linked list
+            head = chunk;
+            cur = chunk;
+        }
+        else {
+            // Append to linked list
+            cur->next = chunk;
+            cur = chunk;
+        }
+
+        if (hr != S_OK)
+        {
+            goto Finished;
+        }
+    }
+
+    EnterCriticalSection(&m_csLock);
+
+    // Get the config again, in case it changed during the time we released the lock
+    hr = MODSECURITY_STORED_CONTEXT::GetConfig(pHttpContext, &pConfig);
+    if (FAILED(hr))
+    {
+        hr = S_OK;
+        goto Finished;
+    }
+
 	// every 3 seconds we check for changes in config file
 	//
 	DWORD ctime = GetTickCount();
@@ -841,6 +903,8 @@ CMyHttpModule::OnBeginRequest(
 	rsc->m_pRequestRec = r;
 	rsc->m_pHttpContext = pHttpContext;
 	rsc->m_pProvider = pProvider;
+    rsc->head = head;
+    head = NULL; // This is to indicate to the cleanup process to use rsc->head instead of head now
 
 	pHttpContext->GetModuleContextContainer()->SetModuleContext(rsc, g_pModuleContext);
 
@@ -1086,6 +1150,15 @@ CMyHttpModule::OnBeginRequest(
 Finished:
 	LeaveCriticalSection(&m_csLock);
 
+    // Free the preallocated body in case there was a failure and it wasn't consumed already
+    preAllocBodyChunk* chunkToFree = head ? head : rsc->head;
+    while (chunkToFree != NULL)
+    {
+        preAllocBodyChunk* next = chunkToFree->next;
+        free(chunkToFree);
+        chunkToFree = next;
+    }
+
     if ( FAILED( hr )  )
     {
         return RQ_NOTIFICATION_FINISH_REQUEST;
@@ -1095,40 +1168,29 @@ Finished:
 
 apr_status_t ReadBodyCallback(request_rec *r, char *buf, unsigned int length, unsigned int *readcnt, int *is_eos)
 {
-	REQUEST_STORED_CONTEXT *rsc = RetrieveIISContext(r);
+    REQUEST_STORED_CONTEXT *rsc = RetrieveIISContext(r);
 
-	*readcnt = 0;
-
-	if(rsc == NULL)
-	{
-		*is_eos = 1;
-		return APR_SUCCESS;
-	}
-
-	IHttpContext *pHttpContext = rsc->m_pHttpContext;
-	IHttpRequest *pRequest = pHttpContext->GetRequest();
-
-	if(pRequest->GetRemainingEntityBytes() == 0)
-	{
-		*is_eos = 1;
-		return APR_SUCCESS;
-	}
-
-	HRESULT hr = pRequest->ReadEntityBody(buf, length, false, (DWORD *)readcnt, NULL);
-
-	if (FAILED(hr))
+    if (rsc->head == NULL)
     {
-        // End of data is okay.
-        if (ERROR_HANDLE_EOF != (hr  & 0x0000FFFF))
-        {
-            // Set the error status.
-            rsc->m_pProvider->SetErrorStatus( hr );
-        }
-
-		*is_eos = 1;
+        *is_eos = 1;
+        return APR_SUCCESS;
     }
 
-	return APR_SUCCESS;
+    *readcnt = length < rsc->head->length ? length : rsc->head->length;
+    void* src = (char*)rsc->head->data;
+    memcpy_s(buf, length, src, *readcnt);
+
+    // Remove the front and proceed to next chunk in the linked list
+    preAllocBodyChunk* chunkToFree = rsc->head;
+    rsc->head = rsc->head->next;
+    free(chunkToFree);
+
+    if (rsc->head == NULL)
+    {
+        *is_eos = 1;
+    }
+
+    return APR_SUCCESS;
 }
 
 apr_status_t WriteBodyCallback(request_rec *r, char *buf, unsigned int length)
