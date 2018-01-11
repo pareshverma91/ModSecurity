@@ -90,7 +90,7 @@ class REQUEST_STORED_CONTEXT : public IHttpStoredContext
 	ULONGLONG			m_pResponseLength;
 	ULONGLONG			m_pResponsePosition;
 
-    preAllocBodyChunk* head;
+    preAllocBodyChunk* requestBodyBufferHead;
 };
 
 
@@ -294,6 +294,44 @@ REQUEST_STORED_CONTEXT *RetrieveIISContext(request_rec *r)
     }
 
     return NULL;
+}
+
+HRESULT GetRequestBodyFromIIS(IHttpRequest* pRequest, preAllocBodyChunk** head)
+{
+    HRESULT hr = S_OK;
+    HTTP_REQUEST * pRawRequest = pRequest->GetRawHttpRequest();
+    preAllocBodyChunk** cur = head;
+    while (pRequest->GetRemainingEntityBytes() > 0)
+    {
+        // Allocate memory for the preAllocBodyChunk linked list structure, and also the actual body content
+        // HUGE_STRING_LEN is hardcoded because this is also hardcoded in apache2_io.c's call to ap_get_brigade
+        preAllocBodyChunk* chunk = (preAllocBodyChunk*)malloc(sizeof(preAllocBodyChunk) + HUGE_STRING_LEN);
+        chunk->next = NULL;
+
+        // Pointer to rest of allocated memory, for convenience
+        chunk->data = chunk + 1;
+
+        DWORD readcnt = 0;
+        hr = pRequest->ReadEntityBody(chunk->data, HUGE_STRING_LEN, false, &readcnt, NULL);
+        if (ERROR_HANDLE_EOF == (hr & 0x0000FFFF))
+        {
+            free(chunk);
+            hr = S_OK;
+            break;
+        }
+        chunk->length = readcnt;
+
+        // Append to linked list
+        *cur = chunk;
+        cur = &(chunk->next);
+
+        if (hr != S_OK)
+        {
+            break;
+        }
+    }
+
+    return hr;
 }
 
 HRESULT CMyHttpModule::ReadFileChunk(HTTP_DATA_CHUNK *chunk, char *buf)
@@ -764,46 +802,12 @@ CMyHttpModule::OnBeginRequest(
 
     // Get request body without holding lock, because some clients may be slow at sending
     LeaveCriticalSection(&m_csLock);
-    HTTP_REQUEST * pRawRequest = pRequest->GetRawHttpRequest();
-    preAllocBodyChunk* head = NULL;
-    preAllocBodyChunk* cur = NULL;
-    while (pRequest->GetRemainingEntityBytes() > 0)
+    preAllocBodyChunk* requestBodyBufferHead = NULL;
+    hr = GetRequestBodyFromIIS(pRequest, &requestBodyBufferHead);
+    if (hr != S_OK)
     {
-        // Allocate memory for the preAllocBodyChunk linked list structure, and also the actual body content
-        // HUGE_STRING_LEN is hardcoded because this is also hardcoded in apache2_io.c's call to ap_get_brigade
-        preAllocBodyChunk* chunk = (preAllocBodyChunk*)malloc(sizeof(preAllocBodyChunk) + HUGE_STRING_LEN);
-        chunk->next = NULL;
-
-        // Pointer to rest of allocated memory, for convenience
-        chunk->data = chunk + 1;
-
-        DWORD readcnt;
-        HRESULT hr = pRequest->ReadEntityBody(chunk->data, HUGE_STRING_LEN, false, &readcnt, NULL);
-        if (ERROR_HANDLE_EOF == (hr & 0x0000FFFF))
-        {
-            free(chunk);
-            break;
-        }
-        chunk->length = readcnt;
-
-        if (!head)
-        {
-            // Initialize linked list
-            head = chunk;
-            cur = chunk;
-        }
-        else {
-            // Append to linked list
-            cur->next = chunk;
-            cur = chunk;
-        }
-
-        if (hr != S_OK)
-        {
-            goto Finished;
-        }
+        goto FinishedWithoutLock;
     }
-
     EnterCriticalSection(&m_csLock);
 
     // Get the config again, in case it changed during the time we released the lock
@@ -903,8 +907,8 @@ CMyHttpModule::OnBeginRequest(
 	rsc->m_pRequestRec = r;
 	rsc->m_pHttpContext = pHttpContext;
 	rsc->m_pProvider = pProvider;
-    rsc->head = head;
-    head = NULL; // This is to indicate to the cleanup process to use rsc->head instead of head now
+    rsc->requestBodyBufferHead = requestBodyBufferHead;
+    requestBodyBufferHead = NULL; // This is to indicate to the cleanup process to use rsc->requestBodyBufferHead instead of requestBodyBufferHead now
 
 	pHttpContext->GetModuleContextContainer()->SetModuleContext(rsc, g_pModuleContext);
 
@@ -1150,8 +1154,9 @@ CMyHttpModule::OnBeginRequest(
 Finished:
 	LeaveCriticalSection(&m_csLock);
 
+FinishedWithoutLock:
     // Free the preallocated body in case there was a failure and it wasn't consumed already
-    preAllocBodyChunk* chunkToFree = head ? head : rsc->head;
+    preAllocBodyChunk* chunkToFree = requestBodyBufferHead ? requestBodyBufferHead : rsc->requestBodyBufferHead;
     while (chunkToFree != NULL)
     {
         preAllocBodyChunk* next = chunkToFree->next;
@@ -1170,22 +1175,22 @@ apr_status_t ReadBodyCallback(request_rec *r, char *buf, unsigned int length, un
 {
     REQUEST_STORED_CONTEXT *rsc = RetrieveIISContext(r);
 
-    if (rsc->head == NULL)
+    if (rsc->requestBodyBufferHead == NULL)
     {
         *is_eos = 1;
         return APR_SUCCESS;
     }
 
-    *readcnt = length < rsc->head->length ? length : rsc->head->length;
-    void* src = (char*)rsc->head->data;
+    *readcnt = length < (unsigned int) rsc->requestBodyBufferHead->length ? length : (unsigned int) rsc->requestBodyBufferHead->length;
+    void* src = (char*)rsc->requestBodyBufferHead->data;
     memcpy_s(buf, length, src, *readcnt);
 
     // Remove the front and proceed to next chunk in the linked list
-    preAllocBodyChunk* chunkToFree = rsc->head;
-    rsc->head = rsc->head->next;
+    preAllocBodyChunk* chunkToFree = rsc->requestBodyBufferHead;
+    rsc->requestBodyBufferHead = rsc->requestBodyBufferHead->next;
     free(chunkToFree);
 
-    if (rsc->head == NULL)
+    if (rsc->requestBodyBufferHead == NULL)
     {
         *is_eos = 1;
     }
