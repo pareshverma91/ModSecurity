@@ -571,6 +571,32 @@ static int is_response_status_relevant(modsec_rec *msr, int status) {
     return 0;
 }
 
+static apr_status_t modsecurity_process_phase_mode_select(modsec_rec * msr) {
+    apr_status_t rc = 0;
+
+    if (msr->txcfg->pre_ruleset != NULL) {
+        rc = msre_ruleset_process_phase(msr->txcfg->pre_ruleset, msr);
+    }
+    if (rc == 0 && msr->txcfg->core_ruleset != NULL) {
+        if (msr->txcfg->mode == MSRCE_MODE) {
+            //execute ModSecurity Ruleset C Language Engine
+            //The function prototype like as : msrce_ruleset_process_phase(msre_ruleset *ruleset, modsec_rec *msr);
+            
+            //TODO:
+            //rc = msrce_ruleset_process_phase(msr->txcfg->core_ruleset, msr);
+            //
+        } else if (msr->txcfg->mode == ORIGINAL_MODE || msr->txcfg->mode == INVALID_MODE) {
+            //ORIGINAL_MODE will as a default mode if no SecMode be set
+            rc = msre_ruleset_process_phase(msr->txcfg->core_ruleset, msr);
+        }
+    }
+    if (rc == 0 && msr->txcfg->post_ruleset != NULL) {
+        rc = msre_ruleset_process_phase(msr->txcfg->post_ruleset, msr);
+    }
+
+    return rc;
+}
+
 /**
  *
  */
@@ -584,9 +610,7 @@ static apr_status_t modsecurity_process_phase_request_headers(modsec_rec *msr) {
     
     time_before = apr_time_now();
 
-    if (msr->txcfg->ruleset != NULL) {
-        rc = msre_ruleset_process_phase(msr->txcfg->ruleset, msr);
-    }
+    rc = modsecurity_process_phase_mode_select(msr);
     
     msr->time_phase1 = apr_time_now() - time_before;
 
@@ -615,9 +639,7 @@ static apr_status_t modsecurity_process_phase_request_body(modsec_rec *msr) {
     
     time_before = apr_time_now();
 
-    if (msr->txcfg->ruleset != NULL) {
-        rc = msre_ruleset_process_phase(msr->txcfg->ruleset, msr);
-    }
+    rc = modsecurity_process_phase_mode_select(msr);
     
     msr->time_phase2 = apr_time_now() - time_before;
 
@@ -645,9 +667,7 @@ static apr_status_t modsecurity_process_phase_response_headers(modsec_rec *msr) 
     
     time_before = apr_time_now();
 
-    if (msr->txcfg->ruleset != NULL) {
-        rc = msre_ruleset_process_phase(msr->txcfg->ruleset, msr);
-    }
+    rc = modsecurity_process_phase_mode_select(msr);
     
     msr->time_phase3 = apr_time_now() - time_before;
 
@@ -675,9 +695,7 @@ static apr_status_t modsecurity_process_phase_response_body(modsec_rec *msr) {
     
     time_before = apr_time_now();
 
-    if (msr->txcfg->ruleset != NULL) {
-        rc = msre_ruleset_process_phase(msr->txcfg->ruleset, msr);
-    }
+    rc = modsecurity_process_phase_mode_select(msr);
     
     msr->time_phase4 = apr_time_now() - time_before;
 
@@ -697,9 +715,7 @@ static apr_status_t modsecurity_process_phase_logging(modsec_rec *msr) {
     
     time_before = apr_time_now();
 
-    if (msr->txcfg->ruleset != NULL) {
-        msre_ruleset_process_phase(msr->txcfg->ruleset, msr);
-    }
+    modsecurity_process_phase_mode_select(msr);
     
     modsecurity_persist_data(msr);
     

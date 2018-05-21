@@ -96,6 +96,12 @@ void *create_directory_config(apr_pool_t *mp, char *path)
 
     dcfg->ruleset = NULL;
 
+    /* Plugin module*/
+    dcfg->mode = INVALID_MODE;
+    dcfg->pre_ruleset = NULL;
+    dcfg->core_ruleset = NULL;
+    dcfg->post_ruleset = NULL;
+
     /* Upload */
     dcfg->tmp_dir = NOT_SET_P;
     dcfg->upload_dir = NOT_SET_P;
@@ -306,6 +312,100 @@ failed:
     return ret;
 }
 
+static void merge_ruleset_inheritance(apr_pool_t *mp, msre_ruleset ** merged, msre_ruleset * parent, msre_ruleset *child, apr_array_header_t  * child_rule_exceptions) {
+    if ((child == NULL) && (parent == NULL)) {
+#ifdef DEBUG_CONF
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP | APLOG_NOERRNO, 0, mp, "No rules in this context.");
+#endif
+
+        /* Do nothing, there are no rules in either context. */
+    }
+    else if (child == NULL) {
+#ifdef DEBUG_CONF
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP | APLOG_NOERRNO, 0, mp, "Using parent rules in this context.");
+#endif
+
+        /* Copy the rules from the parent context. */
+        *merged = msre_ruleset_create(parent->engine, mp);
+        /* TODO: copy_rules return code should be taken into consideration. */
+        copy_rules(mp, parent, *merged, child_rule_exceptions);
+    }
+    else if (parent == NULL) {
+#ifdef DEBUG_CONF
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP | APLOG_NOERRNO, 0, mp, "Using child rules in this context.");
+#endif
+
+        /* Copy child rules. */
+        *merged = msre_ruleset_create(child->engine, mp);
+        (*merged)->phase_request_headers = apr_array_copy(mp,
+            child->phase_request_headers);
+        (*merged)->phase_request_body = apr_array_copy(mp,
+            child->phase_request_body);
+        (*merged)->phase_response_headers = apr_array_copy(mp,
+            child->phase_response_headers);
+        (*merged)->phase_response_body = apr_array_copy(mp,
+            child->phase_response_body);
+        (*merged)->phase_logging = apr_array_copy(mp,
+            child->phase_logging);
+    }
+    else {
+#ifdef DEBUG_CONF
+        ap_log_perror(APLOG_MARK, APLOG_STARTUP | APLOG_NOERRNO, 0, mp, "Using parent then child rules in this context.");
+#endif
+
+        /* Copy parent rules, then add child rules to it. */
+        (*merged) = msre_ruleset_create(parent->engine, mp);
+        /* TODO: copy_rules return code should be taken into consideration. */
+        copy_rules(mp, parent, *merged, child_rule_exceptions);
+
+        apr_array_cat((*merged)->phase_request_headers,
+            child->phase_request_headers);
+        apr_array_cat((*merged)->phase_request_body,
+            child->phase_request_body);
+        apr_array_cat((*merged)->phase_response_headers,
+            child->phase_response_headers);
+        apr_array_cat((*merged)->phase_response_body,
+            child->phase_response_body);
+        apr_array_cat((*merged)->phase_logging,
+            child->phase_logging);
+    }
+}
+
+static void merge_ruleset_none_inheritance(apr_pool_t *mp, msre_ruleset ** merged, msre_ruleset *child) {
+    if (child != NULL) {
+        /* Copy child rules. */
+        (*merged) = msre_ruleset_create(child->engine, mp);
+        (*merged)->phase_request_headers = apr_array_copy(mp,
+            child->phase_request_headers);
+        (*merged)->phase_request_body = apr_array_copy(mp,
+            child->phase_request_body);
+        (*merged)->phase_response_headers = apr_array_copy(mp,
+            child->phase_response_headers);
+        (*merged)->phase_response_body = apr_array_copy(mp,
+            child->phase_response_body);
+        (*merged)->phase_logging = apr_array_copy(mp,
+            child->phase_logging);
+    }
+}
+
+static void merge_ruleset(apr_pool_t * mp, directory_config * merged, directory_config * parent, directory_config * child) {
+    
+    /* rule inheritance */
+    if ((child->rule_inheritance == NOT_SET) || (child->rule_inheritance == 1)) {
+        merged->rule_inheritance = parent->rule_inheritance;
+
+        merge_ruleset_inheritance(mp, &(merged->pre_ruleset), parent->pre_ruleset, child->pre_ruleset, child->rule_exceptions);
+        merge_ruleset_inheritance(mp, &(merged->core_ruleset), parent->core_ruleset, child->core_ruleset, child->rule_exceptions);
+        merge_ruleset_inheritance(mp, &(merged->post_ruleset), parent->post_ruleset, child->post_ruleset, child->rule_exceptions);
+    }
+    else {
+        merged->rule_inheritance = 0;
+        merge_ruleset_none_inheritance(mp, &(merged->pre_ruleset), child->pre_ruleset);
+        merge_ruleset_none_inheritance(mp, &(merged->core_ruleset), child->core_ruleset);
+        merge_ruleset_none_inheritance(mp, &(merged->post_ruleset), child->post_ruleset);
+    }
+}
+
 /**
  * Merges two directory configurations.
  */
@@ -412,81 +512,10 @@ void *merge_directory_configs(apr_pool_t *mp, void *_parent, void *_child)
         ? parent->cookiev0_separator : child->cookiev0_separator);
 
 
-    /* rule inheritance */
-    if ((child->rule_inheritance == NOT_SET)||(child->rule_inheritance == 1)) {
-        merged->rule_inheritance = parent->rule_inheritance;
-        if ((child->ruleset == NULL)&&(parent->ruleset == NULL)) {
-            #ifdef DEBUG_CONF
-            ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_NOERRNO, 0, mp, "No rules in this context.");
-            #endif
+    merged->mode = (child->mode == INVALID_MODE ? parent->mode : child->mode);
 
-            /* Do nothing, there are no rules in either context. */
-        } else
-        if (child->ruleset == NULL) {
-            #ifdef DEBUG_CONF
-            ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_NOERRNO, 0, mp, "Using parent rules in this context.");
-            #endif
-
-            /* Copy the rules from the parent context. */
-            merged->ruleset = msre_ruleset_create(parent->ruleset->engine, mp);
-            /* TODO: copy_rules return code should be taken into consideration. */
-            copy_rules(mp, parent->ruleset, merged->ruleset, child->rule_exceptions);
-        } else
-        if (parent->ruleset == NULL) {
-            #ifdef DEBUG_CONF
-            ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_NOERRNO, 0, mp, "Using child rules in this context.");
-            #endif
-
-            /* Copy child rules. */
-            merged->ruleset = msre_ruleset_create(child->ruleset->engine, mp);
-            merged->ruleset->phase_request_headers = apr_array_copy(mp,
-                child->ruleset->phase_request_headers);
-            merged->ruleset->phase_request_body = apr_array_copy(mp,
-                child->ruleset->phase_request_body);
-            merged->ruleset->phase_response_headers = apr_array_copy(mp,
-                child->ruleset->phase_response_headers);
-            merged->ruleset->phase_response_body = apr_array_copy(mp,
-                child->ruleset->phase_response_body);
-            merged->ruleset->phase_logging = apr_array_copy(mp,
-                child->ruleset->phase_logging);
-        } else {
-            #ifdef DEBUG_CONF
-            ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_NOERRNO, 0, mp, "Using parent then child rules in this context.");
-            #endif
-
-            /* Copy parent rules, then add child rules to it. */
-            merged->ruleset = msre_ruleset_create(parent->ruleset->engine, mp);
-            /* TODO: copy_rules return code should be taken into consideration. */
-            copy_rules(mp, parent->ruleset, merged->ruleset, child->rule_exceptions);
-
-            apr_array_cat(merged->ruleset->phase_request_headers,
-                child->ruleset->phase_request_headers);
-            apr_array_cat(merged->ruleset->phase_request_body,
-                child->ruleset->phase_request_body);
-            apr_array_cat(merged->ruleset->phase_response_headers,
-                child->ruleset->phase_response_headers);
-            apr_array_cat(merged->ruleset->phase_response_body,
-                child->ruleset->phase_response_body);
-            apr_array_cat(merged->ruleset->phase_logging,
-                child->ruleset->phase_logging);
-        }
-    } else {
-        merged->rule_inheritance = 0;
-        if (child->ruleset != NULL) {
-            /* Copy child rules. */
-            merged->ruleset = msre_ruleset_create(child->ruleset->engine, mp);
-            merged->ruleset->phase_request_headers = apr_array_copy(mp,
-                child->ruleset->phase_request_headers);
-            merged->ruleset->phase_request_body = apr_array_copy(mp,
-                child->ruleset->phase_request_body);
-            merged->ruleset->phase_response_headers = apr_array_copy(mp,
-                child->ruleset->phase_response_headers);
-            merged->ruleset->phase_response_body = apr_array_copy(mp,
-                child->ruleset->phase_response_body);
-            merged->ruleset->phase_logging = apr_array_copy(mp,
-                child->ruleset->phase_logging);
-        }
-    }
+    /* merge ruleset. */
+    merge_ruleset(mp, merged, parent, child);
 
     /* Merge rule exceptions. */
     merged->rule_exceptions = apr_array_append(mp, parent->rule_exceptions,
@@ -1159,6 +1188,20 @@ static const char *cmd_db_option(cmd_parms *cmd, void *_dcfg, const char *p1){
     return NULL;
 }
 #endif
+
+static const char * cmd_select_mode(cmd_parms * cmd, void * _dcfg, const char *p1) {
+    directory_config * dcfg = (directory_config *)_dcfg;
+    if (dcfg->mode != INVALID_MODE) {
+        return "mode is duplicate";
+    }
+    if ((strcmp(p1, "ORIGINAL_MODE")) == 0) {
+        dcfg->mode = ORIGINAL_MODE;
+    } else if ((strcmp(p1, "MSRCE_MODE") == 0)) {
+        dcfg->mode = MSRCE_MODE;
+    }
+
+    return NULL;
+}
 
 static const char *cmd_action(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
@@ -3959,5 +4002,13 @@ const command_rec module_directives[] = {
         "Choose database. (origin/redis/agdb)"
     ),
 #endif
+    AP_INIT_TAKE1(
+        "SecMode",
+        cmd_select_mode,
+        NULL,
+        CMD_SCOPE_ANY,
+        "Choose the executed mode of core-ruleset."
+    ),
+
     { NULL }
 };

@@ -76,6 +76,18 @@ static ngx_command_t  ngx_http_modsecurity_commands[] =  {
     NGX_HTTP_LOC_CONF_OFFSET,
     0,
     NULL },
+  { ngx_string(PreModSecurityConfig),
+    NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+    ngx_http_modsecurity_config,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    0,
+    NULL },
+  { ngx_string(PostModSecurityConfig),
+    NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+    ngx_http_modsecurity_config,
+    NGX_HTTP_LOC_CONF_OFFSET,
+    0,
+    NULL },
   { ngx_string("ModSecurityEnabled"),
     NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_SIF_CONF
         |NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_CONF_TAKE1,
@@ -1369,15 +1381,19 @@ ngx_http_modsecurity_cleanup(void *data)
     
 }
 
-    static char *
+static char *
 ngx_http_modsecurity_config(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_modsecurity_loc_conf_t *mscf = conf;
     ngx_str_t       *value;
     const char      *msg;
-
-    if (mscf->config != NGX_CONF_UNSET_PTR) {
-        return "is duplicate";
+    
+   
+    if (mscf->config == NGX_CONF_UNSET_PTR) {
+        mscf->config = modsecGetDefaultConfig();
+        if (mscf->config == NULL) {
+            return NGX_CONF_ERROR;
+        }
     }
 
     value = cf->args->elts;
@@ -1386,22 +1402,17 @@ ngx_http_modsecurity_config(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    mscf->config = modsecGetDefaultConfig();
-
-    if (mscf->config == NULL) {
-        return NGX_CONF_ERROR;
-    }
-
+    mscf->config->command = (const char *)cmd->name.data;
+    
     msg = modsecProcessConfig(mscf->config, (const char *)value[1].data, NULL);
     if (msg != NULL) {
         ngx_log_error(NGX_LOG_EMERG, cf->log, 0, "ModSecurityConfig in %s:%ui: %s",
-                cf->conf_file->file.name.data, cf->conf_file->line, msg);
+            cf->conf_file->file.name.data, cf->conf_file->line, msg);
         return NGX_CONF_ERROR;
     }
-
+    
     return NGX_CONF_OK;
 }
-
 
     static char *
 ngx_http_modsecurity_enable(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)

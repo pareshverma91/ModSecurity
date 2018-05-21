@@ -480,10 +480,36 @@ struct modsec_rec {
     int                 msc_sdbm_delete_error;
 };
 
+enum modsecurity_mode {
+    INVALID_MODE,
+    ORIGINAL_MODE,
+    MSRCE_MODE,
+};
+
+//command name
+#define PreModSecurityConfig  "PreModSecurityConfig"
+#define PostModSecurityConfig "PostModSecurityConfig"
+
+
 struct directory_config {
     apr_pool_t          *mp;
-
+    /* current initialized ruleset */
     msre_ruleset        *ruleset;
+
+    /* for plugin module */
+
+    /* current initialized command*/
+    const char          *command;
+    /* executed mode of core ruleset */
+    enum modsecurity_mode mode;
+    /*executed by original rule engine before core ruleset. */
+    msre_ruleset        *pre_ruleset;
+    /* executed by modsecurity rule C language engine at MSRCE_MODE or 
+       by modsecurity original rule engine at ORIGINAL_MODE. */
+    msre_ruleset        *core_ruleset;
+    /*executed by original rule engine after core ruleset. */
+    msre_ruleset        *post_ruleset;
+
 
     int                  is_enabled;
     int                  reqbody_access;

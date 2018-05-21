@@ -1010,6 +1010,39 @@ const char *populate_include_files(apr_pool_t *p, apr_pool_t *ptemp, apr_array_h
 	return process_fnmatch_configs(ari, fname, p, ptemp, optional);
 }
 
+static const char * assign_ruleset(directory_config *config) {
+    const char * msg = NULL;
+    const char * cmd = config->command;
+
+    //select set ruleset
+    if (strcmp(PreModSecurityConfig, cmd) == 0) {
+        if (config->pre_ruleset != NULL && config->pre_ruleset != NOT_SET_P) {
+            msg = "preruleset is duplicate";
+        }
+        else {
+            config->pre_ruleset = config->ruleset;
+        }
+    }
+    else if (strcmp(PostModSecurityConfig, cmd) == 0) {
+        if (config->post_ruleset != NULL && config->post_ruleset != NOT_SET_P) {
+            msg = "post-ruleset is duplicate";
+        }
+        else {
+            config->post_ruleset = config->ruleset;
+        }
+    }
+    else {
+        if (config->core_ruleset != NULL && config->core_ruleset != NOT_SET_P) {
+            msg = "core-ruleset is duplicate";
+        }
+        else {
+            config->core_ruleset = config->ruleset;
+        }
+    }
+    config->ruleset = NULL;
+    return msg;
+}
+
 const char *process_command_config(server_rec *s,
                                           void *mconfig,
                                           apr_pool_t *p,
@@ -1181,6 +1214,7 @@ ProcessInclude:
 			break;
 	}
 
+    
     if (errmsg) {
 		err = (char *)apr_palloc(p, 1024);
 
@@ -1189,6 +1223,10 @@ ProcessInclude:
 							parms->config_file->line_number, errmsg);
 		else
 			apr_snprintf(err, 1024, "Syntax error in config file: %s", errmsg);
+    }
+    else {
+        //assign ruleset by command
+        errmsg = assign_ruleset((directory_config *)mconfig);
     }
 
     errmsg = err;
