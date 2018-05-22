@@ -3001,7 +3001,7 @@ static const char *cmd_pcre_match_timeout(cmd_parms *cmd,
     }
 
     val = atol(p1);
-    if (val <= 0) {
+    if (val < 0) {
         return apr_psprintf(cmd->pool, "ModSecurity: Invalid setting for "
                 "SecPcreMatchTimeout: %s", p1);
     }
