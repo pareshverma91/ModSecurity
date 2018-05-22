@@ -145,6 +145,8 @@ extern DSOLOCAL unsigned long int msc_pcre_match_limit;
 
 extern DSOLOCAL unsigned long int msc_pcre_match_limit_recursion;
 
+extern DSOLOCAL unsigned long int msc_pcre_match_timeout;
+
 #ifdef WITH_REMOTE_RULES
 extern DSOLOCAL msc_remote_rules_server *remote_rules_server;
 #endif

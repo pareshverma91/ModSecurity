@@ -74,6 +74,8 @@ unsigned long int DSOLOCAL msc_pcre_match_limit = 0;
 
 unsigned long int DSOLOCAL msc_pcre_match_limit_recursion = 0;
 
+unsigned long int DSOLOCAL msc_pcre_match_timeout = 0;
+
 #ifdef WITH_REMOTE_RULES
 msc_remote_rules_server DSOLOCAL *remote_rules_server = NULL;
 #endif
