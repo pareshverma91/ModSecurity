@@ -40,7 +40,7 @@ struct msc_regex_t {
 
 void DSOLOCAL *msc_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,
                                const char **_errptr, int *_erroffset,
-                               int match_limit, int match_limit_recursion);
+                               int match_limit, int match_limit_recursion, int match_limit_timeout);
 
 void DSOLOCAL *msc_pregcomp(apr_pool_t *pool, const char *pattern, int options,
                             const char **_errptr, int *_erroffset);

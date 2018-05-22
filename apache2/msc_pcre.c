@@ -47,7 +47,7 @@ static apr_status_t msc_pcre_cleanup(msc_regex_t *regex) {
  */
 void *msc_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,
                       const char **_errptr, int *_erroffset,
-                      int match_limit, int match_limit_recursion)
+                      int match_limit, int match_limit_recursion, int match_limit_timeout)
 {
     const char *errptr = NULL;
     int erroffset;
@@ -124,6 +124,26 @@ void *msc_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,
 #pragma message ( "This PCRE version does not support match recursion limits!  Upgrade to at least PCRE v6.5." )
 #endif /* PCRE_EXTRA_MATCH_LIMIT_RECURSION */
 
+#ifdef PCRE_EXTRA_MATCH_LIMIT_TIME
+    /* If match limit time is available, then use it */
+
+    /* Use ModSecurity runtime defaults */
+    if (match_limit_timeout > 0) {
+        pe->match_limit_time = match_limit_timeout;
+        pe->flags |= PCRE_EXTRA_MATCH_LIMIT_TIME;
+    }
+#ifdef MODSEC_PCRE_MATCH_LIMIT_TIME
+    /* Default to ModSecurity compiled defaults */
+    else {
+        pe->match_limit_time = MODSEC_PCRE_MATCH_LIMIT_TIME;
+        pe->flags |= PCRE_EXTRA_MATCH_LIMIT_TIME;
+    }
+#endif /* MODSEC_PCRE_MATCH_LIMIT_TIME */
+#else
+#pragma message ( "This PCRE version does not support match limit time!" )
+#endif /* PCRE_EXTRA_MATCH_LIMIT_TIME */
+
+
     regex->pe = pe;
 
     apr_pool_cleanup_register(pool, (void *)regex,
@@ -139,7 +159,7 @@ void *msc_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,
 void *msc_pregcomp(apr_pool_t *pool, const char *pattern, int options,
                    const char **_errptr, int *_erroffset)
 {
-    return msc_pregcomp_ex(pool, pattern, options, _errptr, _erroffset, 0, 0);
+    return msc_pregcomp_ex(pool, pattern, options, _errptr, _erroffset, 0, 0, 0);
 }
 
 /**

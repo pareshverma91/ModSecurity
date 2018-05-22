@@ -378,6 +378,24 @@ AC_ARG_ENABLE(pcre-match-limit-recursion,
   pcre_match_limit_recursion='-DMODSEC_PCRE_MATCH_LIMIT_RECURSION=1500'
 ])
 
+# Limit PCRE matching time
+AC_ARG_ENABLE(pcre-match-limit-timeout,
+              AS_HELP_STRING([--enable-pcre-match-limit-timeout],
+                             [Enable PCRE regex match limit timeout during configure.]),
+[
+  if test "$enableval" = "yes"; then
+    AC_MSG_ERROR([PCRE match limit timeout require a numeric value])
+  elif test "$enableval" = "no"; then
+    pcre_match_limit_timeout=""
+  else
+    pcre_match_limit_timeout="-DMODSEC_PCRE_MATCH_LIMIT_TIME=$enableval"
+    MODSEC_EXTRA_CFLAGS="$MODSEC_EXTRA_CFLAGS $pcre_match_limit_timeout"
+  fi
+],
+[
+  pcre_match_limit_timeout='-DMODSEC_PCRE_MATCH_LIMIT_TIME=0'
+])
+
 # Enable Lua per transaction cache
 AC_ARG_ENABLE(lua-cache,
               AS_HELP_STRING([--enable-lua-cache],
