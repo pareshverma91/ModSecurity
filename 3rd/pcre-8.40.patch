@@ -1,6 +1,6 @@
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/ChangeLog ./pcre-8.40.1/ChangeLog
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/ChangeLog pcre-8.40/ChangeLog
 --- ../pcre-8.40/ChangeLog	2017-01-11 23:39:07.000000000 +0800
-+++ ./pcre-8.40.1/ChangeLog	2018-05-22 14:53:12.000000000 +0800
++++ pcre-8.40/ChangeLog	2018-05-22 14:53:12.000000000 +0800
 @@ -4,6 +4,9 @@
  Note that the PCRE 8.xx series (PCRE1) is now in a bugfix-only state. All
  development is happening in the PCRE2 10.xx series.
@@ -20,9 +20,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/Change
  
  19. There was a typo in the file ucpinternal.h where f0_rangeflag was defined
      as 0x00f00000 instead of 0x00800000. Luckily, this would not have caused
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/CMakeLists.txt ./pcre-8.40.1/CMakeLists.txt
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/CMakeLists.txt pcre-8.40/CMakeLists.txt
 --- ../pcre-8.40/CMakeLists.txt	2016-06-24 16:59:05.000000000 +0800
-+++ ./pcre-8.40.1/CMakeLists.txt	2018-05-22 18:52:12.000000000 +0800
++++ pcre-8.40/CMakeLists.txt	2018-05-22 18:52:12.000000000 +0800
 @@ -146,6 +146,9 @@
  SET(PCRE_MATCH_LIMIT_RECURSION "MATCH_LIMIT" CACHE STRING
      "Default limit on internal recursion. See MATCH_LIMIT_RECURSION in config.h.in for details.")
@@ -50,9 +50,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/CMakeL
    MESSAGE(STATUS "  Build shared libs ............... : ${BUILD_SHARED_LIBS}")
    MESSAGE(STATUS "  Build static libs ............... : ${BUILD_STATIC_LIBS}")
    MESSAGE(STATUS "  Build pcregrep .................. : ${PCRE_BUILD_PCREGREP}")
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/CMakeLists.txt.bak ./pcre-8.40.1/CMakeLists.txt.bak
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/CMakeLists.txt.bak pcre-8.40/CMakeLists.txt.bak
 --- ../pcre-8.40/CMakeLists.txt.bak	1970-01-01 08:00:00.000000000 +0800
-+++ ./pcre-8.40.1/CMakeLists.txt.bak	2018-05-22 11:04:42.000000000 +0800
++++ pcre-8.40/CMakeLists.txt.bak	2018-05-22 11:04:42.000000000 +0800
 @@ -0,0 +1,1012 @@
 +# CMakeLists.txt
 +#
@@ -1066,9 +1066,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/CMakeL
 +ENDIF(PCRE_SHOW_REPORT)
 +
 +# end CMakeLists.txt
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config-cmake.h.in ./pcre-8.40.1/config-cmake.h.in
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config-cmake.h.in pcre-8.40/config-cmake.h.in
 --- ../pcre-8.40/config-cmake.h.in	2014-01-31 22:32:10.000000000 +0800
-+++ ./pcre-8.40.1/config-cmake.h.in	2018-05-22 14:48:32.000000000 +0800
++++ pcre-8.40/config-cmake.h.in	2018-05-22 14:48:32.000000000 +0800
 @@ -49,6 +49,8 @@
  #define PARENS_NEST_LIMIT       @PCRE_PARENS_NEST_LIMIT@
  #define MATCH_LIMIT		@PCRE_MATCH_LIMIT@
@@ -1078,9 +1078,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config
  #define PCREGREP_BUFSIZE        @PCREGREP_BUFSIZE@
  
  #define MAX_NAME_SIZE	32
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config.h.generic ./pcre-8.40.1/config.h.generic
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config.h.generic pcre-8.40/config.h.generic
 --- ../pcre-8.40/config.h.generic	2017-01-11 23:58:59.000000000 +0800
-+++ ./pcre-8.40.1/config.h.generic	2018-05-22 18:49:00.000000000 +0800
++++ pcre-8.40/config.h.generic	2018-05-22 18:49:00.000000000 +0800
 @@ -190,6 +190,12 @@
  #define MATCH_LIMIT_RECURSION MATCH_LIMIT
  #endif
@@ -1094,9 +1094,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config
  /* This limit is parameterized just in case anybody ever wants to change it.
     Care must be taken if it is increased, because it guards against integer
     overflow caused by enormously large patterns. */
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config.h.in ./pcre-8.40.1/config.h.in
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config.h.in pcre-8.40/config.h.in
 --- ../pcre-8.40/config.h.in	2017-01-11 23:37:38.000000000 +0800
-+++ ./pcre-8.40.1/config.h.in	2018-05-22 17:32:22.000000000 +0800
++++ pcre-8.40/config.h.in	2018-05-22 17:32:22.000000000 +0800
 @@ -181,6 +181,10 @@
     a runtime method for setting a different limit. */
  #undef MATCH_LIMIT_RECURSION
@@ -1108,73 +1108,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config
  /* This limit is parameterized just in case anybody ever wants to change it.
     Care must be taken if it is increased, because it guards against integer
     overflow caused by enormously large patterns. */
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/configure ./pcre-8.40.1/configure
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/configure pcre-8.40/configure
 --- ../pcre-8.40/configure	2017-01-11 23:37:37.000000000 +0800
-+++ ./pcre-8.40.1/configure	2018-05-25 11:44:25.991000000 +0800
-@@ -1,6 +1,6 @@
- #! /bin/sh
- # Guess values for system-dependent variables and create Makefiles.
--# Generated by GNU Autoconf 2.69 for PCRE 8.40.
-+# Generated by GNU Autoconf 2.69 for PCRE 8.40.1.
- #
- #
- # Copyright (C) 1992-1996, 1998-2012 Free Software Foundation, Inc.
-@@ -587,8 +587,8 @@
- # Identity of this package.
- PACKAGE_NAME='PCRE'
- PACKAGE_TARNAME='pcre'
--PACKAGE_VERSION='8.40'
--PACKAGE_STRING='PCRE 8.40'
-+PACKAGE_VERSION='8.40.1'
-+PACKAGE_STRING='PCRE 8.40.1'
- PACKAGE_BUGREPORT=''
- PACKAGE_URL=''
- 
-@@ -1418,7 +1418,7 @@
-   # Omit some internal or obsolete options to make the list less imposing.
-   # This message is too long to be a string in the A/UX 3.1 sh.
-   cat <<_ACEOF
--\`configure' configures PCRE 8.40 to adapt to many kinds of systems.
-+\`configure' configures PCRE 8.40.1 to adapt to many kinds of systems.
- 
- Usage: $0 [OPTION]... [VAR=VALUE]...
- 
-@@ -1488,7 +1488,7 @@
- 
- if test -n "$ac_init_help"; then
-   case $ac_init_help in
--     short | recursive ) echo "Configuration of PCRE 8.40:";;
-+     short | recursive ) echo "Configuration of PCRE 8.40.1:";;
-    esac
-   cat <<\_ACEOF
- 
-@@ -1662,7 +1662,7 @@
- test -n "$ac_init_help" && exit $ac_status
- if $ac_init_version; then
-   cat <<\_ACEOF
--PCRE configure 8.40
-+PCRE configure 8.40.1
- generated by GNU Autoconf 2.69
- 
- Copyright (C) 2012 Free Software Foundation, Inc.
-@@ -2419,7 +2419,7 @@
- This file contains any messages produced by compilers while
- running configure, to aid debugging if configure makes a mistake.
- 
--It was created by PCRE $as_me 8.40, which was
-+It was created by PCRE $as_me 8.40.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   $ $0 $@
-@@ -3283,7 +3283,7 @@
- 
- # Define the identity of the package.
-  PACKAGE='pcre'
-- VERSION='8.40'
-+ VERSION='8.40.1'
- 
- 
- cat >>confdefs.h <<_ACEOF
++++ pcre-8.40/configure	2018-05-22 18:48:10.000000000 +0800
 @@ -17920,6 +17920,20 @@
    with_match_limit_recursion=MATCH_LIMIT
  fi
@@ -1207,24 +1143,6 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config
  
  $as_echo "#define MAX_NAME_SIZE 32" >>confdefs.h
  
-@@ -20719,7 +20735,7 @@
- # report actual input values of CONFIG_FILES etc. instead of their
- # values after options handling.
- ac_log="
--This file was extended by PCRE $as_me 8.40, which was
-+This file was extended by PCRE $as_me 8.40.1, which was
- generated by GNU Autoconf 2.69.  Invocation command line was
- 
-   CONFIG_FILES    = $CONFIG_FILES
-@@ -20785,7 +20801,7 @@
- cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
- ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
- ac_cs_version="\\
--PCRE config.status 8.40
-+PCRE config.status 8.40.1
- configured by $0, generated by GNU Autoconf 2.69,
-   with options \\"\$ac_cs_config\\"
- 
 @@ -22798,6 +22814,7 @@
      Nested parentheses limit ........ : ${with_parens_nest_limit}
      Match limit ..................... : ${with_match_limit}
@@ -1233,9 +1151,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config
      Build shared libs ............... : ${enable_shared}
      Build static libs ............... : ${enable_static}
      Use JIT in pcregrep ............. : ${enable_pcregrep_jit}
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/configure.ac ./pcre-8.40.1/configure.ac
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/configure.ac pcre-8.40/configure.ac
 --- ../pcre-8.40/configure.ac	2017-01-11 23:37:28.000000000 +0800
-+++ ./pcre-8.40.1/configure.ac	2018-05-22 18:46:20.000000000 +0800
++++ pcre-8.40/configure.ac	2018-05-22 18:46:20.000000000 +0800
 @@ -300,6 +300,17 @@
                             [default limit on internal recursion (default=MATCH_LIMIT)]),
              , with_match_limit_recursion=MATCH_LIMIT)
@@ -1273,23 +1191,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/config
      Build shared libs ............... : ${enable_shared}
      Build static libs ............... : ${enable_static}
      Use JIT in pcregrep ............. : ${enable_pcregrep_jit}
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/NEWS ./pcre-8.40.1/NEWS
---- ../pcre-8.40/NEWS	2017-01-11 23:40:00.000000000 +0800
-+++ ./pcre-8.40.1/NEWS	2018-05-25 11:43:47.227829700 +0800
-@@ -1,6 +1,10 @@
- News about PCRE releases
- ------------------------
- 
-+Release 8.40.1 25-May-2018
-+----------------------------
-+Add time limit by Microsoft
-+
- Release 8.40 11-January-2017
- ----------------------------
- 
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_config.c ./pcre-8.40.1/pcre_config.c
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_config.c pcre-8.40/pcre_config.c
 --- ../pcre-8.40/pcre_config.c	2014-01-31 22:32:08.000000000 +0800
-+++ ./pcre-8.40.1/pcre_config.c	2018-05-22 18:02:38.000000000 +0800
++++ pcre-8.40/pcre_config.c	2018-05-22 18:02:38.000000000 +0800
 @@ -172,6 +172,9 @@
    case PCRE_CONFIG_MATCH_LIMIT_RECURSION:
    *((unsigned long int *)where) = MATCH_LIMIT_RECURSION;
@@ -1300,10 +1204,10 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_c
  
    case PCRE_CONFIG_STACKRECURSE:
  #ifdef NO_RECURSE
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_exec.c ./pcre-8.40.1/pcre_exec.c
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_exec.c pcre-8.40/pcre_exec.c
 --- ../pcre-8.40/pcre_exec.c	2016-07-06 17:14:24.000000000 +0800
-+++ ./pcre-8.40.1/pcre_exec.c	2018-05-25 11:03:06.934753600 +0800
-@@ -138,6 +138,64 @@
++++ pcre-8.40/pcre_exec.c	2018-05-29 13:14:38.000000000 +0800
+@@ -138,6 +138,95 @@
  }
  #endif
  
@@ -1364,51 +1268,89 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
 +    return time_now;
 +}
 +
++#define TIMEOUT (!!(1))
++#define CONTINUE (!(TIMEOUT))
++
++#define TIMER_HIGHEST_BIT (((TIME_TYPE)1)<<(sizeof(TIME_TYPE) * 8 - 1))
++
++#define INITIALIZE_TIMER(VALUE) ((TIME_TYPE)(VALUE) | TIMER_HIGHEST_BIT)
++#define IS_TIMER_STARTED(TIMER) ((TIMER & TIMER_HIGHEST_BIT) == 0)
++#define START_TIMER(TIMER) ((TIMER) = ((TIMER & (~TIMER_HIGHEST_BIT)) + get_time_now()))
++
++static int check_timeout(match_data *md) {
++    if (md->match_limit_time == FOREVER) {
++        return CONTINUE;
++    }
++    /* we needn't compare the timer with current time every time, 
++    the number 127 comes from tunning. */
++    if ((md->match_call_count & ((unsigned long int)127)) != 0) {
++        return CONTINUE;
++    }
++    /* we will start the timer if the timer hasn't be started. */
++    if ( ! IS_TIMER_STARTED(md->match_limit_time)) {
++        START_TIMER(md->match_limit_time);
++        return CONTINUE;
++    }
++    
++    if (md->match_limit_time > get_time_now()) {
++        return CONTINUE;
++    }
++    
++    return TIMEOUT;
++}
++
 +#endif
  
  
  /*************************************************
-@@ -723,6 +781,8 @@
- 
+@@ -724,6 +813,9 @@
  if (md->match_call_count++ >= md->match_limit) RRETURN(PCRE_ERROR_MATCHLIMIT);
  if (rdepth >= md->match_limit_recursion) RRETURN(PCRE_ERROR_RECURSIONLIMIT);
-+/* check that we haven't been timeout match too many time*/
-+if (md->match_limit_time != FOREVER && md->match_limit_time <= get_time_now()) RRETURN(PCRE_ERROR_TIMELIMIT);
  
++/* check that we haven't call match() timeout*/
++if (check_timeout(md) == TIMEOUT) RRETURN(PCRE_ERROR_TIMELIMIT);
++
  /* At the start of a group with an unlimited repeat that may match an empty
  string, the variable md->match_function_type is set to MATCH_CBEGROUP. It is
-@@ -6503,6 +6563,16 @@
+ done this way to save having to use another function argument, which would take
+@@ -6503,6 +6595,16 @@
  study = NULL;
  md->match_limit = MATCH_LIMIT;
  md->match_limit_recursion = MATCH_LIMIT_RECURSION;
 +
 +#ifdef PCRE_CONFIG_MATCH_LIMIT_TIME
-+md->match_limit_time = 0;
++md->match_limit_time = FOREVER;
 +/* MATCH_LIMIT_TIME need be less than 1 days to avoid the upper overflow. */
 +assert(MATCH_LIMIT_TIME == FOREVER || MATCH_LIMIT_TIME < (24 *3600 * S / MS));
 +if (MATCH_LIMIT_TIME != FOREVER) {
-+    md->match_limit_time = MATCH_LIMIT_TIME + get_time_now();
++    md->match_limit_time = INITIALIZE_TIMER(MATCH_LIMIT_TIME);
 +}
 +#endif
 +
  md->callout_data = NULL;
  
  /* The table pointer is always in native byte order. */
-@@ -6523,6 +6593,13 @@
+@@ -6523,6 +6625,19 @@
    if ((flags & PCRE_EXTRA_CALLOUT_DATA) != 0)
      md->callout_data = extra_data->callout_data;
    if ((flags & PCRE_EXTRA_TABLES) != 0) tables = extra_data->tables;
 +#ifdef PCRE_CONFIG_MATCH_LIMIT_TIME
-+  if ((flags & PCRE_EXTRA_MATCH_LIMIT_TIME) != 0 && extra_data->match_limit_time != FOREVER) {
-+      /* MATCH_LIMIT_TIME need be less than 1 days to avoid the upper overflow. */
-+      assert(extra_data->match_limit_time < (24 * 3600 * S / MS));
-+      md->match_limit_time = extra_data->match_limit_time + get_time_now();
++  if ((flags & PCRE_EXTRA_MATCH_LIMIT_TIME) != 0) {
++      if (extra_data->match_limit_time == FOREVER) {
++          md->match_limit_time = FOREVER;
++      }
++      else {
++          /* MATCH_LIMIT_TIME need be less than 1 days to avoid the upper overflow. */
++          assert(extra_data->match_limit_time < (24 * 3600 * S / MS));
++          md->match_limit_time = INITIALIZE_TIMER(extra_data->match_limit_time);
++      }
++
 +  }
 +#endif
    }
  
  /* Limits in the regex override only if they are smaller. */
-@@ -6930,6 +7007,7 @@
+@@ -6930,6 +7045,7 @@
    md->start_match_ptr = start_match;
    md->start_used_ptr = start_match;
    md->match_call_count = 0;
@@ -1416,9 +1358,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
    md->match_function_type = 0;
    md->end_offset_top = 0;
    md->skip_arg_count = 0;
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre.h.generic ./pcre-8.40.1/pcre.h.generic
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre.h.generic pcre-8.40/pcre.h.generic
 --- ../pcre-8.40/pcre.h.generic	2017-01-11 23:58:52.000000000 +0800
-+++ ./pcre-8.40.1/pcre.h.generic	2018-05-22 15:41:38.000000000 +0800
++++ pcre-8.40/pcre.h.generic	2018-05-22 15:41:38.000000000 +0800
 @@ -211,6 +211,7 @@
  #define PCRE_ERROR_BADLENGTH       (-32)
  #define PCRE_ERROR_UNSET           (-33)
@@ -1427,9 +1369,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre.h
  /* Specific error codes for UTF-8 validity checks */
  
  #define PCRE_UTF8_ERR0               0
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre.h.in ./pcre-8.40.1/pcre.h.in
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre.h.in pcre-8.40/pcre.h.in
 --- ../pcre-8.40/pcre.h.in	2014-02-09 19:46:05.000000000 +0800
-+++ ./pcre-8.40.1/pcre.h.in	2018-05-22 17:35:08.000000000 +0800
++++ pcre-8.40/pcre.h.in	2018-05-22 17:35:08.000000000 +0800
 @@ -211,6 +211,8 @@
  #define PCRE_ERROR_BADLENGTH       (-32)
  #define PCRE_ERROR_UNSET           (-33)
@@ -1484,10 +1426,10 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre.h
    PCRE_UCHAR32 **mark;            /* For passing back a mark pointer */
    void *executable_jit;           /* Contains a pointer to a compiled jit code */
  } pcre32_extra;
-diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_internal.h ./pcre-8.40.1/pcre_internal.h
+diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_internal.h pcre-8.40/pcre_internal.h
 --- ../pcre-8.40/pcre_internal.h	2016-05-21 21:33:24.000000000 +0800
-+++ ./pcre-8.40.1/pcre_internal.h	2018-05-22 18:04:42.000000000 +0800
-@@ -2514,6 +2514,14 @@
++++ pcre-8.40/pcre_internal.h	2018-05-29 11:25:38.000000000 +0800
+@@ -2514,6 +2514,16 @@
    unsigned long int match_call_count;      /* As it says */
    unsigned long int match_limit;           /* As it says */
    unsigned long int match_limit_recursion; /* As it says */
@@ -1495,7 +1437,9 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_i
 +#ifdef PCRE_CONFIG_MATCH_LIMIT_TIME
 +
 +#define TIME_TYPE unsigned long long
-+  TIME_TYPE match_limit_time;     /* As it says ,The resolution of time is 1 millisecond.*/
++  TIME_TYPE match_limit_time;     /* As it says ,The resolution of time is 1 millisecond. 
++                                  the highest bit is saved the initialized information, 
++                                  1 means that the timer hasn't be started. */
 +
 +#endif
 +
