@@ -1206,8 +1206,8 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_c
  #ifdef NO_RECURSE
 diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_exec.c pcre-8.40/pcre_exec.c
 --- ../pcre-8.40/pcre_exec.c	2016-07-06 17:14:24.000000000 +0800
-+++ pcre-8.40/pcre_exec.c	2018-05-29 13:14:38.000000000 +0800
-@@ -138,6 +138,95 @@
++++ pcre-8.40/pcre_exec.c	2018-05-30 11:37:24.000000000 +0800
+@@ -138,6 +138,96 @@
  }
  #endif
  
@@ -1247,19 +1247,20 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
 +    TIME_TYPE time_now = 0;
 +
 +#ifdef _WIN32
-+    LARGE_INTEGER frequency = { 0 };
-+    LARGE_INTEGER counter = { 0 };
++    FILETIME create_time, exit_time, kernal_time, user_time;
++    ULARGE_INTEGER ui;
 +
-+    if (0 == QueryPerformanceFrequency(&frequency)) {
-+        return -1;
-+    }
-+    if (0 == QueryPerformanceCounter(&counter)) {
-+        return -1;
-+    }
-+    time_now = (TIME_TYPE)((((double)(counter.QuadPart)) / ((double)(frequency.QuadPart))) * (double)(S / MS));
++    GetThreadTimes(GetCurrentThread(), &create_time, &exit_time, &kernal_time, &user_time);
++
++    ui.LowPart = user_time.dwLowDateTime;
++    ui.HighPart = user_time.dwHighDateTime;
++    /* All times are expressed using FILETIME data structures.
++    Such a structure contains two 32-bit values that combine to
++    form a 64-bit count of 100-nanosecond time units. */
++    time_now = ((TIME_TYPE)ui.QuadPart * 100) / MS;
 +#else
 +    struct timespec ts = { 0 };
-+    if (0 != clock_gettime(CLOCK_MONOTONIC, &ts)) {
++    if (0 != clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts)) {
 +        return -1;
 +    }
 +    time_now = ((ts.tv_nsec * NS) + (ts.tv_sec * S)) / MS;
@@ -1282,8 +1283,8 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
 +        return CONTINUE;
 +    }
 +    /* we needn't compare the timer with current time every time, 
-+    the number 127 comes from tunning. */
-+    if ((md->match_call_count & ((unsigned long int)127)) != 0) {
++    the number 1023 comes from tunning. */
++    if ((md->match_call_count & ((unsigned long int)1023)) != 0) {
 +        return CONTINUE;
 +    }
 +    /* we will start the timer if the timer hasn't be started. */
@@ -1303,7 +1304,7 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
  
  
  /*************************************************
-@@ -724,6 +813,9 @@
+@@ -724,6 +814,9 @@
  if (md->match_call_count++ >= md->match_limit) RRETURN(PCRE_ERROR_MATCHLIMIT);
  if (rdepth >= md->match_limit_recursion) RRETURN(PCRE_ERROR_RECURSIONLIMIT);
  
@@ -1313,7 +1314,7 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
  /* At the start of a group with an unlimited repeat that may match an empty
  string, the variable md->match_function_type is set to MATCH_CBEGROUP. It is
  done this way to save having to use another function argument, which would take
-@@ -6503,6 +6595,16 @@
+@@ -6503,6 +6596,16 @@
  study = NULL;
  md->match_limit = MATCH_LIMIT;
  md->match_limit_recursion = MATCH_LIMIT_RECURSION;
@@ -1330,7 +1331,7 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
  md->callout_data = NULL;
  
  /* The table pointer is always in native byte order. */
-@@ -6523,6 +6625,19 @@
+@@ -6523,6 +6626,19 @@
    if ((flags & PCRE_EXTRA_CALLOUT_DATA) != 0)
      md->callout_data = extra_data->callout_data;
    if ((flags & PCRE_EXTRA_TABLES) != 0) tables = extra_data->tables;
@@ -1350,7 +1351,7 @@ diff -x testdata -x RunTest.bat -x '*.pas' -x 'makevp*' -ruN ../pcre-8.40/pcre_e
    }
  
  /* Limits in the regex override only if they are smaller. */
-@@ -6930,6 +7045,7 @@
+@@ -6930,6 +7046,7 @@
    md->start_match_ptr = start_match;
    md->start_used_ptr = start_match;
    md->match_call_count = 0;
