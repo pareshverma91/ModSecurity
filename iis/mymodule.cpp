@@ -818,11 +818,7 @@ CMyHttpModule::OnBeginRequest(
         goto Finished;
     }
 
-	// every 3 seconds we check for changes in config file
-	//
-	DWORD ctime = GetTickCount();
-
-	if(pConfig->m_Config == NULL || (ctime - pConfig->m_dwLastCheck) > 3000)
+	if(pConfig->m_Config == NULL)
 	{
 		char *path;
 		USHORT pathlen;
@@ -835,19 +831,8 @@ CMyHttpModule::OnBeginRequest(
 			goto Finished;
 		}
 
-		WIN32_FILE_ATTRIBUTE_DATA fdata;
-		BOOL ret;
-
-		ret = GetFileAttributesEx(path, GetFileExInfoStandard, &fdata);
-
-		pConfig->m_dwLastCheck = ctime;
-
-		if(pConfig->m_Config == NULL || (ret != 0 && (pConfig->m_LastChange.dwLowDateTime != fdata.ftLastWriteTime.dwLowDateTime ||
-			pConfig->m_LastChange.dwHighDateTime != fdata.ftLastWriteTime.dwHighDateTime)))
+		if(pConfig->m_Config == NULL)
 		{
-			pConfig->m_LastChange.dwLowDateTime = fdata.ftLastWriteTime.dwLowDateTime;
-			pConfig->m_LastChange.dwHighDateTime = fdata.ftLastWriteTime.dwHighDateTime;
-
 			pConfig->m_Config = modsecGetDefaultConfig();
 
 			PCWSTR servpath = pHttpContext->GetApplication()->GetApplicationPhysicalPath();
@@ -1140,7 +1125,9 @@ CMyHttpModule::OnBeginRequest(
 #endif
 	c->remote_host = NULL;
 
+    LeaveCriticalSection(&m_csLock);
 	int status = modsecProcessRequest(r);
+    EnterCriticalSection(&m_csLock);
 
 	if(status != DECLINED)
 	{
