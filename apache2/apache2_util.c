@@ -16,6 +16,8 @@
 #include "apache2.h"
 #include "http_core.h"
 #include "util_script.h"
+#include "waf_log_util_external.h"
+#include "string.h"
 
 /**
  * Sends a brigade with an error bucket down the filter chain.
@@ -188,6 +190,83 @@ char *get_env_var(request_rec *r, char *name) {
 }
 
 /**
+ * Retrieve waf log field.
+ */
+void get_field_value(const char* from, const char* to, const char* text, char* output) {
+    char* first = strstr(text, from);
+    int first_index = first - text;
+
+    if (first != NULL ) {
+        if ((first_index > 0 && (first-1)[0] != "\\") || (first_index == 0)) {
+            first += strlen(from);
+        }
+        else {
+            first = NULL;
+        }
+    }
+
+    char* last = strstr(first, to);
+    int last_index = last- first;
+    if (last != NULL ) {
+        if ((last_index > 0 && (last-1)[0] != "\\") || (last_index == 0)) {
+        }
+        else {
+            last = NULL;
+        }
+    }
+
+    if (first != NULL && last != NULL) {
+        strncpy(output, first, last - first);
+    }
+}
+
+/**
+ * send all waf fields in json format to a file.
+ */
+void send_waf_log(const char* str1, const char* ip_port, const char* uri, int mode, const char* hostname, request_rec *r) {
+    int rc = 0;
+    char waf_filename[1024] = "";
+    char waf_line[1024] = "";
+    char waf_id[1024] = "";
+    char waf_message[1024] = "";
+    char waf_data[1024] = "";
+    char waf_ip[50] = "";
+    char waf_port[50] = "";
+    char waf_detail_message[1024] = "";
+
+    get_field_value("[file ", "]", str1, waf_filename);
+    get_field_value("[id ", "]", str1, waf_id);
+    get_field_value("[line ", "]", str1, waf_line);
+    get_field_value("[msg ", "]", str1, waf_message);
+    get_field_value("[data ", "]", str1, waf_data);
+
+    char *comma = strstr(ip_port, ":");
+    if (comma!= NULL) {
+        strcpy(waf_port, comma+1);
+        strncpy(waf_ip, ip_port, comma - ip_port);
+    }
+    else {
+        strcpy(waf_ip, ip_port);
+    }
+
+    char *end = strstr(str1, "[file ");
+    if (end != NULL) {
+        strncpy(waf_detail_message, str1, end - str1);
+    }
+
+    rc = write_json_to_file(waf_ip, waf_port, uri, "", "", waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname);
+    if (rc == WAF_LOG_OPEN_FAILED) {
+#if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
+       ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
+            "ModSecurity: can't print json log");
+#else
+        ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r->server,
+            "ModSecurity: can't print json log");
+#endif
+    }
+}
+
+/**
  * Extended internal log helper function. Use msr_log instead. If fixup is
  * true, the message will be stripped of any trailing newline and any
  * required bytes will be escaped.
@@ -273,6 +352,10 @@ static void internal_log_ex(request_rec *r, directory_config *dcfg, modsec_rec *
                 log_escape(msr->mp, requestheaderhostname));
         }
         else requestheaderhostname = "";
+
+#ifdef WAF_JSON_LOGGING_ENABLE
+        send_waf_log(str1, r->useragent_ip ? r->useragent_ip : r->connection->client_ip, log_escape(msr->mp, r->uri), dcfg->is_enabled, (char*)msr->hostname, r);
+#endif
 
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
 	ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
