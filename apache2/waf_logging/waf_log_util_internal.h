@@ -6,6 +6,6 @@
 #include <fstream>
 #include <exception>
 
-#define WAF_LOG_UTIL_PATH "/var/log/Appgwwaf/waf_json.log"
+#define WAF_LOG_UTIL_FILE "waf_json.log"
 
 #endif 

@@ -227,7 +227,7 @@ void get_field_value(const char* from, const char* to, const char* text, char* o
 /**
  * send all waf fields in json format to a file.
  */
-void send_waf_log(const char* str1, const char* ip_port, const char* uri, int mode, const char* hostname, request_rec *r) {
+void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, const char* uri, int mode, const char* hostname, request_rec *r) {
     int rc = 0;
     char waf_filename[1024] = "";
     char waf_line[1024] = "";
@@ -258,7 +258,7 @@ void send_waf_log(const char* str1, const char* ip_port, const char* uri, int mo
         strncpy(waf_detail_message, str1, end - str1);
     }
 
-    rc = write_json_to_file(waf_ip, waf_port, uri, "", "", waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname);
+    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, "", "", waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname);
     if (rc == WAF_LOG_UTIL_FAILED) {
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
        ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
@@ -359,7 +359,7 @@ static void internal_log_ex(request_rec *r, directory_config *dcfg, modsec_rec *
         else requestheaderhostname = "";
 
 #ifdef WAF_JSON_LOGGING_ENABLE
-        send_waf_log(str1, r->useragent_ip ? r->useragent_ip : r->connection->client_ip, log_escape(msr->mp, r->uri), dcfg->is_enabled, (char*)msr->hostname, r);
+        send_waf_log(msr->txcfg->data_dir, str1, r->useragent_ip ? r->useragent_ip : r->connection->client_ip, log_escape(msr->mp, r->uri), dcfg->is_enabled, (char*)msr->hostname, r);
 #endif
 
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
