@@ -16,8 +16,11 @@
 #include "apache2.h"
 #include "http_core.h"
 #include "util_script.h"
+
+#ifdef WAF_JSON_LOGGING_ENABLE
 #include "waf_log_util_external.h"
 #include "string.h"
+#endif
 
 /**
  * Sends a brigade with an error bucket down the filter chain.
@@ -189,6 +192,7 @@ char *get_env_var(request_rec *r, char *name) {
     return result;
 }
 
+#ifdef WAF_JSON_LOGGING_ENABLE
 /**
  * Retrieve waf log field.
  */
@@ -265,6 +269,7 @@ void send_waf_log(const char* str1, const char* ip_port, const char* uri, int mo
 #endif
     }
 }
+#endif
 
 /**
  * Extended internal log helper function. Use msr_log instead. If fixup is
