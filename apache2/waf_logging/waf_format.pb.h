@@ -532,6 +532,21 @@ class Waf_Format : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::std::string* release_hostname();
   void set_allocated_hostname(::std::string* hostname);
 
+  // optional string time = 12;
+  bool has_time() const;
+  void clear_time();
+  static const int kTimeFieldNumber = 12;
+  const ::std::string& time() const;
+  void set_time(const ::std::string& value);
+  #if LANG_CXX11
+  void set_time(::std::string&& value);
+  #endif
+  void set_time(const char* value);
+  void set_time(const char* value, size_t size);
+  ::std::string* mutable_time();
+  ::std::string* release_time();
+  void set_allocated_time(::std::string* time);
+
   // optional .waf_format.Details details = 10;
   bool has_details() const;
   void clear_details();
@@ -579,6 +594,8 @@ class Waf_Format : public ::google::protobuf::Message /* @@protoc_insertion_poin
   void clear_has_details();
   void set_has_hostname();
   void clear_has_hostname();
+  void set_has_time();
+  void clear_has_time();
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::HasBits<1> _has_bits_;
@@ -591,6 +608,7 @@ class Waf_Format : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::google::protobuf::internal::ArenaStringPtr ruleid_;
   ::google::protobuf::internal::ArenaStringPtr messages_;
   ::google::protobuf::internal::ArenaStringPtr hostname_;
+  ::google::protobuf::internal::ArenaStringPtr time_;
   ::waf_format::Details* details_;
   int action_;
   int site_;
@@ -1307,13 +1325,13 @@ inline void Waf_Format::set_allocated_messages(::std::string* messages) {
 
 // optional .waf_format.Waf_Format.ActionType action = 8;
 inline bool Waf_Format::has_action() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
+  return (_has_bits_[0] & 0x00000400u) != 0;
 }
 inline void Waf_Format::set_has_action() {
-  _has_bits_[0] |= 0x00000200u;
+  _has_bits_[0] |= 0x00000400u;
 }
 inline void Waf_Format::clear_has_action() {
-  _has_bits_[0] &= ~0x00000200u;
+  _has_bits_[0] &= ~0x00000400u;
 }
 inline void Waf_Format::clear_action() {
   action_ = 0;
@@ -1332,13 +1350,13 @@ inline void Waf_Format::set_action(::waf_format::Waf_Format_ActionType value) {
 
 // optional .waf_format.Waf_Format.SiteType site = 9;
 inline bool Waf_Format::has_site() const {
-  return (_has_bits_[0] & 0x00000400u) != 0;
+  return (_has_bits_[0] & 0x00000800u) != 0;
 }
 inline void Waf_Format::set_has_site() {
-  _has_bits_[0] |= 0x00000400u;
+  _has_bits_[0] |= 0x00000800u;
 }
 inline void Waf_Format::clear_has_site() {
-  _has_bits_[0] &= ~0x00000400u;
+  _has_bits_[0] &= ~0x00000800u;
 }
 inline void Waf_Format::clear_site() {
   site_ = 0;
@@ -1357,13 +1375,13 @@ inline void Waf_Format::set_site(::waf_format::Waf_Format_SiteType value) {
 
 // optional .waf_format.Details details = 10;
 inline bool Waf_Format::has_details() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+  return (_has_bits_[0] & 0x00000200u) != 0;
 }
 inline void Waf_Format::set_has_details() {
-  _has_bits_[0] |= 0x00000100u;
+  _has_bits_[0] |= 0x00000200u;
 }
 inline void Waf_Format::clear_has_details() {
-  _has_bits_[0] &= ~0x00000100u;
+  _has_bits_[0] &= ~0x00000200u;
 }
 inline void Waf_Format::clear_details() {
   if (details_ != NULL) details_->Clear();
@@ -1470,6 +1488,69 @@ inline void Waf_Format::set_allocated_hostname(::std::string* hostname) {
   }
   hostname_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), hostname);
   // @@protoc_insertion_point(field_set_allocated:waf_format.Waf_Format.hostname)
+}
+
+// optional string time = 12;
+inline bool Waf_Format::has_time() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void Waf_Format::set_has_time() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void Waf_Format::clear_has_time() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void Waf_Format::clear_time() {
+  time_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_time();
+}
+inline const ::std::string& Waf_Format::time() const {
+  // @@protoc_insertion_point(field_get:waf_format.Waf_Format.time)
+  return time_.GetNoArena();
+}
+inline void Waf_Format::set_time(const ::std::string& value) {
+  set_has_time();
+  time_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:waf_format.Waf_Format.time)
+}
+#if LANG_CXX11
+inline void Waf_Format::set_time(::std::string&& value) {
+  set_has_time();
+  time_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:waf_format.Waf_Format.time)
+}
+#endif
+inline void Waf_Format::set_time(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  set_has_time();
+  time_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:waf_format.Waf_Format.time)
+}
+inline void Waf_Format::set_time(const char* value, size_t size) {
+  set_has_time();
+  time_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:waf_format.Waf_Format.time)
+}
+inline ::std::string* Waf_Format::mutable_time() {
+  set_has_time();
+  // @@protoc_insertion_point(field_mutable:waf_format.Waf_Format.time)
+  return time_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* Waf_Format::release_time() {
+  // @@protoc_insertion_point(field_release:waf_format.Waf_Format.time)
+  clear_has_time();
+  return time_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Waf_Format::set_allocated_time(::std::string* time) {
+  if (time != NULL) {
+    set_has_time();
+  } else {
+    clear_has_time();
+  }
+  time_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), time);
+  // @@protoc_insertion_point(field_set_allocated:waf_format.Waf_Format.time)
 }
 
 #ifdef __GNUC__

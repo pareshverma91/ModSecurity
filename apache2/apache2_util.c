@@ -225,9 +225,47 @@ void get_field_value(const char* from, const char* to, const char* text, char* o
 }
 
 /**
+ * get ip and port number.
+ */
+void get_ip_port(const char* ip_port, char* waf_ip, char* waf_port) {
+    char *comma = strstr(ip_port, ":");
+    if (comma!= NULL) {
+        strcpy(waf_port, comma+1);
+        strncpy(waf_ip, ip_port, comma - ip_port);
+    }
+    else {
+        strcpy(waf_ip, ip_port);
+    }
+}
+
+/**
+ * get detail_messages.
+ */
+void get_detail_message(const char* str1, char* waf_detail_message) {
+    char *end = strstr(str1, "[file ");
+    if (end != NULL) {
+        strncpy(waf_detail_message, str1, end - str1);
+    }
+}
+
+void get_short_filename(char* waf_filename) {
+    char tmp_filename[1024] = ""; 
+    char *index = strstr(waf_filename, WAF_RULESET_PREFIX);
+
+    if (index != NULL) {
+        index += strlen(WAF_RULESET_PREFIX);
+        index = strstr(index, "/");
+        if (index != NULL) {
+            strcpy(tmp_filename, index+1);
+            strcpy(waf_filename, tmp_filename);
+        }
+    }
+}
+
+/**
  * send all waf fields in json format to a file.
  */
-void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, const char* uri, int mode, const char* hostname, request_rec *r) {
+void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, const char* uri, const char* time, int mode, const char* hostname, request_rec *r) {
     int rc = 0;
     char waf_filename[1024] = "";
     char waf_line[1024] = "";
@@ -243,22 +281,11 @@ void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, c
     get_field_value("[line ", "]", str1, waf_line);
     get_field_value("[msg ", "]", str1, waf_message);
     get_field_value("[data ", "]", str1, waf_data);
+    get_ip_port(ip_port, waf_ip, waf_port);
+    get_detail_message(str1, waf_detail_message); 
+    get_short_filename(waf_filename);
 
-    char *comma = strstr(ip_port, ":");
-    if (comma!= NULL) {
-        strcpy(waf_port, comma+1);
-        strncpy(waf_ip, ip_port, comma - ip_port);
-    }
-    else {
-        strcpy(waf_ip, ip_port);
-    }
-
-    char *end = strstr(str1, "[file ");
-    if (end != NULL) {
-        strncpy(waf_detail_message, str1, end - str1);
-    }
-
-    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, "", "", waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname);
+    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, "", "", waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname, time);
     if (rc == WAF_LOG_UTIL_FAILED) {
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
        ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
@@ -359,7 +386,7 @@ static void internal_log_ex(request_rec *r, directory_config *dcfg, modsec_rec *
         else requestheaderhostname = "";
 
 #ifdef WAF_JSON_LOGGING_ENABLE
-        send_waf_log(msr->txcfg->data_dir, str1, r->useragent_ip ? r->useragent_ip : r->connection->client_ip, log_escape(msr->mp, r->uri), dcfg->is_enabled, (char*)msr->hostname, r);
+        send_waf_log(msr->txcfg->data_dir, str1, r->useragent_ip ? r->useragent_ip : r->connection->client_ip, log_escape(msr->mp, r->uri), current_logtime(msr->mp), dcfg->is_enabled, (char*)msr->hostname, r);
 #endif
 
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
