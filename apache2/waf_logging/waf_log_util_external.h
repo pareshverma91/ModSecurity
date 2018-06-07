@@ -1,7 +1,8 @@
 #ifndef _WAF_LOG_UTIL_EXTERNAL_HEADER
 #define _WAF_LOG_UTIL_EXTERNAL_HEADER
 
-#define WAF_LOG_OPEN_FAILED -1
+#define WAF_LOG_UTIL_FAILED -1
+#define WAF_LOG_UTIL_SUCCESS 0
 #ifdef __cplusplus
 extern "C" {
 #endif

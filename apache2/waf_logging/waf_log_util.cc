@@ -1,7 +1,7 @@
 #include "waf_log_util_internal.h"
 #include "waf_log_util_external.h"
 
-// This function fills in a Person message based on user input.
+// This function fills in a waf format message based on modsec input.
 void set_waf_format(waf_format::Waf_Format* waf_format, char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname) {
   if (clientIP != NULL) {
       waf_format->set_clientip(clientIP);
@@ -67,31 +67,51 @@ void set_waf_format(waf_format::Waf_Format* waf_format, char* clientIP, char* cl
   }
 }
 
-// Main function:  Reads the entire address book from a file,
-//   adds one person based on user input, then writes it back out to the same
-//   file.
+// Main function:  get fields from modsec, set the protobuf object and write to file in json.
 int write_json_to_file(char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname) {
-  // Verify that the version of the library that we linked against is
-  // compatible with the version of the headers we compiled against.
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
+  waf_format::Waf_Format waf_format;
   std::ofstream json_file;
   std::string json_string;
-  json_file.open(WAF_LOG_PATH, std::ios::app);
-  if (json_file.fail())
-  {
-     return WAF_LOG_OPEN_FAILED;
+  google::protobuf::util::JsonPrintOptions options;
+  google::protobuf::util::Status convert_result;
+
+  // Verify that the version of the library that we linked against is
+  // compatible with the version of the headers we compiled against.
+  try {
+      GOOGLE_PROTOBUF_VERIFY_VERSION;
+  }
+  catch (std::exception& e) {
+      return WAF_LOG_UTIL_FAILED;
   }
 
-  waf_format::Waf_Format waf_format;
+  json_file.open(WAF_LOG_UTIL_PATH, std::ios::app);
+  if (json_file.fail())
+  {
+     return WAF_LOG_UTIL_FAILED;
+  }
 
-  // Add an address.
-  set_waf_format(&waf_format, clientIP, clientPort, requestUri, ruleSetType, ruleSetVersion, ruleId, messages, action, site, details_messages, details_data, details_file, details_line, hostname); 
+  // Set Waf format.
+  try {
+      set_waf_format(&waf_format, clientIP, clientPort, requestUri, ruleSetType, ruleSetVersion, ruleId, messages, action, site, details_messages, details_data, details_file, details_line, hostname); 
+  }
+  catch (std::exception& e) {
+      return WAF_LOG_UTIL_FAILED;
+  }
 
-  google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
   options.always_print_primitive_fields = true;
   options.preserve_proto_field_names = true;
-  MessageToJsonString(waf_format, &json_string, options);
+
+  try {
+      convert_result = MessageToJsonString(waf_format, &json_string, options);
+  }
+  catch (std::exception& e) {
+      return WAF_LOG_UTIL_FAILED;
+  }
+
+  if (!convert_result.ok()) {
+      return WAF_LOG_UTIL_FAILED;
+  }
 
     // Write the new address book back to disk.
   json_file << json_string << std::endl;
@@ -100,5 +120,5 @@ int write_json_to_file(char* clientIP, char* clientPort, char* requestUri, char*
   // Optional:  Delete all global objects allocated by libprotobuf.
   //google::protobuf::ShutdownProtobufLibrary();
 
-  return 0;
+  return WAF_LOG_UTIL_SUCCESS;
 }

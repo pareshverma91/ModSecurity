@@ -259,7 +259,7 @@ void send_waf_log(const char* str1, const char* ip_port, const char* uri, int mo
     }
 
     rc = write_json_to_file(waf_ip, waf_port, uri, "", "", waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname);
-    if (rc == WAF_LOG_OPEN_FAILED) {
+    if (rc == WAF_LOG_UTIL_FAILED) {
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
        ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
             "ModSecurity: can't print json log");
