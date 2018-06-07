@@ -810,13 +810,6 @@ CMyHttpModule::OnBeginRequest(
     }
     EnterCriticalSection(&m_csLock);
 
-    // Get the config again, in case it changed during the time we released the lock
-    hr = MODSECURITY_STORED_CONTEXT::GetConfig(pHttpContext, &pConfig);
-    if (FAILED(hr))
-    {
-        hr = S_OK;
-        goto Finished;
-    }
 
 	if(pConfig->m_Config == NULL)
 	{
@@ -831,44 +824,42 @@ CMyHttpModule::OnBeginRequest(
 			goto Finished;
 		}
 
-		if(pConfig->m_Config == NULL)
+		pConfig->m_Config = modsecGetDefaultConfig();
+
+		PCWSTR servpath = pHttpContext->GetApplication()->GetApplicationPhysicalPath();
+		char *apppath;
+		USHORT apppathlen;
+
+		hr = pConfig->GlobalWideCharToMultiByte((WCHAR *)servpath, wcslen(servpath), &apppath, &apppathlen);
+
+		if ( FAILED( hr ) )
 		{
-			pConfig->m_Config = modsecGetDefaultConfig();
+			delete path;
+			hr = E_UNEXPECTED;
+			goto Finished;
+		}
 
-			PCWSTR servpath = pHttpContext->GetApplication()->GetApplicationPhysicalPath();
-			char *apppath;
-			USHORT apppathlen;
+		if(path[0] != 0)
+		{
+			const char * err = modsecProcessConfig((directory_config *)pConfig->m_Config, path, apppath);
 
-			hr = pConfig->GlobalWideCharToMultiByte((WCHAR *)servpath, wcslen(servpath), &apppath, &apppathlen);
-
-			if ( FAILED( hr ) )
+			if(err != NULL)
 			{
+				WriteEventViewerLog(err, EVENTLOG_ERROR_TYPE);
+				delete apppath;
 				delete path;
-				hr = E_UNEXPECTED;
 				goto Finished;
 			}
 
-			if(path[0] != 0)
+			modsecReportRemoteLoadedRules();
+			if (this->status_call_already_sent == false)
 			{
-				const char * err = modsecProcessConfig((directory_config *)pConfig->m_Config, path, apppath);
-
-				if(err != NULL)
-				{
-					WriteEventViewerLog(err, EVENTLOG_ERROR_TYPE);
-					delete apppath;
-					delete path;
-					goto Finished;
-				}
-
-				modsecReportRemoteLoadedRules();
-				if (this->status_call_already_sent == false)
-				{
-					this->status_call_already_sent = true;
-					modsecStatusEngineCall();
-				}
+				this->status_call_already_sent = true;
+				modsecStatusEngineCall();
 			}
-			delete apppath;
 		}
+
+		delete apppath;
 		delete path;
 	}
 
