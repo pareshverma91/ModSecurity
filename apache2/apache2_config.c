@@ -1160,6 +1160,35 @@ static const char *cmd_db_option(cmd_parms *cmd, void *_dcfg, const char *p1){
 }
 #endif
 
+/* crs rule set type and version */ 
+#ifdef WAF_JSON_LOGGING_ENABLE
+static const char *cmd_crs_type(cmd_parms *cmd,
+        void *_dcfg, const char *p1)
+{
+
+    if (cmd->server->is_virtual) {
+        return "ModSecurity: SecCRSType not allowed in VirtualHost";
+    }
+
+    msc_crs_type = (char *)p1;
+
+    return NULL;
+}
+
+static const char *cmd_crs_version(cmd_parms *cmd,
+        void *_dcfg, const char *p1)
+{
+
+    if (cmd->server->is_virtual) {
+        return "ModSecurity: SecCRSVersion not allowed in VirtualHost";
+    }
+
+    msc_crs_version = (char *)p1;
+
+    return NULL;
+}
+#endif
+
 static const char *cmd_action(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
     return add_rule(cmd, (directory_config *)_dcfg, RULE_TYPE_ACTION, SECACTION_TARGETS, SECACTION_ARGS, p1);
@@ -3957,6 +3986,22 @@ const command_rec module_directives[] = {
         NULL,
         CMD_SCOPE_ANY,
         "Choose database. (origin/redis/agdb)"
+    ),
+#endif
+#ifdef WAF_JSON_LOGGING_ENABLE 
+    AP_INIT_TAKE1 (
+        "SecCRSType",
+        cmd_crs_type,
+        NULL,
+        CMD_SCOPE_ANY,
+        "Choose crs type"
+    ),
+    AP_INIT_TAKE1 (
+        "SecCRSVersion",
+        cmd_crs_version,
+        NULL,
+        CMD_SCOPE_ANY,
+        "Choose crs version"
     ),
 #endif
     { NULL }

@@ -248,6 +248,9 @@ void get_detail_message(const char* str1, char* waf_detail_message) {
     }
 }
 
+/**
+ * only expose short path.
+ */
 void get_short_filename(char* waf_filename) {
     char tmp_filename[1024] = ""; 
     char *index = strstr(waf_filename, WAF_RULESET_PREFIX);
@@ -285,7 +288,7 @@ void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, c
     get_detail_message(str1, waf_detail_message); 
     get_short_filename(waf_filename);
 
-    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, "", "", waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname, time);
+    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, msc_crs_type, msc_crs_version, waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname, time);
     if (rc == WAF_LOG_UTIL_FAILED) {
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
        ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,

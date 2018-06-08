@@ -167,6 +167,11 @@ extern DSOLOCAL unsigned long int unicode_codepage;
 
 extern DSOLOCAL int *unicode_map_table;
 
+#ifdef WAF_JSON_LOGGING_ENABLE
+extern DSOLOCAL char *msc_crs_type;
+extern DSOLOCAL char *msc_crs_version;
+#endif
+
 #define RESBODY_STATUS_NOT_READ         0   /* we were not configured to read the body */
 #define RESBODY_STATUS_ERROR            1   /* error occured while we were reading the body */
 #define RESBODY_STATUS_PARTIAL          2   /* partial body content available in the brigade */

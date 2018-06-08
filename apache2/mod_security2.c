@@ -92,6 +92,11 @@ unsigned long int DSOLOCAL conn_write_state_limit = 0;
 TreeRoot DSOLOCAL *conn_write_state_whitelist = 0;
 TreeRoot DSOLOCAL *conn_write_state_suspicious_list = 0;
 
+#ifdef WAF_JSON_LOGGING_ENABLE
+char DSOLOCAL *msc_crs_type = "";
+char DSOLOCAL *msc_crs_version = "0.0";
+#endif
+
 
 #if defined(WIN32) || defined(VERSION_NGINX)
 int (*modsecDropAction)(request_rec *r) = NULL;
