@@ -266,6 +266,27 @@ void get_short_filename(char* waf_filename) {
 }
 
 /**
+ * get crs type and version.
+ */
+void get_ruleset_type_version(char* waf_ruleset_info, char* waf_ruleset_type, char* waf_ruleset_version) {
+    char ruleset_info_no_quote[200] = "";
+    char *type_start = NULL;
+    char *type_end = NULL;
+
+    get_field_value("\"", "\"", waf_ruleset_info, ruleset_info_no_quote);
+    type_start = ruleset_info_no_quote;
+
+    type_end = strstr(type_start, "/");
+    if (type_end != NULL) {
+        strncpy(waf_ruleset_type, type_start, type_end - type_start);
+        strcpy(waf_ruleset_version, type_end + 1);
+    }
+    else {
+        strcpy(waf_ruleset_type, type_start + 1);
+    }
+}
+
+/**
  * send all waf fields in json format to a file.
  */
 void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, const char* uri, const char* time, int mode, const char* hostname, request_rec *r) {
@@ -277,6 +298,9 @@ void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, c
     char waf_data[1024] = "";
     char waf_ip[50] = "";
     char waf_port[50] = "";
+    char waf_ruleset_info[200] = "";
+    char waf_ruleset_type[50] = "";
+    char waf_ruleset_version[50] = "";
     char waf_detail_message[1024] = "";
 
     get_field_value("[file ", "]", str1, waf_filename);
@@ -284,11 +308,13 @@ void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, c
     get_field_value("[line ", "]", str1, waf_line);
     get_field_value("[msg ", "]", str1, waf_message);
     get_field_value("[data ", "]", str1, waf_data);
+    get_field_value("[ver ", "]", str1, waf_ruleset_info);
     get_ip_port(ip_port, waf_ip, waf_port);
     get_detail_message(str1, waf_detail_message); 
     get_short_filename(waf_filename);
+    get_ruleset_type_version(waf_ruleset_info, waf_ruleset_type, waf_ruleset_version); 
 
-    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, msc_crs_type, msc_crs_version, waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname, time);
+    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, waf_ruleset_type, waf_ruleset_version, waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname, time);
     if (rc == WAF_LOG_UTIL_FAILED) {
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
        ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
