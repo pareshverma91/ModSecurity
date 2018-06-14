@@ -208,6 +208,9 @@ void get_field_value(const char* from, const char* to, const char* text, char* o
             first = NULL;
         }
     }
+    else {
+        return;
+    }
 
     char* last = strstr(first, to);
     int last_index = last- first;
@@ -286,11 +289,34 @@ void get_ruleset_type_version(char* waf_ruleset_info, char* waf_ruleset_type, ch
     }
 }
 
+int write_file_with_lock(apr_global_mutex_t* lock, apr_file_t* fd, char* str) {
+    int rc;
+    apr_size_t nbytes, nbytes_written;
+
+    rc = apr_global_mutex_lock(lock);
+    if (rc != APR_SUCCESS) {
+        return WAF_LOG_UTIL_FAILED;
+    }
+
+    if (fd != NULL) {
+        nbytes = strlen(str);
+        apr_file_write_full(fd, str, nbytes, &nbytes_written);
+    }
+
+    rc = apr_global_mutex_unlock(lock);
+    if (rc != APR_SUCCESS) {
+        return WAF_LOG_UTIL_FAILED;
+    }
+
+    return WAF_LOG_UTIL_SUCCESS;
+}
+
 /**
  * send all waf fields in json format to a file.
  */
-void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, const char* uri, const char* time, int mode, const char* hostname, request_rec *r) {
+void send_waf_log(apr_global_mutex_t* lock, apr_file_t* fd, const char* str1, const char* ip_port, const char* uri, const char* time, int mode, const char* hostname, request_rec *r) {
     int rc = 0;
+    char* json_str;
     char waf_filename[1024] = "";
     char waf_line[1024] = "";
     char waf_id[1024] = "";
@@ -314,7 +340,19 @@ void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, c
     get_short_filename(waf_filename);
     get_ruleset_type_version(waf_ruleset_info, waf_ruleset_type, waf_ruleset_version); 
 
-    rc = write_json_to_file(data_dir, waf_ip, waf_port, uri, waf_ruleset_type, waf_ruleset_version, waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname, time);
+    rc = generate_json(&json_str, waf_ip, waf_port, uri, waf_ruleset_type, waf_ruleset_version, waf_id, waf_message, mode, 0, waf_detail_message, waf_data, waf_filename, waf_line, hostname, time);
+    if (rc == WAF_LOG_UTIL_FAILED) {
+#if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
+       ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
+            "ModSecurity: can't print json log");
+#else
+        ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r->server,
+            "ModSecurity: can't print json log");
+#endif
+        return;
+    }
+
+    rc = write_file_with_lock(lock, fd, json_str);
     if (rc == WAF_LOG_UTIL_FAILED) {
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
        ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
@@ -324,6 +362,8 @@ void send_waf_log(const char* data_dir, const char* str1, const char* ip_port, c
             "ModSecurity: can't print json log");
 #endif
     }
+
+    free_json(json_str);
 }
 #endif
 
@@ -415,7 +455,7 @@ static void internal_log_ex(request_rec *r, directory_config *dcfg, modsec_rec *
         else requestheaderhostname = "";
 
 #ifdef WAF_JSON_LOGGING_ENABLE
-        send_waf_log(msr->txcfg->data_dir, str1, r->useragent_ip ? r->useragent_ip : r->connection->client_ip, log_escape(msr->mp, r->uri), current_logtime(msr->mp), dcfg->is_enabled, (char*)msr->hostname, r);
+        send_waf_log(msr->modsecurity->wafjsonlog_lock, dcfg->wafjsonlog_fd, str1, r->useragent_ip ? r->useragent_ip : r->connection->client_ip, log_escape(msr->mp, r->uri), current_logtime(msr->mp), dcfg->is_enabled, (char*)msr->hostname, r);
 #endif
 
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2

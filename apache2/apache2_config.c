@@ -28,6 +28,9 @@
 #if defined(WITH_LUA)
 #include "msc_lua.h"
 #endif
+#ifdef WAF_JSON_LOGGING_ENABLE
+#include "waf_log_util_external.h"
+#endif
 
 
 /* -- Directory context creation and initialisation -- */
@@ -111,6 +114,9 @@ void *create_directory_config(apr_pool_t *mp, char *path)
 
     /* Misc */
     dcfg->data_dir = NOT_SET_P;
+#ifdef WAF_JSON_LOGGING_ENABLE
+    dcfg->wafjsonlog_fd = NOT_SET_P;
+#endif
     dcfg->webappid = NOT_SET_P;
     dcfg->sensor_id = NOT_SET_P;
     dcfg->httpBlkey = NOT_SET_P;
@@ -548,6 +554,10 @@ void *merge_directory_configs(apr_pool_t *mp, void *_parent, void *_child)
     /* Misc */
     merged->data_dir = (child->data_dir == NOT_SET_P
         ? parent->data_dir : child->data_dir);
+#ifdef WAF_JSON_LOGGING_ENABLE
+    merged->wafjsonlog_fd = (child->wafjsonlog_fd == NOT_SET_P
+        ? parent->wafjsonlog_fd : child->wafjsonlog_fd);
+#endif
     merged->webappid = (child->webappid == NOT_SET_P
         ? parent->webappid : child->webappid);
     merged->sensor_id = (child->sensor_id == NOT_SET_P
@@ -716,6 +726,9 @@ void init_directory_config(directory_config *dcfg)
 
     /* Misc */
     if (dcfg->data_dir == NOT_SET_P) dcfg->data_dir = NULL;
+#ifdef WAF_JSON_LOGGING_ENABLE
+    if (dcfg->wafjsonlog_fd == NOT_SET_P) dcfg->wafjsonlog_fd = NULL;
+#endif
     if (dcfg->webappid == NOT_SET_P) dcfg->webappid = "default";
     if (dcfg->sensor_id == NOT_SET_P) dcfg->sensor_id = "default";
     if (dcfg->httpBlkey == NOT_SET_P) dcfg->httpBlkey = NULL;
@@ -1160,35 +1173,6 @@ static const char *cmd_db_option(cmd_parms *cmd, void *_dcfg, const char *p1){
 }
 #endif
 
-/* crs rule set type and version */ 
-#ifdef WAF_JSON_LOGGING_ENABLE
-static const char *cmd_crs_type(cmd_parms *cmd,
-        void *_dcfg, const char *p1)
-{
-
-    if (cmd->server->is_virtual) {
-        return "ModSecurity: SecCRSType not allowed in VirtualHost";
-    }
-
-    msc_crs_type = (char *)p1;
-
-    return NULL;
-}
-
-static const char *cmd_crs_version(cmd_parms *cmd,
-        void *_dcfg, const char *p1)
-{
-
-    if (cmd->server->is_virtual) {
-        return "ModSecurity: SecCRSVersion not allowed in VirtualHost";
-    }
-
-    msc_crs_version = (char *)p1;
-
-    return NULL;
-}
-#endif
-
 static const char *cmd_action(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
     return add_rule(cmd, (directory_config *)_dcfg, RULE_TYPE_ACTION, SECACTION_TARGETS, SECACTION_ARGS, p1);
@@ -1501,6 +1485,10 @@ static const char *cmd_content_injection(cmd_parms *cmd, void *_dcfg, int flag)
 
 static const char *cmd_data_dir(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
+#ifdef WAF_JSON_LOGGING_ENABLE
+    int rc;
+    char wafjsonlog_path[1024]; 
+#endif
     directory_config *dcfg = (directory_config *)_dcfg;
 
     if (cmd->server->is_virtual) {
@@ -1509,6 +1497,18 @@ static const char *cmd_data_dir(cmd_parms *cmd, void *_dcfg, const char *p1)
 
     dcfg->data_dir = ap_server_root_relative(cmd->pool, p1);
 
+#ifdef WAF_JSON_LOGGING_ENABLE
+    strcpy( wafjsonlog_path, dcfg->data_dir );
+    strcat( wafjsonlog_path, WAF_LOG_UTIL_FILE );
+    rc = apr_file_open(&dcfg->wafjsonlog_fd, wafjsonlog_path,
+                   APR_WRITE | APR_APPEND | APR_CREATE | APR_BINARY,
+                   CREATEMODE, cmd->pool);
+
+    if (rc != APR_SUCCESS) {
+        return apr_psprintf(cmd->pool, "ModSecurity: Failed to open wafjson log file: %s",
+            wafjsonlog_path);
+    }
+#endif
     return NULL;
 }
 
@@ -3986,22 +3986,6 @@ const command_rec module_directives[] = {
         NULL,
         CMD_SCOPE_ANY,
         "Choose database. (origin/redis/agdb)"
-    ),
-#endif
-#ifdef WAF_JSON_LOGGING_ENABLE 
-    AP_INIT_TAKE1 (
-        "SecCRSType",
-        cmd_crs_type,
-        NULL,
-        CMD_SCOPE_ANY,
-        "Choose crs type"
-    ),
-    AP_INIT_TAKE1 (
-        "SecCRSVersion",
-        cmd_crs_version,
-        NULL,
-        CMD_SCOPE_ANY,
-        "Choose crs version"
     ),
 #endif
     { NULL }

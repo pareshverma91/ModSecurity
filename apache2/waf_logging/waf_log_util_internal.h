@@ -6,6 +6,4 @@
 #include <fstream>
 #include <exception>
 
-#define WAF_LOG_UTIL_FILE "waf_json.log"
-
 #endif 

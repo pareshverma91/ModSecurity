@@ -76,29 +76,13 @@ void set_waf_format(waf_format::Waf_Format* waf_format, char* clientIP, char* cl
 }
 
 // Main function:  get fields from modsec, set the protobuf object and write to file in json.
-int write_json_to_file(char* data_dir, char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname, char* time) {
+int generate_json(char** result_json, char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname, char* time) {
     waf_format::Waf_Format waf_format;
-    std::ofstream json_file;
     std::string json_string;
     google::protobuf::util::JsonPrintOptions options;
     google::protobuf::util::Status convert_result;
-    std::string directory_name;
-    std::string file_name;
-    const char* fullname;
+    char* json_str;
     
-    if (data_dir == NULL) {
-       return WAF_LOG_UTIL_FAILED;
-    }
-    
-    directory_name = data_dir;
-    file_name = WAF_LOG_UTIL_FILE;
-    fullname = (directory_name + "/" + file_name).c_str();
-
-    json_file.open(fullname, std::ios::app);
-    if (json_file.fail()) {
-       return WAF_LOG_UTIL_FAILED;
-    }
-
     try {
         // Verify that the version of the library that we linked against is
         // compatible with the version of the headers we compiled against.
@@ -114,18 +98,18 @@ int write_json_to_file(char* data_dir, char* clientIP, char* clientPort, char* r
         convert_result = MessageToJsonString(waf_format, &json_string, options);
         
         if (!convert_result.ok()) {
-            json_file.close();
             return WAF_LOG_UTIL_FAILED;
         }
     }
     catch (...) {
-        json_file.close();
         return WAF_LOG_UTIL_FAILED;
     }
     
     // Write the waf json string to disk.
-    json_file << json_string << std::endl;
-    json_file.close();
-    
-    return WAF_LOG_UTIL_SUCCESS;
+    *result_json = strdup(json_string.c_str());
+    return WAF_LOG_UTIL_SUCCESS; 
+}
+
+void free_json(char* str) {
+    free(str);
 }
