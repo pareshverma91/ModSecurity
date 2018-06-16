@@ -10,26 +10,34 @@ message Details {
 }
 
 
-message Waf_Format {
-  optional string clientIP = 1;
-  optional string clientPort = 2;
-  optional string requestUri = 3;
-  optional string ruleSetType = 4;
-  optional string ruleSetVersion = 5;
-  optional string ruleId = 6;
-  optional string messages = 7;
+message Properties {
+  optional string instanceId = 1;
+  optional string clientIP = 2;
+  optional string clientPort = 3;
+  optional string requestUri = 4;
+  optional string ruleSetType = 5;
+  optional string ruleSetVersion = 6;
+  optional string ruleId = 7;
+  optional string messages = 8;
 
   enum ActionType {
     Detected = 0;
     Blocked = 1;
   }
-  optional ActionType action = 8;
+  optional ActionType action = 9;
 
   enum SiteType {
     Global = 0;
   }
-  optional SiteType site = 9;
-  optional Details details = 10;
-  optional string hostname = 11;
-  optional string time = 12;
+  optional SiteType site = 10;
+  optional Details details = 11;
+  optional string hostname = 12;
+}
+
+message Waf_Format {
+  optional string resourceId = 1;
+  optional string operationName = 2;
+  optional string time = 3;
+  optional string category = 4;
+  optional Properties properties = 5;
 }

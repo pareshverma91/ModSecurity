@@ -2,81 +2,99 @@
 #include "waf_log_util_external.h"
 
 // This function fills in a waf format message based on modsec input.
-void set_waf_format(waf_format::Waf_Format* waf_format, char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname, char* time) {
+void set_waf_format(waf_format::Waf_Format* waf_format, char* resourceId, char* operationName, char* category, char* instanceId, char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname, char* time) {
+    waf_format::Properties *properties;
+    waf_format::Details *details;
+
+    properties = waf_format->mutable_properties();
+    details = properties->mutable_details();
+
+    if (resourceId != NULL) {
+        waf_format->set_resourceid(resourceId);
+    }
+
+    if (operationName != NULL) {
+        waf_format->set_operationname(operationName);
+    }
+
+    if (time != NULL) {
+        waf_format->set_time(time);
+    }
+
+    if (category != NULL) {
+        waf_format->set_category(category);
+    }
+
+    if (instanceId != NULL) {
+        properties->set_instanceid(instanceId);
+    }
+
     if (clientIP != NULL) {
-        waf_format->set_clientip(clientIP);
+        properties->set_clientip(clientIP);
     }
     
     if (clientPort != NULL) {
-        waf_format->set_clientport(clientPort);
+        properties->set_clientport(clientPort);
     }
     
     if (requestUri != NULL) {
-        waf_format->set_requesturi(requestUri);
+        properties->set_requesturi(requestUri);
     }
     
     if (ruleSetType != NULL) {
-        waf_format->set_rulesettype(ruleSetType);
+        properties->set_rulesettype(ruleSetType);
     }
     
     if (ruleSetVersion != NULL) {
-        waf_format->set_rulesetversion(ruleSetVersion);
+        properties->set_rulesetversion(ruleSetVersion);
     }
     
     if (ruleId != NULL) {
-        waf_format->set_ruleid(ruleId);
+        properties->set_ruleid(ruleId);
     }
     
     if (messages != NULL) {
-        waf_format->set_messages(messages);
+        properties->set_messages(messages);
     }
     
     switch(action) {
         case 1:
-            waf_format->set_action(waf_format::Waf_Format::Detected);
+            properties->set_action(waf_format::Properties::Detected);
             break;
         case 2:
-            waf_format->set_action(waf_format::Waf_Format::Blocked);
+            properties->set_action(waf_format::Properties::Blocked);
             break;
         default:
             break;
     }
     
     if (site == 0) {
-        waf_format->set_site(waf_format::Waf_Format::Global);
+        properties->set_site(waf_format::Properties::Global);
     }
     
-    waf_format::Details details;
-    
     if (details_messages != NULL) {
-        details.set_messages(details_messages);
+        details->set_messages(details_messages);
     }
     
     if (details_data != NULL) {
-        details.set_data(details_data);
+        details->set_data(details_data);
     }
     
     if (details_file != NULL) {
-        details.set_file(details_file);
+        details->set_file(details_file);
     }
     
     if (details_line != NULL) {
-        details.set_line(details_line);
+        details->set_line(details_line);
     }
-    
-    *waf_format->mutable_details() = details;
     
     if (hostname != NULL) {
-        waf_format->set_hostname(hostname);
-    }
-
-    if (time != NULL) {
-        waf_format->set_time(time);
+        properties->set_hostname(hostname);
     }
 }
 
 // Main function:  get fields from modsec, set the protobuf object and write to file in json.
-int generate_json(char** result_json, char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname, char* time) {
+int generate_json(char** result_json, char* resourceId, char* operationName, char* category, char* instanceId, char* clientIP, char* clientPort, char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, char* hostname, char* time) {
     waf_format::Waf_Format waf_format;
     std::string json_string;
     google::protobuf::util::JsonPrintOptions options;
@@ -89,7 +107,7 @@ int generate_json(char** result_json, char* clientIP, char* clientPort, char* re
         GOOGLE_PROTOBUF_VERIFY_VERSION;
         
         // Set Waf format.
-        set_waf_format(&waf_format, clientIP, clientPort, requestUri, ruleSetType, ruleSetVersion, ruleId, messages, action, site, details_messages, details_data, details_file, details_line, hostname, time); 
+        set_waf_format(&waf_format, resourceId, operationName, category, instanceId, clientIP, clientPort, requestUri, ruleSetType, ruleSetVersion, ruleId, messages, action, site, details_messages, details_data, details_file, details_line, hostname, time); 
         
         options.add_whitespace = true;
         options.always_print_primitive_fields = true;

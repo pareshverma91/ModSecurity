@@ -1173,6 +1173,35 @@ static const char *cmd_db_option(cmd_parms *cmd, void *_dcfg, const char *p1){
 }
 #endif
 
+/* resourceId and instanceId */ 
+#ifdef WAF_JSON_LOGGING_ENABLE
+static const char *cmd_waf_resourceId(cmd_parms *cmd,
+        void *_dcfg, const char *p1)
+{
+
+    if (cmd->server->is_virtual) {
+        return "ModSecurity: SecWafResourceId not allowed in VirtualHost";
+    }
+
+    msc_waf_resourceId = (char *)p1;
+
+    return NULL;
+}
+
+static const char *cmd_waf_instanceId(cmd_parms *cmd,
+        void *_dcfg, const char *p1)
+{
+
+    if (cmd->server->is_virtual) {
+        return "ModSecurity: SecWafInstanceId not allowed in VirtualHost";
+    }
+
+    msc_waf_instanceId = (char *)p1;
+
+    return NULL;
+}
+#endif
+
 static const char *cmd_action(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
     return add_rule(cmd, (directory_config *)_dcfg, RULE_TYPE_ACTION, SECACTION_TARGETS, SECACTION_ARGS, p1);
@@ -3986,6 +4015,22 @@ const command_rec module_directives[] = {
         NULL,
         CMD_SCOPE_ANY,
         "Choose database. (origin/redis/agdb)"
+    ),
+#endif
+#ifdef WAF_JSON_LOGGING_ENABLE 
+    AP_INIT_TAKE1 (
+        "SecWafResourceId",
+        cmd_waf_resourceId,
+        NULL,
+        CMD_SCOPE_ANY,
+        "Set waf resourceId"
+    ),
+    AP_INIT_TAKE1 (
+        "SecWafInstanceId",
+        cmd_waf_instanceId,
+        NULL,
+        CMD_SCOPE_ANY,
+        "Set waf instancdId"
     ),
 #endif
     { NULL }
