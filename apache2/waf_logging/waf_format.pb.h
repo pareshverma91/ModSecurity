@@ -196,20 +196,20 @@ class Details : public ::google::protobuf::Message /* @@protoc_insertion_point(c
 
   // accessors -------------------------------------------------------
 
-  // optional string messages = 1;
-  bool has_messages() const;
-  void clear_messages();
-  static const int kMessagesFieldNumber = 1;
-  const ::std::string& messages() const;
-  void set_messages(const ::std::string& value);
+  // optional string message = 1;
+  bool has_message() const;
+  void clear_message();
+  static const int kMessageFieldNumber = 1;
+  const ::std::string& message() const;
+  void set_message(const ::std::string& value);
   #if LANG_CXX11
-  void set_messages(::std::string&& value);
+  void set_message(::std::string&& value);
   #endif
-  void set_messages(const char* value);
-  void set_messages(const char* value, size_t size);
-  ::std::string* mutable_messages();
-  ::std::string* release_messages();
-  void set_allocated_messages(::std::string* messages);
+  void set_message(const char* value);
+  void set_message(const char* value, size_t size);
+  ::std::string* mutable_message();
+  ::std::string* release_message();
+  void set_allocated_message(::std::string* message);
 
   // optional string data = 2;
   bool has_data() const;
@@ -258,8 +258,8 @@ class Details : public ::google::protobuf::Message /* @@protoc_insertion_point(c
 
   // @@protoc_insertion_point(class_scope:waf_format.Details)
  private:
-  void set_has_messages();
-  void clear_has_messages();
+  void set_has_message();
+  void clear_has_message();
   void set_has_data();
   void clear_has_data();
   void set_has_file();
@@ -270,7 +270,7 @@ class Details : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::HasBits<1> _has_bits_;
   mutable int _cached_size_;
-  ::google::protobuf::internal::ArenaStringPtr messages_;
+  ::google::protobuf::internal::ArenaStringPtr message_;
   ::google::protobuf::internal::ArenaStringPtr data_;
   ::google::protobuf::internal::ArenaStringPtr file_;
   ::google::protobuf::internal::ArenaStringPtr line_;
@@ -433,10 +433,10 @@ class Properties : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::std::string* release_instanceid();
   void set_allocated_instanceid(::std::string* instanceid);
 
-  // optional string clientIP = 2;
+  // optional string clientIp = 2;
   bool has_clientip() const;
   void clear_clientip();
-  static const int kClientIPFieldNumber = 2;
+  static const int kClientIpFieldNumber = 2;
   const ::std::string& clientip() const;
   void set_clientip(const ::std::string& value);
   #if LANG_CXX11
@@ -523,20 +523,20 @@ class Properties : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::std::string* release_ruleid();
   void set_allocated_ruleid(::std::string* ruleid);
 
-  // optional string messages = 8;
-  bool has_messages() const;
-  void clear_messages();
-  static const int kMessagesFieldNumber = 8;
-  const ::std::string& messages() const;
-  void set_messages(const ::std::string& value);
+  // optional string message = 8;
+  bool has_message() const;
+  void clear_message();
+  static const int kMessageFieldNumber = 8;
+  const ::std::string& message() const;
+  void set_message(const ::std::string& value);
   #if LANG_CXX11
-  void set_messages(::std::string&& value);
+  void set_message(::std::string&& value);
   #endif
-  void set_messages(const char* value);
-  void set_messages(const char* value, size_t size);
-  ::std::string* mutable_messages();
-  ::std::string* release_messages();
-  void set_allocated_messages(::std::string* messages);
+  void set_message(const char* value);
+  void set_message(const char* value, size_t size);
+  ::std::string* mutable_message();
+  ::std::string* release_message();
+  void set_allocated_message(::std::string* message);
 
   // optional string hostname = 12;
   bool has_hostname() const;
@@ -592,8 +592,8 @@ class Properties : public ::google::protobuf::Message /* @@protoc_insertion_poin
   void clear_has_rulesetversion();
   void set_has_ruleid();
   void clear_has_ruleid();
-  void set_has_messages();
-  void clear_has_messages();
+  void set_has_message();
+  void clear_has_message();
   void set_has_action();
   void clear_has_action();
   void set_has_site();
@@ -613,7 +613,7 @@ class Properties : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::google::protobuf::internal::ArenaStringPtr rulesettype_;
   ::google::protobuf::internal::ArenaStringPtr rulesetversion_;
   ::google::protobuf::internal::ArenaStringPtr ruleid_;
-  ::google::protobuf::internal::ArenaStringPtr messages_;
+  ::google::protobuf::internal::ArenaStringPtr message_;
   ::google::protobuf::internal::ArenaStringPtr hostname_;
   ::waf_format::Details* details_;
   int action_;
@@ -816,67 +816,67 @@ class Waf_Format : public ::google::protobuf::Message /* @@protoc_insertion_poin
 #endif  // __GNUC__
 // Details
 
-// optional string messages = 1;
-inline bool Details::has_messages() const {
+// optional string message = 1;
+inline bool Details::has_message() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void Details::set_has_messages() {
+inline void Details::set_has_message() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void Details::clear_has_messages() {
+inline void Details::clear_has_message() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void Details::clear_messages() {
-  messages_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_messages();
+inline void Details::clear_message() {
+  message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_message();
 }
-inline const ::std::string& Details::messages() const {
-  // @@protoc_insertion_point(field_get:waf_format.Details.messages)
-  return messages_.GetNoArena();
+inline const ::std::string& Details::message() const {
+  // @@protoc_insertion_point(field_get:waf_format.Details.message)
+  return message_.GetNoArena();
 }
-inline void Details::set_messages(const ::std::string& value) {
-  set_has_messages();
-  messages_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:waf_format.Details.messages)
+inline void Details::set_message(const ::std::string& value) {
+  set_has_message();
+  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:waf_format.Details.message)
 }
 #if LANG_CXX11
-inline void Details::set_messages(::std::string&& value) {
-  set_has_messages();
-  messages_.SetNoArena(
+inline void Details::set_message(::std::string&& value) {
+  set_has_message();
+  message_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:waf_format.Details.messages)
+  // @@protoc_insertion_point(field_set_rvalue:waf_format.Details.message)
 }
 #endif
-inline void Details::set_messages(const char* value) {
+inline void Details::set_message(const char* value) {
   GOOGLE_DCHECK(value != NULL);
-  set_has_messages();
-  messages_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:waf_format.Details.messages)
+  set_has_message();
+  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:waf_format.Details.message)
 }
-inline void Details::set_messages(const char* value, size_t size) {
-  set_has_messages();
-  messages_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+inline void Details::set_message(const char* value, size_t size) {
+  set_has_message();
+  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:waf_format.Details.messages)
+  // @@protoc_insertion_point(field_set_pointer:waf_format.Details.message)
 }
-inline ::std::string* Details::mutable_messages() {
-  set_has_messages();
-  // @@protoc_insertion_point(field_mutable:waf_format.Details.messages)
-  return messages_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline ::std::string* Details::mutable_message() {
+  set_has_message();
+  // @@protoc_insertion_point(field_mutable:waf_format.Details.message)
+  return message_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Details::release_messages() {
-  // @@protoc_insertion_point(field_release:waf_format.Details.messages)
-  clear_has_messages();
-  return messages_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline ::std::string* Details::release_message() {
+  // @@protoc_insertion_point(field_release:waf_format.Details.message)
+  clear_has_message();
+  return message_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Details::set_allocated_messages(::std::string* messages) {
-  if (messages != NULL) {
-    set_has_messages();
+inline void Details::set_allocated_message(::std::string* message) {
+  if (message != NULL) {
+    set_has_message();
   } else {
-    clear_has_messages();
+    clear_has_message();
   }
-  messages_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), messages);
-  // @@protoc_insertion_point(field_set_allocated:waf_format.Details.messages)
+  message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), message);
+  // @@protoc_insertion_point(field_set_allocated:waf_format.Details.message)
 }
 
 // optional string data = 2;
@@ -1135,7 +1135,7 @@ inline void Properties::set_allocated_instanceid(::std::string* instanceid) {
   // @@protoc_insertion_point(field_set_allocated:waf_format.Properties.instanceId)
 }
 
-// optional string clientIP = 2;
+// optional string clientIp = 2;
 inline bool Properties::has_clientip() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -1150,41 +1150,41 @@ inline void Properties::clear_clientip() {
   clear_has_clientip();
 }
 inline const ::std::string& Properties::clientip() const {
-  // @@protoc_insertion_point(field_get:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_get:waf_format.Properties.clientIp)
   return clientip_.GetNoArena();
 }
 inline void Properties::set_clientip(const ::std::string& value) {
   set_has_clientip();
   clientip_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_set:waf_format.Properties.clientIp)
 }
 #if LANG_CXX11
 inline void Properties::set_clientip(::std::string&& value) {
   set_has_clientip();
   clientip_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_set_rvalue:waf_format.Properties.clientIp)
 }
 #endif
 inline void Properties::set_clientip(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   set_has_clientip();
   clientip_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_set_char:waf_format.Properties.clientIp)
 }
 inline void Properties::set_clientip(const char* value, size_t size) {
   set_has_clientip();
   clientip_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_set_pointer:waf_format.Properties.clientIp)
 }
 inline ::std::string* Properties::mutable_clientip() {
   set_has_clientip();
-  // @@protoc_insertion_point(field_mutable:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_mutable:waf_format.Properties.clientIp)
   return clientip_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Properties::release_clientip() {
-  // @@protoc_insertion_point(field_release:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_release:waf_format.Properties.clientIp)
   clear_has_clientip();
   return clientip_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1195,7 +1195,7 @@ inline void Properties::set_allocated_clientip(::std::string* clientip) {
     clear_has_clientip();
   }
   clientip_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), clientip);
-  // @@protoc_insertion_point(field_set_allocated:waf_format.Properties.clientIP)
+  // @@protoc_insertion_point(field_set_allocated:waf_format.Properties.clientIp)
 }
 
 // optional string clientPort = 3;
@@ -1513,67 +1513,67 @@ inline void Properties::set_allocated_ruleid(::std::string* ruleid) {
   // @@protoc_insertion_point(field_set_allocated:waf_format.Properties.ruleId)
 }
 
-// optional string messages = 8;
-inline bool Properties::has_messages() const {
+// optional string message = 8;
+inline bool Properties::has_message() const {
   return (_has_bits_[0] & 0x00000080u) != 0;
 }
-inline void Properties::set_has_messages() {
+inline void Properties::set_has_message() {
   _has_bits_[0] |= 0x00000080u;
 }
-inline void Properties::clear_has_messages() {
+inline void Properties::clear_has_message() {
   _has_bits_[0] &= ~0x00000080u;
 }
-inline void Properties::clear_messages() {
-  messages_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_messages();
+inline void Properties::clear_message() {
+  message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  clear_has_message();
 }
-inline const ::std::string& Properties::messages() const {
-  // @@protoc_insertion_point(field_get:waf_format.Properties.messages)
-  return messages_.GetNoArena();
+inline const ::std::string& Properties::message() const {
+  // @@protoc_insertion_point(field_get:waf_format.Properties.message)
+  return message_.GetNoArena();
 }
-inline void Properties::set_messages(const ::std::string& value) {
-  set_has_messages();
-  messages_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:waf_format.Properties.messages)
+inline void Properties::set_message(const ::std::string& value) {
+  set_has_message();
+  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:waf_format.Properties.message)
 }
 #if LANG_CXX11
-inline void Properties::set_messages(::std::string&& value) {
-  set_has_messages();
-  messages_.SetNoArena(
+inline void Properties::set_message(::std::string&& value) {
+  set_has_message();
+  message_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:waf_format.Properties.messages)
+  // @@protoc_insertion_point(field_set_rvalue:waf_format.Properties.message)
 }
 #endif
-inline void Properties::set_messages(const char* value) {
+inline void Properties::set_message(const char* value) {
   GOOGLE_DCHECK(value != NULL);
-  set_has_messages();
-  messages_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:waf_format.Properties.messages)
+  set_has_message();
+  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:waf_format.Properties.message)
 }
-inline void Properties::set_messages(const char* value, size_t size) {
-  set_has_messages();
-  messages_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+inline void Properties::set_message(const char* value, size_t size) {
+  set_has_message();
+  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:waf_format.Properties.messages)
+  // @@protoc_insertion_point(field_set_pointer:waf_format.Properties.message)
 }
-inline ::std::string* Properties::mutable_messages() {
-  set_has_messages();
-  // @@protoc_insertion_point(field_mutable:waf_format.Properties.messages)
-  return messages_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline ::std::string* Properties::mutable_message() {
+  set_has_message();
+  // @@protoc_insertion_point(field_mutable:waf_format.Properties.message)
+  return message_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Properties::release_messages() {
-  // @@protoc_insertion_point(field_release:waf_format.Properties.messages)
-  clear_has_messages();
-  return messages_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline ::std::string* Properties::release_message() {
+  // @@protoc_insertion_point(field_release:waf_format.Properties.message)
+  clear_has_message();
+  return message_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Properties::set_allocated_messages(::std::string* messages) {
-  if (messages != NULL) {
-    set_has_messages();
+inline void Properties::set_allocated_message(::std::string* message) {
+  if (message != NULL) {
+    set_has_message();
   } else {
-    clear_has_messages();
+    clear_has_message();
   }
-  messages_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), messages);
-  // @@protoc_insertion_point(field_set_allocated:waf_format.Properties.messages)
+  message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), message);
+  // @@protoc_insertion_point(field_set_allocated:waf_format.Properties.message)
 }
 
 // optional .waf_format.Properties.ActionType action = 9;

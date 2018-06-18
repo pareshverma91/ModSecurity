@@ -54,7 +54,7 @@ void set_waf_format(waf_format::Waf_Format* waf_format, char* resourceId, char* 
     }
     
     if (messages != NULL) {
-        properties->set_messages(messages);
+        properties->set_message(messages);
     }
     
     switch(action) {
@@ -73,7 +73,7 @@ void set_waf_format(waf_format::Waf_Format* waf_format, char* resourceId, char* 
     }
     
     if (details_messages != NULL) {
-        details->set_messages(details_messages);
+        details->set_message(details_messages);
     }
     
     if (details_data != NULL) {

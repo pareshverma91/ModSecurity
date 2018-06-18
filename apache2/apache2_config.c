@@ -4030,7 +4030,7 @@ const command_rec module_directives[] = {
         cmd_waf_instanceId,
         NULL,
         CMD_SCOPE_ANY,
-        "Set waf instancdId"
+        "Set waf instanceId"
     ),
 #endif
     { NULL }

@@ -111,7 +111,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Details, messages_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Details, message_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Details, data_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Details, file_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Details, line_),
@@ -131,7 +131,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, rulesettype_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, rulesetversion_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, ruleid_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, messages_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, message_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, action_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, site_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::waf_format::Properties, details_),
@@ -198,25 +198,25 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\020waf_format.proto\022\nwaf_format\"E\n\007Detail"
-      "s\022\020\n\010messages\030\001 \001(\t\022\014\n\004data\030\002 \001(\t\022\014\n\004fil"
-      "e\030\003 \001(\t\022\014\n\004line\030\004 \001(\t\"\204\003\n\nProperties\022\022\n\n"
-      "instanceId\030\001 \001(\t\022\020\n\010clientIP\030\002 \001(\t\022\022\n\ncl"
-      "ientPort\030\003 \001(\t\022\022\n\nrequestUri\030\004 \001(\t\022\023\n\013ru"
-      "leSetType\030\005 \001(\t\022\026\n\016ruleSetVersion\030\006 \001(\t\022"
-      "\016\n\006ruleId\030\007 \001(\t\022\020\n\010messages\030\010 \001(\t\0221\n\006act"
-      "ion\030\t \001(\0162!.waf_format.Properties.Action"
-      "Type\022-\n\004site\030\n \001(\0162\037.waf_format.Properti"
-      "es.SiteType\022$\n\007details\030\013 \001(\0132\023.waf_forma"
-      "t.Details\022\020\n\010hostname\030\014 \001(\t\"\'\n\nActionTyp"
-      "e\022\014\n\010Detected\020\000\022\013\n\007Blocked\020\001\"\026\n\010SiteType"
-      "\022\n\n\006Global\020\000\"\203\001\n\nWaf_Format\022\022\n\nresourceI"
-      "d\030\001 \001(\t\022\025\n\roperationName\030\002 \001(\t\022\014\n\004time\030\003"
-      " \001(\t\022\020\n\010category\030\004 \001(\t\022*\n\nproperties\030\005 \001"
-      "(\0132\026.waf_format.Properties"
+      "\n\020waf_format.proto\022\nwaf_format\"D\n\007Detail"
+      "s\022\017\n\007message\030\001 \001(\t\022\014\n\004data\030\002 \001(\t\022\014\n\004file"
+      "\030\003 \001(\t\022\014\n\004line\030\004 \001(\t\"\203\003\n\nProperties\022\022\n\ni"
+      "nstanceId\030\001 \001(\t\022\020\n\010clientIp\030\002 \001(\t\022\022\n\ncli"
+      "entPort\030\003 \001(\t\022\022\n\nrequestUri\030\004 \001(\t\022\023\n\013rul"
+      "eSetType\030\005 \001(\t\022\026\n\016ruleSetVersion\030\006 \001(\t\022\016"
+      "\n\006ruleId\030\007 \001(\t\022\017\n\007message\030\010 \001(\t\0221\n\006actio"
+      "n\030\t \001(\0162!.waf_format.Properties.ActionTy"
+      "pe\022-\n\004site\030\n \001(\0162\037.waf_format.Properties"
+      ".SiteType\022$\n\007details\030\013 \001(\0132\023.waf_format."
+      "Details\022\020\n\010hostname\030\014 \001(\t\"\'\n\nActionType\022"
+      "\014\n\010Detected\020\000\022\013\n\007Blocked\020\001\"\026\n\010SiteType\022\n"
+      "\n\006Global\020\000\"\203\001\n\nWaf_Format\022\022\n\nresourceId\030"
+      "\001 \001(\t\022\025\n\roperationName\030\002 \001(\t\022\014\n\004time\030\003 \001"
+      "(\t\022\020\n\010category\030\004 \001(\t\022*\n\nproperties\030\005 \001(\013"
+      "2\026.waf_format.Properties"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 626);
+      descriptor, 624);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "waf_format.proto", &protobuf_RegisterTypes);
 }
@@ -279,7 +279,7 @@ const int Properties::SiteType_ARRAYSIZE;
 void Details::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Details::kMessagesFieldNumber;
+const int Details::kMessageFieldNumber;
 const int Details::kDataFieldNumber;
 const int Details::kFileFieldNumber;
 const int Details::kLineFieldNumber;
@@ -299,9 +299,9 @@ Details::Details(const Details& from)
       _has_bits_(from._has_bits_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  messages_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_messages()) {
-    messages_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.messages_);
+  message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.has_message()) {
+    message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.message_);
   }
   data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_data()) {
@@ -320,7 +320,7 @@ Details::Details(const Details& from)
 
 void Details::SharedCtor() {
   _cached_size_ = 0;
-  messages_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   file_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   line_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -332,7 +332,7 @@ Details::~Details() {
 }
 
 void Details::SharedDtor() {
-  messages_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  message_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   data_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   file_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   line_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -370,8 +370,8 @@ void Details::Clear() {
   cached_has_bits = _has_bits_[0];
   if (cached_has_bits & 15u) {
     if (cached_has_bits & 0x00000001u) {
-      GOOGLE_DCHECK(!messages_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
-      (*messages_.UnsafeRawStringPointer())->clear();
+      GOOGLE_DCHECK(!message_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
+      (*message_.UnsafeRawStringPointer())->clear();
     }
     if (cached_has_bits & 0x00000002u) {
       GOOGLE_DCHECK(!data_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
@@ -400,16 +400,16 @@ bool Details::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional string messages = 1;
+      // optional string message = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_messages()));
+                input, this->mutable_message()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-            this->messages().data(), static_cast<int>(this->messages().length()),
+            this->message().data(), static_cast<int>(this->message().length()),
             ::google::protobuf::internal::WireFormat::PARSE,
-            "waf_format.Details.messages");
+            "waf_format.Details.message");
         } else {
           goto handle_unusual;
         }
@@ -491,14 +491,14 @@ void Details::SerializeWithCachedSizes(
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  // optional string messages = 1;
+  // optional string message = 1;
   if (cached_has_bits & 0x00000001u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->messages().data(), static_cast<int>(this->messages().length()),
+      this->message().data(), static_cast<int>(this->message().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "waf_format.Details.messages");
+      "waf_format.Details.message");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->messages(), output);
+      1, this->message(), output);
   }
 
   // optional string data = 2;
@@ -546,15 +546,15 @@ void Details::SerializeWithCachedSizes(
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  // optional string messages = 1;
+  // optional string message = 1;
   if (cached_has_bits & 0x00000001u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->messages().data(), static_cast<int>(this->messages().length()),
+      this->message().data(), static_cast<int>(this->message().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "waf_format.Details.messages");
+      "waf_format.Details.message");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->messages(), target);
+        1, this->message(), target);
   }
 
   // optional string data = 2;
@@ -608,11 +608,11 @@ size_t Details::ByteSizeLong() const {
         _internal_metadata_.unknown_fields());
   }
   if (_has_bits_[0 / 32] & 15u) {
-    // optional string messages = 1;
-    if (has_messages()) {
+    // optional string message = 1;
+    if (has_message()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->messages());
+          this->message());
     }
 
     // optional string data = 2;
@@ -669,8 +669,8 @@ void Details::MergeFrom(const Details& from) {
   cached_has_bits = from._has_bits_[0];
   if (cached_has_bits & 15u) {
     if (cached_has_bits & 0x00000001u) {
-      set_has_messages();
-      messages_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.messages_);
+      set_has_message();
+      message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.message_);
     }
     if (cached_has_bits & 0x00000002u) {
       set_has_data();
@@ -711,7 +711,7 @@ void Details::Swap(Details* other) {
 }
 void Details::InternalSwap(Details* other) {
   using std::swap;
-  messages_.Swap(&other->messages_);
+  message_.Swap(&other->message_);
   data_.Swap(&other->data_);
   file_.Swap(&other->file_);
   line_.Swap(&other->line_);
@@ -734,13 +734,13 @@ void Properties::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Properties::kInstanceIdFieldNumber;
-const int Properties::kClientIPFieldNumber;
+const int Properties::kClientIpFieldNumber;
 const int Properties::kClientPortFieldNumber;
 const int Properties::kRequestUriFieldNumber;
 const int Properties::kRuleSetTypeFieldNumber;
 const int Properties::kRuleSetVersionFieldNumber;
 const int Properties::kRuleIdFieldNumber;
-const int Properties::kMessagesFieldNumber;
+const int Properties::kMessageFieldNumber;
 const int Properties::kActionFieldNumber;
 const int Properties::kSiteFieldNumber;
 const int Properties::kDetailsFieldNumber;
@@ -789,9 +789,9 @@ Properties::Properties(const Properties& from)
   if (from.has_ruleid()) {
     ruleid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ruleid_);
   }
-  messages_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_messages()) {
-    messages_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.messages_);
+  message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.has_message()) {
+    message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.message_);
   }
   hostname_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_hostname()) {
@@ -817,7 +817,7 @@ void Properties::SharedCtor() {
   rulesettype_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   rulesetversion_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ruleid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  messages_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   hostname_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&details_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&site_) -
@@ -837,7 +837,7 @@ void Properties::SharedDtor() {
   rulesettype_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   rulesetversion_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ruleid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  messages_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  message_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   hostname_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete details_;
 }
@@ -902,8 +902,8 @@ void Properties::Clear() {
       (*ruleid_.UnsafeRawStringPointer())->clear();
     }
     if (cached_has_bits & 0x00000080u) {
-      GOOGLE_DCHECK(!messages_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
-      (*messages_.UnsafeRawStringPointer())->clear();
+      GOOGLE_DCHECK(!message_.IsDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited()));
+      (*message_.UnsafeRawStringPointer())->clear();
     }
   }
   if (cached_has_bits & 768u) {
@@ -951,7 +951,7 @@ bool Properties::MergePartialFromCodedStream(
         break;
       }
 
-      // optional string clientIP = 2;
+      // optional string clientIp = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
@@ -960,7 +960,7 @@ bool Properties::MergePartialFromCodedStream(
           ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
             this->clientip().data(), static_cast<int>(this->clientip().length()),
             ::google::protobuf::internal::WireFormat::PARSE,
-            "waf_format.Properties.clientIP");
+            "waf_format.Properties.clientIp");
         } else {
           goto handle_unusual;
         }
@@ -1047,16 +1047,16 @@ bool Properties::MergePartialFromCodedStream(
         break;
       }
 
-      // optional string messages = 8;
+      // optional string message = 8;
       case 8: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_messages()));
+                input, this->mutable_message()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-            this->messages().data(), static_cast<int>(this->messages().length()),
+            this->message().data(), static_cast<int>(this->message().length()),
             ::google::protobuf::internal::WireFormat::PARSE,
-            "waf_format.Properties.messages");
+            "waf_format.Properties.message");
         } else {
           goto handle_unusual;
         }
@@ -1168,12 +1168,12 @@ void Properties::SerializeWithCachedSizes(
       1, this->instanceid(), output);
   }
 
-  // optional string clientIP = 2;
+  // optional string clientIp = 2;
   if (cached_has_bits & 0x00000002u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->clientip().data(), static_cast<int>(this->clientip().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "waf_format.Properties.clientIP");
+      "waf_format.Properties.clientIp");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->clientip(), output);
   }
@@ -1228,14 +1228,14 @@ void Properties::SerializeWithCachedSizes(
       7, this->ruleid(), output);
   }
 
-  // optional string messages = 8;
+  // optional string message = 8;
   if (cached_has_bits & 0x00000080u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->messages().data(), static_cast<int>(this->messages().length()),
+      this->message().data(), static_cast<int>(this->message().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "waf_format.Properties.messages");
+      "waf_format.Properties.message");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      8, this->messages(), output);
+      8, this->message(), output);
   }
 
   // optional .waf_format.Properties.ActionType action = 9;
@@ -1292,12 +1292,12 @@ void Properties::SerializeWithCachedSizes(
         1, this->instanceid(), target);
   }
 
-  // optional string clientIP = 2;
+  // optional string clientIp = 2;
   if (cached_has_bits & 0x00000002u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->clientip().data(), static_cast<int>(this->clientip().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "waf_format.Properties.clientIP");
+      "waf_format.Properties.clientIp");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->clientip(), target);
@@ -1358,15 +1358,15 @@ void Properties::SerializeWithCachedSizes(
         7, this->ruleid(), target);
   }
 
-  // optional string messages = 8;
+  // optional string message = 8;
   if (cached_has_bits & 0x00000080u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
-      this->messages().data(), static_cast<int>(this->messages().length()),
+      this->message().data(), static_cast<int>(this->message().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
-      "waf_format.Properties.messages");
+      "waf_format.Properties.message");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        8, this->messages(), target);
+        8, this->message(), target);
   }
 
   // optional .waf_format.Properties.ActionType action = 9;
@@ -1424,7 +1424,7 @@ size_t Properties::ByteSizeLong() const {
           this->instanceid());
     }
 
-    // optional string clientIP = 2;
+    // optional string clientIp = 2;
     if (has_clientip()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -1466,11 +1466,11 @@ size_t Properties::ByteSizeLong() const {
           this->ruleid());
     }
 
-    // optional string messages = 8;
-    if (has_messages()) {
+    // optional string message = 8;
+    if (has_message()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->messages());
+          this->message());
     }
 
   }
@@ -1562,8 +1562,8 @@ void Properties::MergeFrom(const Properties& from) {
       ruleid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ruleid_);
     }
     if (cached_has_bits & 0x00000080u) {
-      set_has_messages();
-      messages_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.messages_);
+      set_has_message();
+      message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.message_);
     }
   }
   if (cached_has_bits & 3840u) {
@@ -1615,7 +1615,7 @@ void Properties::InternalSwap(Properties* other) {
   rulesettype_.Swap(&other->rulesettype_);
   rulesetversion_.Swap(&other->rulesetversion_);
   ruleid_.Swap(&other->ruleid_);
-  messages_.Swap(&other->messages_);
+  message_.Swap(&other->message_);
   hostname_.Swap(&other->hostname_);
   swap(details_, other->details_);
   swap(action_, other->action_);

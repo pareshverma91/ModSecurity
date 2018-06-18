@@ -3,7 +3,7 @@ syntax = "proto2";
 package waf_format;
 
 message Details {
-  optional string messages = 1;
+  optional string message = 1;
   optional string data = 2;
   optional string file = 3;
   optional string line = 4;
@@ -12,13 +12,13 @@ message Details {
 
 message Properties {
   optional string instanceId = 1;
-  optional string clientIP = 2;
+  optional string clientIp = 2;
   optional string clientPort = 3;
   optional string requestUri = 4;
   optional string ruleSetType = 5;
   optional string ruleSetVersion = 6;
   optional string ruleId = 7;
-  optional string messages = 8;
+  optional string message = 8;
 
   enum ActionType {
     Detected = 0;
