@@ -999,9 +999,9 @@ AP_DECLARE(void) unixd_pre_config(apr_pool_t *ptemp)
 
 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER < 3
 #ifdef WAF_JSON_LOGGING_ENABLE
-    unixd_config.user_name = msc_waf_lock_perm;
-    unixd_config.user_id = ap_uname2id(msc_waf_lock_perm);
-    unixd_config.group_id = ap_gname2id(msc_waf_lock_perm);
+    unixd_config.user_name = msc_waf_lock_owner;
+    unixd_config.user_id = ap_uname2id(msc_waf_lock_owner);
+    unixd_config.group_id = ap_gname2id(msc_waf_lock_owner);
 #else
     unixd_config.user_name = DEFAULT_USER;
     unixd_config.user_id = ap_uname2id(DEFAULT_USER);
@@ -1010,9 +1010,9 @@ AP_DECLARE(void) unixd_pre_config(apr_pool_t *ptemp)
     unixd_config.suexec_enabled = 0;
 #else
 #ifdef WAF_JSON_LOGGING_ENABLE
-    ap_unixd_config.user_name = msc_waf_lock_perm;
-    ap_unixd_config.user_id = ap_uname2id(msc_waf_lock_perm);
-    ap_unixd_config.group_id = ap_gname2id(msc_waf_lock_perm);
+    ap_unixd_config.user_name = msc_waf_lock_owner;
+    ap_unixd_config.user_id = ap_uname2id(msc_waf_lock_owner);
+    ap_unixd_config.group_id = ap_gname2id(msc_waf_lock_owner);
 #else
     ap_unixd_config.user_name = DEFAULT_USER;
     ap_unixd_config.user_id = ap_uname2id(DEFAULT_USER);

@@ -1201,15 +1201,15 @@ static const char *cmd_waf_instanceId(cmd_parms *cmd,
     return NULL;
 }
 
-static const char *cmd_waf_lock_perm(cmd_parms *cmd,
+static const char *cmd_waf_lock_owner(cmd_parms *cmd,
         void *_dcfg, const char *p1)
 {
 
     if (cmd->server->is_virtual) {
-        return "ModSecurity: SecWafLockPerm not allowed in VirtualHost";
+        return "ModSecurity: SecWafLockOwner not allowed in VirtualHost";
     }
 
-    msc_waf_lock_perm = (char *)p1;
+    msc_waf_lock_owner = (char *)p1;
 
     return NULL;
 }
@@ -4046,11 +4046,11 @@ const command_rec module_directives[] = {
         "Set waf instanceId"
     ),
     AP_INIT_TAKE1 (
-        "SecWafLockPerm",
-        cmd_waf_lock_perm,
+        "SecWafLockOwner",
+        cmd_waf_lock_owner,
         NULL,
         CMD_SCOPE_ANY,
-        "Set waf lock permission"
+        "Set waf lock owner"
     ),
 #endif
     { NULL }
