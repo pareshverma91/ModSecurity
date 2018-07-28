@@ -172,7 +172,7 @@ static apr_table_t *collection_retrieve_ex(int db_option, void *existing_dbm, mo
         if (existing_dbm == NULL) {
 #ifdef GLOBAL_COLLECTION_LOCK
 	    rc = WAF_getExclusiveLock(msr->modsecurity->dbm_lock);
-            if (rc != WAF_LOCK_SUCCESS) {
+            if (Waf_lock_isError(rc)) {
                 msr_log(msr, 1, "collection_retrieve_ex: Failed to lock: %s",
                         get_apr_error(msr->mp, rc));
                 goto cleanup;
@@ -340,7 +340,7 @@ static apr_table_t *collection_retrieve_ex(int db_option, void *existing_dbm, mo
             if (existing_dbm == NULL) {
 #ifdef GLOBAL_COLLECTION_LOCK
 	        rc = WAF_getExclusiveLock(msr->modsecurity->dbm_lock);
-                if (rc != WAF_LOCK_SUCCESS) {
+                if (Waf_lock_isError(rc)) {
                     msr_log(msr, 1, "collection_retrieve_ex: Failed to lock: %s",
                             get_apr_error(msr->mp, rc));
                     goto cleanup;
@@ -645,7 +645,7 @@ static int collection_store_ex(int db_option, modsec_rec *msr, apr_table_t *col)
 #ifdef GLOBAL_COLLECTION_LOCK
         /* Need to lock to pull in the stored data again and apply deltas. */
 	rc = WAF_getExclusiveLock(msr->modsecurity->dbm_lock);
-        if (rc != WAF_LOCK_SUCCESS) {
+        if (Waf_lock_isError(rc)) {
             msr_log(msr, 1, "collection_retrieve_ex: Failed to lock: %s",
                     get_apr_error(msr->mp, rc));
             goto error;
@@ -973,7 +973,7 @@ static int collections_remove_stale_ex(int db_option, modsec_rec *msr, const cha
 
 #ifdef GLOBAL_COLLECTION_LOCK
     rc = WAF_getExclusiveLock(msr->modsecurity->dbm_lock);
-    if (rc != WAF_LOCK_SUCCESS) {
+    if (Waf_lock_isError(rc)) {
         msr_log(msr, 1, "collection_retrieve_ex: Failed to lock: %s",
                 get_apr_error(msr->mp, rc));
         goto error;
