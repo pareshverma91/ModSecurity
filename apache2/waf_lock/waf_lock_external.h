@@ -35,7 +35,7 @@ extern "C" {
 #define WAF_ERROR_LOCK_LINUX_SEM_INIT_FAIL                      1102
 #define WAF_ERROR_LOCK_LINUX_SEM_MODIFY_FAIL                    1103
 #define WAF_ERROR_LOCK_LINUX_SEM_DESTROY_FAIL                   1104
-#define	WAF_ERROR_LOCK_LINUX_SEM_SET_PERMISSION_FAIL            1105
+#define WAF_ERROR_LOCK_LINUX_SEM_SET_PERMISSION_FAIL            1105
 #define	WAF_ERROR_LOCK_LINUX_SEM_GET_USER_FAIL                  1106
 
 #define WAF_ERROR_LOCK_WIN_NAME_INVALID_STRING                  1200

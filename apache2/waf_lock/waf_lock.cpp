@@ -17,25 +17,17 @@
 **         WAF_SUCCESS_LOCK_OPEN if successfully link to an existed lock,
 **         WAF_LOCK_ERROR if failed.
 */
-int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) {
 #ifndef _WIN32
+int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) {
     union semun sem_union;
     uid_t uid;
     gid_t gid;
-#else
-    int read_lock_name_len = 0;
-    int write_lock_name_len = 0;
-    char* read_lock_name = NULL;
-    char* write_lock_name = NULL;
-    bool lock_exists = false;
-#endif
     if (new_lock == NULL)
         return WAF_LOCK_ERROR_HANDLE_NULL;
-#ifndef _WIN32
     new_lock->sem_id = semget(new_lock_args->lock_id, SEM_NUMBERS, IPC_CREAT | IPC_EXCL);
     if (new_lock->sem_id != -1) {
         // A new semaphore set is created, need to initialize the semaphore set
-	// Set permssion
+        // Set permssion
 	struct semid_ds buf;
 	if ((GetUserId(new_lock_args->lock_owner, &uid) == WAF_LOCK_ERROR) || (GetGroupId(new_lock_args->lock_owner, &gid) == WAF_LOCK_ERROR)) {
             lock_destroy(new_lock);
@@ -46,17 +38,20 @@ int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) 
 	buf.sem_perm.gid = gid; 
 	buf.sem_perm.mode = 0600;
 	sem_union.buf = &buf;
+	// Set the permission for the new lock
         if (semctl(new_lock->sem_id, 0, IPC_SET, sem_union) == -1) {
             lock_destroy(new_lock);
             return WAF_ERROR_LOCK_LINUX_SEM_SET_PERMISSION_FAIL;
         }
 	
+	// Set the read count for the new lock
         sem_union.val = SEM_READ_INITVAL;
         if (semctl(new_lock->sem_id, SEM_ID_READ, SETVAL, sem_union) == -1) {
             lock_destroy(new_lock);
             return WAF_ERROR_LOCK_LINUX_SEM_CREATE_FAIL;
         }
 
+	// Set the write count for the new lock
         sem_union.val = SEM_WRITE_INITVAL;
         if (semctl(new_lock->sem_id, SEM_ID_WRITE, SETVAL, sem_union) == -1) {
             // If failed, destroy the lock
@@ -72,7 +67,31 @@ int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) 
         }
         return WAF_SUCCESS_LOCK_OPEN;
     }
+
+    // Should never get here
+    return WAF_SUCCESS_LOCK_CREATE;
+}
 #else
+int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) {
+    int read_lock_name_len = 0;
+    int write_lock_name_len = 0;
+    char* read_lock_name = NULL;
+    char* write_lock_name = NULL;
+    bool lock_exists = false;
+    if (new_lock == NULL)
+        return WAF_LOCK_ERROR_HANDLE_NULL;
+
+    /* Check the format of db_name */
+    if (new_lock_args->lock_name == NULL) {
+        return WAF_LOCK_ERROR_NAME_NULL;
+    }
+    else if (new_lock_args->lock_name_length <= 0) {
+        return WAF_LOCK_ERROR_NAME_INVALID_STRING;
+    }
+    else if (Waf_lock_isstring(new_lock_args->lock_name, new_lock_args->lock_name_length) == WAF_LOCK_ERROR) {
+        return WAF_LOCK_ERROR_NAME_INVALID_STRING;
+    }
+
     read_lock_name_len = (strlen(READ_LOCK_SUFFIX) + strlen(new_lock_args->lock_name) + 1) * sizeof(char);
     write_lock_name_len = (strlen(WRITE_LOCK_SUFFIX) + strlen(new_lock_args->lock_name) + 1) * sizeof(char);
 
@@ -123,10 +142,10 @@ int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) 
         return WAF_SUCCESS_LOCK_OPEN;
     else
         return WAF_SUCCESS_LOCK_CREATE;
-#endif
     // Should never get here
     return WAF_SUCCESS_LOCK_CREATE;
 }
+#endif
 
 /**
 ** Destroy the lock
@@ -134,6 +153,7 @@ int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) 
 ** return: WAF_LOCK_SUCCESS if successfully destroy the lock,
 **         WAF_LOCK_ERROR if failed.
 */
+#ifndef _WIN32
 int lock_destroy(struct waf_lock *waf_lock) {
     int rc = WAF_LOCK_SUCCESS;
     if (waf_lock == NULL)
@@ -141,7 +161,6 @@ int lock_destroy(struct waf_lock *waf_lock) {
     rc = lock_close(waf_lock);
     if (Waf_lock_isError(rc))
         return rc;
-#ifndef _WIN32
     if (waf_lock->sem_id == -1)
         return WAF_LOCK_SUCCESS;
     rc = semctl(waf_lock->sem_id, 0, IPC_RMID);
@@ -150,11 +169,19 @@ int lock_destroy(struct waf_lock *waf_lock) {
     else
         waf_lock->sem_id = -1;
     return WAF_LOCK_SUCCESS;
+}
 #else
+int lock_destroy(struct waf_lock *waf_lock) {
+    int rc = WAF_LOCK_SUCCESS;
+    if (waf_lock == NULL)
+        return WAF_LOCK_ERROR_HANDLE_NULL;
+    rc = lock_close(waf_lock);
+    if (Waf_lock_isError(rc))
+        return rc;
     /* Locks destroy doesn't support on Windows */
     return WAF_ERROR_LOCK_WIN_DESTROY_NOT_SUPPORT;
-#endif
 }
+#endif
 
 /**
 ** Close the lock
@@ -162,11 +189,18 @@ int lock_destroy(struct waf_lock *waf_lock) {
 ** return: WAF_LOCK_SUCCESS if successfully close the lock,
 **         WAF_LOCK_ERROR if failed.
 */
+#ifndef _WIN32
 int lock_close(struct waf_lock *waf_lock) {
     if (waf_lock == NULL)
         return WAF_LOCK_ERROR_HANDLE_NULL;
     /* Linux doesn't do anything */
-#ifdef _WIN32
+    return WAF_LOCK_SUCCESS;
+}
+#else
+int lock_close(struct waf_lock *waf_lock) {
+    if (waf_lock == NULL)
+        return WAF_LOCK_ERROR_HANDLE_NULL;
+    /* Linux doesn't do anything */
     BOOL rc_read = 1;
     BOOL rc_write = 1;
     if (waf_lock->read_lock_handle != INVALID_HANDLE_VALUE)
@@ -185,9 +219,9 @@ int lock_close(struct waf_lock *waf_lock) {
 
     if (rc_read == 0 || rc_write == 0)
         return WAF_ERROR_LOCK_WIN_CLOSE_MUTEX_FAIL;
-#endif
     return WAF_LOCK_SUCCESS;
 }
+#endif
 
 /**
 ** Decrease a lock's value by a given number.
@@ -197,8 +231,8 @@ int lock_close(struct waf_lock *waf_lock) {
 ** return: WAF_LOCK_SUCCESS if success;
 **         or WAF_LOCK_ERROR if failed
 */
-int lock_P(const struct waf_lock *waf_lock, int index, int val) {
 #ifndef _WIN32
+int lock_P(const struct waf_lock *waf_lock, int index, int val) {
     struct sembuf sem_op;
     if (val < 0)
         return WAF_ERROR_LOCK_OP_NEGATIVE_VAL;
@@ -209,7 +243,9 @@ int lock_P(const struct waf_lock *waf_lock, int index, int val) {
     if (semop(waf_lock->sem_id, &sem_op, 1) == -1)
         return WAF_ERROR_LOCK_LINUX_SEM_MODIFY_FAIL;
     return WAF_LOCK_SUCCESS;
+}
 #else
+int lock_P(const struct waf_lock *waf_lock, int index, int val) {
     int rc;
     HANDLE lock_handle;
     if (val < 0)
@@ -227,8 +263,8 @@ int lock_P(const struct waf_lock *waf_lock, int index, int val) {
     if (rc != WAIT_OBJECT_0)
         return WAF_ERROR_LOCK_WIN_GET_MUTEX_FAIL;
     return WAF_LOCK_SUCCESS;
-#endif
 }
+#endif
 
 /**
 ** Increase a lock's value by a given number.
@@ -238,8 +274,8 @@ int lock_P(const struct waf_lock *waf_lock, int index, int val) {
 ** return: WAF_LOCK_SUCCESS if success;
 **         or WAF_LOCK_ERROR if failed
 */
-int lock_V(const struct waf_lock *waf_lock, int index, int val) {
 #ifndef _WIN32
+int lock_V(const struct waf_lock *waf_lock, int index, int val) {
     struct sembuf sem_op;
     if (val < 0)
         return WAF_ERROR_LOCK_OP_NEGATIVE_VAL;
@@ -250,7 +286,9 @@ int lock_V(const struct waf_lock *waf_lock, int index, int val) {
     if (semop(waf_lock->sem_id, &sem_op, 1) == -1)
         return WAF_ERROR_LOCK_LINUX_SEM_MODIFY_FAIL;
     return WAF_LOCK_SUCCESS;
+}
 #else
+int lock_V(const struct waf_lock *waf_lock, int index, int val) {
     int rc;
     HANDLE lock_handle;
     if (val < 0)
@@ -268,8 +306,8 @@ int lock_V(const struct waf_lock *waf_lock, int index, int val) {
     if (rc == 0)
         return WAF_ERROR_LOCK_WIN_RELEASE_MUTEX_FAIL;
     return WAF_LOCK_SUCCESS;
-#endif
 }
+#endif
 
 /**
 ** Check the string format.
@@ -307,17 +345,22 @@ bool Waf_lock_isError(int return_code) {
 ** return:  if WAF_LOCK_SUCCESS if success
 **          or WAF_LOCK_ERROR if the handle is NULL.
 */
+#ifndef _WIN32
 int Waf_lock_init(struct waf_lock* waf_lock) {
     if (waf_lock == NULL)
         return WAF_LOCK_ERROR_HANDLE_NULL;
-#ifndef _WIN32
     waf_lock->sem_id = -1;
-#else
-    waf_lock->read_lock_handle = INVALID_HANDLE_VALUE;
-    waf_lock->write_lock_handle = INVALID_HANDLE_VALUE;
-#endif
     return WAF_LOCK_SUCCESS;
 }
+#else
+int Waf_lock_init(struct waf_lock* waf_lock) {
+    if (waf_lock == NULL)
+        return WAF_LOCK_ERROR_HANDLE_NULL;
+    waf_lock->read_lock_handle = INVALID_HANDLE_VALUE;
+    waf_lock->write_lock_handle = INVALID_HANDLE_VALUE;
+    return WAF_LOCK_SUCCESS;
+}
+#endif
 
 /**
 **========================================================
@@ -426,17 +469,6 @@ int Waf_createLock(struct waf_lock* waf_lock, struct waf_lock_args* waf_lock_arg
     rc = Waf_lock_init(waf_lock);
     if (rc != WAF_LOCK_SUCCESS) {
         return rc;
-    }
-
-    /* Check the format of db_name */
-    if (waf_lock_name == NULL) {
-        return WAF_LOCK_ERROR_NAME_NULL;
-    }
-    else if (waf_lock_name_length <= 0) {
-        return WAF_LOCK_ERROR_NAME_INVALID_STRING;
-    }
-    else if (Waf_lock_isstring(waf_lock_name, waf_lock_name_length) == WAF_LOCK_ERROR) {
-        return WAF_LOCK_ERROR_NAME_INVALID_STRING;
     }
 
     /* Create or open the lock */
