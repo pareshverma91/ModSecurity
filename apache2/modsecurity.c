@@ -164,6 +164,8 @@ static void set_lock_args(struct waf_lock_args *lock_args, int lock_id) {
 
 #else
     lock_args->lock_id = lock_id;
+    lock_args->user = msc_waf_lock_user;
+    lock_args->group = msc_waf_lock_group;
 #endif
 }
 
@@ -285,6 +287,11 @@ void modsecurity_child_init(msc_engine *msce) {
     waf_create_lock(msce->dbm_lock, lock_args);    
 #endif
 
+}
+
+void modsecurity_set_lock_owner(const char *user, const char *group) {
+    msc_waf_lock_user = user;
+    msc_waf_lock_group = group;
 }
 
 /**
