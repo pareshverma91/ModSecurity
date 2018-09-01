@@ -555,6 +555,7 @@ int waf_close_lock(struct waf_lock *waf_lock) {
         return WAF_LOCK_SUCCESS;
 }
 
+#ifndef _WIN32
 int GetGroupId(const char *name, gid_t *id)
 {
     struct group *grp = getgrnam(name); /* don't free, see getgrnam() for details */
@@ -573,3 +574,4 @@ int GetGroupId(const char *name, gid_t *id)
      *id = pwd->pw_uid;
     return WAF_LOCK_SUCCESS;
 }
+#endif
