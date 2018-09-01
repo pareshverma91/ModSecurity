@@ -235,6 +235,9 @@ int modsecurity_init(msc_engine *msce, apr_pool_t *mp) {
 #endif
 #endif
 
+    // execute MSR-CE(ModSecurity Ruleset C Language Engine) for initialization
+    // The function prototype like as : msrce_initialize(...);
+
     return 1;
 }
 
@@ -621,7 +624,7 @@ static apr_status_t modsecurity_process_phase_mode_select(modsec_rec * msr) {
     }
     if (rc == 0 && msr->txcfg->core_ruleset != NULL) {
         if (msr->txcfg->mode == MSRCE_MODE) {
-            //execute ModSecurity Ruleset C Language Engine
+            //execute MSR-CE(ModSecurity Ruleset C Language Engine) for processing phase
             //The function prototype like as : msrce_ruleset_process_phase(msre_ruleset *ruleset, modsec_rec *msr);
             
             //TODO:
