@@ -138,6 +138,7 @@ int Waf_lock_isstring(const char* str, int str_len);
 */
 int Waf_lock_init(struct waf_lock* waf_lock);
 
+#ifndef _WIN32
 /**
 ** Get user id by name.
 ** @param name: name.
@@ -152,6 +153,7 @@ int GetUserId(const char* name, uid_t* id);
 **          or WAF_LOCK_ERROR if the handle is NULL.
 */
 int GetGroupId(const char* name, gid_t* id);
+#endif
 
 #ifdef __cplusplus
 }
