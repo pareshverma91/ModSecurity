@@ -253,7 +253,7 @@ int ri_exec(const ri_regex_t regex, const char *subject,
             return error_code;
     }
 
-    for (unsigned int i = 0; i < priority_exec.engine_count; i++) {
+    for (unsigned int i = 0; i < MIN(priority_exec.engine_count, RI_ENGINE_COUNT); i++) {
         switch (priority_exec.engines[i]) {
         case RI_PCRE:
             if (t_regex->pcre_re != NULL)
