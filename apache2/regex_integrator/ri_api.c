@@ -17,6 +17,7 @@ static const struct ri_priority RI_PRIORITY_DEFAULT = {
     },
     3
 };
+
 // Default param
 static const struct ri_pcre_params RI_PCRE_PARAMS_DEFAULT= {
     0,
@@ -25,8 +26,10 @@ static const struct ri_pcre_params RI_PCRE_PARAMS_DEFAULT= {
 
 // Global log level
 static ri_log_level_t g_ri_log_level = RI_LOG_ERROR;
+
 // Global log message
 static __thread char *g_ri_log_msg = NULL;
+// Global log buffer length
 static size_t g_ri_log_len = 0;
 
 #define MAX(a, b)               \
@@ -41,13 +44,12 @@ static size_t g_ri_log_len = 0;
 
 /** Update priority_dst using priority_src.
 ** @param priority_dst:     The priority to update.
-** @param priority_dst_len: The length of priority_dst.
 ** @param priority_src:     The priority used to update.
-** @param priority_src_len: The length of priority_src.
 ** @param pattern:          The regex expression for profiling in RI_AUTO mode.
 ** @param comp_comptions:   Compilation options for profiling in RI_AUTO mode.
 ** @param exec_comptions:   Execution options for profiling in RI_AUTO mode.
 ** @param log:              The pointer to the log. It is optional.
+**                          We would not output the log message if it is NULL.
 ** return: 0 if it succeeds,
 **         or the error code.
 **/
@@ -59,8 +61,8 @@ static int ri_update_priority(struct ri_priority *priority_dst,
 /**
 ** Check whether the priority is valid.
 ** @param priority:     The pointer to the priority.
-** @param priority_len: The length of priority.
 ** @param log:          The pointer to the log. It is optional.
+**                      We would not output the log message if it is NULL.
 ** return: 0 if the priority is valid,
 **         or the error code.
 **/
@@ -73,8 +75,8 @@ static int ri_validate_priority(const struct ri_priority *priority,
 ** @param comp_options: Compilation options.
 ** @param exec_options: Execution options.
 ** @param priority:     The pointer to the priority output by profiling.
-** @param priority_len: The length of priority.
 ** @param log:          The pointer to the log. It is optional.
+**                      We would not output the log message if it is NULL.
 ** return: 0 if the profiling succeeds,
 **         or the error code.
 **/
@@ -90,10 +92,9 @@ static int ri_do_profiling(const char *pattern, int comp_options,
 **                      It contains various bit settings of ri_comp_option.
 **                      Its usage is as same as the bitmap.
 ** @param priority:     The pointer to the priority of regex engines.
-**                      It is optional.
-** @param priority_len: The length of priority.
+**                      It is optional, NULL is using default priority.
 ** @param params:       The pointer to additional parameters for compilation.
-**                      It is optional.
+**                      It is optional, NULL is using default params.
 ** @param log:          The pointer to the log. It is optional.
 **                      We would not output the log message if it is NULL.
 ** return: 0 if compilation succeeds,
@@ -204,14 +205,13 @@ int ri_create(ri_regex_t *regex, const char *pattern, int options,
 **                      It is optional.
 **                      If it is NULL, use the priority in the regex.
 **                      It does not override the priority in the regex.
-** @param priority_len: The length of priority.
 ** @param ovector:      The pointer to a vector storing sub-matches.
 **                      Please refer to the explanation of arguments in pcre_exec().
 **                      It is optional.
 ** @param ovec_size:    Number of elements in the vector (a multiple of 3).
 **                      Please refer to the explanation of arguments in pcre_exec().
-** @param log:          The pointer to the log.
-**                      It is optional.
+** @param log:          The pointer to the log. It is optional.
+**                      We would not output the log message if it is NULL.
 ** return: The number of captured sub-matches,
 **         or 0 if the subject matches but the output vector is not big enough,
 **         or -1 if there is no match,
@@ -336,8 +336,10 @@ void ri_free(ri_regex_t regex)
 /**
 ** Set regex's priority using the new priority.
 ** @param regex:            The compiled regex.
-** @param priority_new:     The pointor to the new priority.
-** @param priority_new_len: The length of the new priority.
+** @param priority_new:     The pointer to the new priority.
+**                          If it is NULL, set default priority for the regex.
+** @param log:              The pointer to the log. It is optional.
+**                          We would not output the log message if it is NULL.
 ** return: 0 if it succeeds,
 **         or the error code.
 **/
@@ -358,13 +360,12 @@ int ri_set_priority(ri_regex_t regex,
 
 /** Update priority_dst using priority_src.
 ** @param priority_dst:     The priority to update.
-** @param priority_dst_len: The length of priority_dst.
 ** @param priority_src:     The priority used to update.
-** @param priority_src_len: The length of priority_src.
 ** @param pattern:          The regex expression for profiling in RI_AUTO mode.
 ** @param comp_comptions:   Compilation options for profiling in RI_AUTO mode.
 ** @param exec_comptions:   Execution options for profiling in RI_AUTO mode.
 ** @param log:              The pointer to the log. It is optional.
+**                          We would not output the log message if it is NULL.
 ** return: 0 if it succeeds,
 **         or the error code.
 **/
@@ -408,8 +409,8 @@ static int ri_update_priority(struct ri_priority * priority_dst,
 /**
 ** Check whether the priority is valid.
 ** @param priority:     The pointer to the priority.
-** @param priority_len: The length of priority.
 ** @param log:          The pointer to the log. It is optional.
+**                      We would not output the log message if it is NULL.
 ** return: 0 if the priority is valid,
 **         or the error code.
 **/
@@ -461,8 +462,8 @@ static int ri_validate_priority(const struct ri_priority *priority,
 ** @param comp_options: Compilation options.
 ** @param exec_options: Execution options.
 ** @param priority:     The pointer to the priority output by profiling.
-** @param priority_len: The length of priority.
 ** @param log:          The pointer to the log. It is optional.
+**                      We would not output the log message if it is NULL.
 ** return: 0 if the profiling succeeds,
 **         or the error code.
 **/
@@ -531,12 +532,12 @@ const char *ri_get_error_msg(int error_code)
 }
 
 /**
-** Fill in g_ri_log_msg according on the error_code
-** @param error_code: The error code.
-** @param level:      The log level to fill the detailed error information.
+** Fill in log according on the error_code
 ** @param log:        The pointer to the log.
+** @param level:      The log level to fill the detailed error information.
+** @param error_code: The error code.
+** return: RI_SUCCESS if it succeeds, or the error code.
 **/
-
 int ri_fill_log(const char ** log, ri_log_level_t log_level, int error_code) {
     if (log != NULL && log_level <= g_ri_log_level) {
         *log = ri_get_error_msg(error_code);
@@ -544,6 +545,14 @@ int ri_fill_log(const char ** log, ri_log_level_t log_level, int error_code) {
     return RI_SUCCESS;
 }
 
+/**
+** Fill in log according on the format and rested paramenters
+** @param log:        The pointer to the log.
+** @param level:      The log level to fill the detailed error information.
+** @param error_code: The error code.
+** @param format:     The format string to record log, like printf.
+** return: RI_SUCCESS if it succeeds, or the error code.
+**/
 int ri_fill_log_ex(const char ** log, ri_log_level_t log_level, const char * format, ...) {
     int size = 0;
     char *p = NULL;
@@ -597,6 +606,7 @@ int ri_fill_log_ex(const char ** log, ri_log_level_t log_level, const char * for
 
 /**
 ** Perform initialization.
+** It need be called at the first using of this module
 **/
 void ri_init()
 {
@@ -607,7 +617,8 @@ void ri_init()
 }
 
 /**
-** Free the allocated memory.
+** Perform release.
+** It need be called at the last using of this module
 **/
 void ri_release()
 {

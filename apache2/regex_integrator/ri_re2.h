@@ -14,7 +14,8 @@ extern "C"
 ** Compile the provided regular expression pattern.
 ** @param pattern: The regular expression for compilation.
 ** @param options: The options for compilation.
-** @param log:     The pointer to the log.
+** @param log:     The pointer to the log. It is optional.
+**                 If it is NULL, we would not fill in detailed log message.
 ** return: A pointer to RE2 object if compilation succeeds,
 **         or NULL if compilation fails.
 **/

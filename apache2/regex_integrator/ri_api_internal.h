@@ -19,14 +19,23 @@ extern "C" {
 #endif
 
 /**
-** Fill in g_ri_log_msg according on the error_code
-** @param error_code: The error code.
-** @param level:      The log level to fill the detailed error information.
+** Fill in log according on the error_code
 ** @param log:        The pointer to the log.
+** @param level:      The log level to fill the detailed error information.
+** @param error_code: The error code.
+** return: RI_SUCCESS if it succeeds, or the error code.
 **/
-
 extern int ri_fill_log(const char ** log,  ri_log_level_t log_level,
         int error_code);
+
+/**
+** Fill in log according on the format and rested paramenters
+** @param log:        The pointer to the log.
+** @param level:      The log level to fill the detailed error information.
+** @param error_code: The error code.
+** @param format:     The format string to record log, like printf.
+** return: RI_SUCCESS if it succeeds, or the error code.
+**/
 extern int ri_fill_log_ex(const char ** log, ri_log_level_t log_level,
         const char * format, ...);
 
