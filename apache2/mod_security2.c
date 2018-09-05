@@ -93,8 +93,8 @@ TreeRoot DSOLOCAL *conn_write_state_whitelist = 0;
 TreeRoot DSOLOCAL *conn_write_state_suspicious_list = 0;
 
 #ifdef WAF_JSON_LOGGING_ENABLE
-char DSOLOCAL *msc_waf_resourceId = "";
-char DSOLOCAL *msc_waf_instanceId = "";
+char DSOLOCAL *msc_waf_resourceId = NULL;
+char DSOLOCAL *msc_waf_instanceId = NULL;
 #endif
 
 char DSOLOCAL *msc_waf_lock_user;

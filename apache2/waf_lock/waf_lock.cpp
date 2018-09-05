@@ -34,7 +34,8 @@ int lock_create(struct waf_lock *new_lock, struct waf_lock_args *new_lock_args) 
 
     if (new_lock_args->user != NULL && new_lock_args->group != NULL)
     {
-        if ((GetUserId(new_lock_args->user, &uid) == WAF_LOCK_ERROR) || (GetGroupId(new_lock_args->group, &gid) == WAF_LOCK_ERROR)) {
+        if ((GetUserId(new_lock_args->user, &uid) == WAF_LOCK_ERROR) || (GetGroupId(new_lock_args->group, &gid) == WAF_LOCK_ERROR)) 
+        {
             lock_destroy(new_lock);
             return WAF_ERROR_LOCK_LINUX_SEM_GET_USER_FAIL;
 	    }
@@ -559,19 +560,21 @@ int waf_close_lock(struct waf_lock *waf_lock) {
 int GetGroupId(const char *name, gid_t *id)
 {
     struct group *grp = getgrnam(name); /* don't free, see getgrnam() for details */
-    if(grp == NULL) {
+    if(grp == NULL) 
+    {
         return WAF_LOCK_ERROR;
     } 
-     *id = grp->gr_gid;
+    *id = grp->gr_gid;
     return WAF_LOCK_SUCCESS;
 }
  int GetUserId(const char *name, uid_t *id)
 {
     struct passwd *pwd = getpwnam(name); /* don't free, see getpwnam() for details */
-    if(pwd == NULL) {
+    if(pwd == NULL) 
+    {
         return WAF_LOCK_ERROR;
     } 
-     *id = pwd->pw_uid;
+    *id = pwd->pw_uid;
     return WAF_LOCK_SUCCESS;
 }
 #endif
