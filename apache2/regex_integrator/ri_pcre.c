@@ -2,7 +2,7 @@
    Licensed under the MIT License. */
 #include "ri_api_internal.h"
 #include "ri_pcre.h"
-#include "pcre.h"
+#include <pcre.h>
 #include <string.h>
 #include <stdio.h>
 

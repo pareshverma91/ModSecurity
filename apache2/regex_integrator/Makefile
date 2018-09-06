@@ -7,10 +7,12 @@ PCRE_DIR = $(3RD)/$(PCRE_VER)
 
 CC = gcc
 CXX = g++
+CINCLUDES = -I./$(PCRE_DIR)
+CXXINCLUDES = -I./$(RE2_DIR) 
 CFLAGS = -g -O3 -Wall -Werror -std=c99
 CXXFLAGS = -g -O3 -Wall -Werror -std=c++11
-LIBS = -pthread -L./$(PCRE_DIR)/.libs -I./$(PCRE_DIR) -lpcre
-CXXLIBS = -L./$(RE2_DIR)/obj -I./$(RE2_DIR)/re2 -lre2
+CLIBS = -pthread -L./$(PCRE_DIR)/.libs -lpcre
+CXXLIBS = -L./$(RE2_DIR)/obj -lre2
 TARGET = bin/libregex_integrator.so
 OBJS = objs/ri_pcre.o objs/ri_re2.o objs/ri_api.o
 
@@ -45,17 +47,17 @@ endif
 	@cd $(RE2_DIR) && CXXFLAGS=-fPIC make -j;
 
 objs/%.o: %.c
-	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+	$(CC) $(CFLAGS) $(CINCLUDES) -fPIC -c $< -o $@
 
 objs/%.o: %.cpp %.h
-	$(CXX) $(CXXFLAGS) -fPIC -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CXXINCLUDES) -fPIC -c $< -o $@
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -fPIC -shared -o $@ $(OBJS) $(LIBS) $(CXXLIBS)
+	$(CXX) $(CXXFLAGS) -fPIC -shared -o $@ $(OBJS) $(CLIBS) $(CXXLIBS)
 	@echo $(TARGET)" Compile Success"
 
 test: tester.cpp
-	$(CXX) $(CXXFLAGS) $< $(shell pwd)/$(TARGET) -Wl,-rpath=$(shell pwd)/bin -o bin/$@
+	$(CXX) $(CXXFLAGS) $(CINCLUDES) $(CXXINCLUDES) $< $(shell pwd)/$(TARGET) -Wl,-rpath=$(shell pwd)/bin -o bin/$@
 	@bin/$@
 	@echo 'Test Success'
 
