@@ -79,7 +79,10 @@ DECLARE_HOOK(void, error_log, (const char *file, int line, int level,
 DECLARE_HOOK(int,log_transaction,(request_rec *r))
 DECLARE_HOOK(void,insert_filter,(request_rec *r))
 DECLARE_HOOK(void,insert_error_filter,(request_rec *r))
+
+#ifndef _WIN32
 DECLARE_HOOK(void,set_lock_owner,(const char *user, const char *group))
+#endif
 
 char *sa_name = "standalone";
 const char *sa_name_argv[] = { "standalone", NULL };
@@ -325,9 +328,11 @@ void modsecInitProcess()    {
     hookfn_child_init(pool, server);
 }
 
+#ifndef _WIN32
 void modsecSetLockOwner(const char *user, const char *group)    {
     hookfn_set_lock_owner(user, group);
 }
+#endif
 
 conn_rec *modsecNewConnection() {
     conn_rec *c;

@@ -289,10 +289,12 @@ void modsecurity_child_init(msc_engine *msce) {
 
 }
 
+#ifndef _WIN32
 void modsecurity_set_lock_owner(const char *user, const char *group) {
     msc_waf_lock_user = user;
     msc_waf_lock_group = group;
 }
+#endif
 
 /**
  * Releases resources held by engine instance.

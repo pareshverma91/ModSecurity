@@ -738,7 +738,9 @@ int DSOLOCAL modsecurity_init(msc_engine *msce, apr_pool_t *mp);
 
 void DSOLOCAL modsecurity_child_init(msc_engine *msce);
 
+#ifndef _WIN32
 void DSOLOCAL modsecurity_set_lock_owner(const char* user, const char* group);
+#endif
 
 void DSOLOCAL modsecurity_shutdown(msc_engine *msce);
 

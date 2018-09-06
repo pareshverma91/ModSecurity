@@ -15,6 +15,10 @@
 #ifndef _HOOKS_HEADER
 #define _HOOKS_HEADER
 
+#include "http_config.h"
+
+#ifndef _WIN32
 AP_DECLARE_HOOK(void,set_lock_owner,(const char *user, const char *group))
+#endif
 
 #endif

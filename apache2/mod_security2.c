@@ -838,9 +838,11 @@ static void hook_child_init(apr_pool_t *mp, server_rec *s) {
     modsecurity_child_init(modsecurity);
 }
 
+#ifndef _WIN32
 static void hook_set_lock_owner(const char *user, const char *group) {
     modsecurity_set_lock_owner(user, group);
 }
+#endif
 
 /**
  * Initial request processing, executed immediatelly after
@@ -1716,8 +1718,10 @@ static void register_hooks(apr_pool_t *mp) {
     ap_hook_post_config(hook_post_config, postconfig_beforeme_list,
         postconfig_afterme_list, APR_HOOK_REALLY_LAST);
     ap_hook_child_init(hook_child_init, NULL, NULL, APR_HOOK_MIDDLE);
+    
+#ifndef _WIN32
     ap_hook_set_lock_owner(hook_set_lock_owner, NULL, NULL, APR_HOOK_MIDDLE);
-
+#endif
     /* Our own hook to handle RPC transactions (not used at the moment).
      * // ap_hook_handler(hook_handler, NULL, NULL, APR_HOOK_MIDDLE);
      */

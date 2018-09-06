@@ -64,4 +64,7 @@ DECLARE_HOOK(void, error_log, (const char *file, int line, int level,
 DECLARE_HOOK(int,log_transaction,(request_rec *r))
 DECLARE_HOOK(void,insert_filter,(request_rec *r))
 DECLARE_HOOK(void,insert_error_filter,(request_rec *r))
+
+#ifndef _WIN32
 DECLARE_HOOK(void,set_lock_owner,(const char *user, const char *group))
+#endif
