@@ -818,12 +818,12 @@ static char *msre_action_ctl_validate(msre_engine *engine, apr_pool_t *mp, msre_
         return NULL;
     } else
     if (strcasecmp(name, "ruleRemoveByTag") == 0) {
-        if (!msc_pregcomp(mp, value, 0, NULL, NULL))
+        if (!msc_regex_pregcomp(mp, value, 0, NULL, NULL))
            return apr_psprintf(mp, "ModSecurity: Invalid regular expression \"%s\"", value);
         return NULL;
     } else
     if (strcasecmp(name, "ruleRemoveByMsg") == 0) {
-       if (!msc_pregcomp(mp, value, 0, NULL, NULL))
+       if (!msc_regex_pregcomp(mp, value, 0, NULL, NULL))
            return apr_psprintf(mp, "ModSecurity: Invalid regular expression \"%s\"", value);
         return NULL;
     } else
@@ -927,7 +927,7 @@ static char *msre_action_ctl_validate(msre_engine *engine, apr_pool_t *mp, msre_
                 parm = apr_strtok(value,";",&savedptr);
                 if(parm == NULL && savedptr == NULL)
                     return apr_psprintf(mp, "ruleRemoveTargetByTag must has at least tag;VARIABLE");
-            if (!msc_pregcomp(mp, parm, 0, NULL, NULL)) {
+            if (!msc_regex_pregcomp(mp, parm, 0, NULL, NULL)) {
                 return apr_psprintf(mp, "ModSecurity: Invalid regular expression \"%s\"", parm);
             }
         return NULL;
@@ -939,7 +939,7 @@ static char *msre_action_ctl_validate(msre_engine *engine, apr_pool_t *mp, msre_
                 parm = apr_strtok(value,";",&savedptr);
                 if(parm == NULL && savedptr == NULL)
                     return apr_psprintf(mp, "ruleRemoveTargetByMsg must has at least msg;VARIABLE");
-            if (!msc_pregcomp(mp, parm, 0, NULL, NULL)) {
+            if (!msc_regex_pregcomp(mp, parm, 0, NULL, NULL)) {
                 return apr_psprintf(mp, "ModSecurity: Invalid regular expression \"%s\"", parm);
             }
         return NULL;
@@ -1042,7 +1042,7 @@ static apr_status_t msre_action_ctl_execute(modsec_rec *msr, apr_pool_t *mptmp,
         rule_exception *re = apr_pcalloc(msr->mp, sizeof(rule_exception));
         re->type = RULE_EXCEPTION_REMOVE_TAG;
         re->param = (const char *)apr_pstrdup(msr->mp, value);
-        re->param_data = msc_pregcomp(msr->mp, re->param, 0, NULL, NULL);
+        re->param_data = msc_regex_pregcomp(msr->mp, re->param, 0, NULL, NULL);
         if (re->param_data == NULL) {
             msr_log(msr, 1, "ModSecurity: Invalid regular expression \"%s\"", re->param);
             return -1;
@@ -1060,7 +1060,7 @@ static apr_status_t msre_action_ctl_execute(modsec_rec *msr, apr_pool_t *mptmp,
         rule_exception *re = apr_pcalloc(msr->mp, sizeof(rule_exception));
         re->type = RULE_EXCEPTION_REMOVE_MSG;
         re->param = (const char *)apr_pstrdup(msr->mp, value);
-        re->param_data = msc_pregcomp(msr->mp, re->param, 0, NULL, NULL);
+        re->param_data = msc_regex_pregcomp(msr->mp, re->param, 0, NULL, NULL);
         if (re->param_data == NULL) {
             msr_log(msr, 1, "ModSecurity: Invalid regular expression \"%s\"", re->param);
             return -1;
@@ -1261,7 +1261,7 @@ static apr_status_t msre_action_ctl_execute(modsec_rec *msr, apr_pool_t *mptmp,
     re = apr_pcalloc(msr->mp, sizeof(rule_exception));
     re->type = RULE_EXCEPTION_REMOVE_TAG;
     re->param = (const char *)apr_pstrdup(msr->mp, p1);
-    re->param_data = msc_pregcomp(msr->mp, p1, 0, NULL, NULL);
+    re->param_data = msc_regex_pregcomp(msr->mp, p1, 0, NULL, NULL);
     if (re->param_data == NULL) {
         msr_log(msr, 1, "ModSecurity: Invalid regular expression \"%s\"", p1);
         return -1;
@@ -1285,7 +1285,7 @@ static apr_status_t msre_action_ctl_execute(modsec_rec *msr, apr_pool_t *mptmp,
     re = apr_pcalloc(msr->mp, sizeof(rule_exception));
     re->type = RULE_EXCEPTION_REMOVE_MSG;
     re->param = apr_pstrdup(msr->mp, p1);
-    re->param_data = msc_pregcomp(msr->mp, p1, 0, NULL, NULL);
+    re->param_data = msc_regex_pregcomp(msr->mp, p1, 0, NULL, NULL);
     if (re->param_data == NULL) {
         msr_log(msr, 1, "ModSecurity: Invalid regular expression \"%s\"", p1);
         return -1;

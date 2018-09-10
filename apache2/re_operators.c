@@ -15,6 +15,7 @@
 #include "modsecurity.h"
 #include "re.h"
 #include "msc_pcre.h"
+#include "msc_regex.h"
 #include "msc_geo.h"
 #include "msc_gsb.h"
 #include "apr_lib.h"
@@ -682,38 +683,44 @@ nextround:
 static int msre_op_validateHash_param_init(msre_rule *rule, char **error_msg) {
     const char *errptr = NULL;
     int erroffset;
-    msc_regex_t *regex;
+    void *regex;
     const char *pattern = rule->op_param;
     #ifdef WITH_PCRE_STUDY
         #ifdef WITH_PCRE_JIT
     int rc, jit;
         #endif
     #endif
-
+    
     if (error_msg == NULL) return -1;
     *error_msg = NULL;
 
     /* Compile pattern */
-    if(strstr(pattern,"%{") == NULL)    {
-        regex = msc_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
+    if(strstr(pattern,"%{") == NULL) {
+        regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern,0, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion) ;
         if (regex == NULL) {
-            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
+            if (g_use_regex_integrator) {
+                *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern: %s", errptr);
+            } else {
+                *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                     erroffset, errptr);
+            }
             return 0;
         }
 
         #ifdef WITH_PCRE_STUDY
             #ifdef WITH_PCRE_JIT
-        rc = msc_fullinfo(regex, PCRE_INFO_JIT, &jit);
-        if ((rc != 0) || (jit != 1)) {
-            *error_msg = apr_psprintf(rule->ruleset->mp,
-                    "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
-                    "Execution error - "
-                    "Does not support JIT (%d)",
-                    rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
-                            (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
-                    rule->filename != NULL ? rule->filename : "-",
-                    rule->line_num,rc);
+        if (!g_use_regex_integrator) {
+            rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
+            if ((rc != 0) || (jit != 1)) {
+                *error_msg = apr_psprintf(rule->ruleset->mp,
+                        "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
+                        "Execution error - "
+                        "Does not support JIT (%d)",
+                        rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
+                                (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
+                        rule->filename != NULL ? rule->filename : "-",
+                        rule->line_num,rc);
+            }
         }
             #endif
         #endif
@@ -740,7 +747,7 @@ static int msre_op_validateHash_param_init(msre_rule *rule, char **error_msg) {
  * \retval 0 On fail
  */
 static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, char **error_msg) {
-    msc_regex_t *regex = (msc_regex_t *)rule->op_param_data;
+    void *regex = rule->op_param_data;
     msc_string *re_pattern = (msc_string *)apr_pcalloc(msr->mp, sizeof(msc_string));
     const char *target;
     const char *errptr = NULL;
@@ -783,29 +790,35 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
             if (msr->txcfg->debuglog_level >= 6) {
                 msr_log(msr, 6, "Escaping pattern [%s]",pattern);
             }
-
-            regex = msc_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, 
+            
+            regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, 
                     &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
             if (regex == NULL) {
-                *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
+                if (g_use_regex_integrator) {
+                    *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
+                } else {
+                    *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                         erroffset, errptr);
+                }
                 return 0;
             }
 
             #ifdef WITH_PCRE_STUDY
                 #ifdef WITH_PCRE_JIT
             if (msr->txcfg->debuglog_level >= 4) {
-                rc = msc_fullinfo(regex, PCRE_INFO_JIT, &jit);
-                if ((rc != 0) || (jit != 1)) {
-                    *error_msg = apr_psprintf(rule->ruleset->mp,
-                            "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
-                            "Execution error - "
-                            "Does not support JIT (%d)",
-                            rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
-                                    (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
-                            rule->filename != NULL ? rule->filename : "-",
-                            rule->line_num,rc);
-                    msr_log(msr, 4, "%s.", *error_msg);
+                if (!g_use_regex_integrator) {
+                    rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
+                    if ((rc != 0) || (jit != 1)) {
+                        *error_msg = apr_psprintf(rule->ruleset->mp,
+                                "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
+                                "Execution error - "
+                                "Does not support JIT (%d)",
+                                rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
+                                        (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
+                                rule->filename != NULL ? rule->filename : "-",
+                                rule->line_num,rc);
+                        msr_log(msr, 4, "%s.", *error_msg);
+                    }
                 }
             }
                 #endif
@@ -828,7 +841,8 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
     /* We always use capture so that ovector can be used as working space
      * and no memory has to be allocated for any backreferences.
      */
-    rc = msc_regexec_capture(regex, target, target_length, ovector, 30, &my_error_msg);
+    
+    rc = msc_regex_regexec_capture((msc_ri_regex_t *)regex, target, target_length, ovector, 30, &my_error_msg);
     if ((rc == PCRE_ERROR_MATCHLIMIT) || (rc == PCRE_ERROR_RECURSIONLIMIT)) {
         msc_string *s = (msc_string *)apr_pcalloc(msr->mp, sizeof(msc_string));
 
@@ -861,7 +875,8 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
 
     if (rc != PCRE_ERROR_NOMATCH) { /* Match. */
         /* We no longer escape the pattern here as it is done when logging */
-        char *pattern = apr_pstrdup(msr->mp, log_escape(msr->mp, regex->pattern ? regex->pattern : "<Unknown Match>"));
+        const char * original_pattern = msc_regex_pattern(regex);
+        char *pattern = apr_pstrdup(msr->mp, log_escape(msr->mp, original_pattern ? original_pattern : "<Unknown Match>"));
         char *hmac = NULL, *valid = NULL;
         char *hash_link = NULL, *nlink = NULL;
 
@@ -925,7 +940,7 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
 static int msre_op_rx_param_init(msre_rule *rule, char **error_msg) {
     const char *errptr = NULL;
     int erroffset;
-    msc_regex_t *regex;
+    void *regex;
     const char *pattern = rule->op_param;
     #ifdef WITH_PCRE_STUDY
        #ifdef WITH_PCRE_JIT
@@ -938,25 +953,31 @@ static int msre_op_rx_param_init(msre_rule *rule, char **error_msg) {
 
     /* Compile pattern */
     if(strstr(pattern,"%{") == NULL)    {
-        regex = msc_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
+        regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
         if (regex == NULL) {
-            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
+            if (g_use_regex_integrator) {
+                *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
+            } else {
+                *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                     erroffset, errptr);
+            }
             return 0;
         }
 
         #ifdef WITH_PCRE_STUDY
             #ifdef WITH_PCRE_JIT
-        rc = msc_fullinfo(regex, PCRE_INFO_JIT, &jit);
-        if ((rc != 0) || (jit != 1)) {
-            *error_msg = apr_psprintf(rule->ruleset->mp,
-                    "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
-                    "Execution error - "
-                    "Does not support JIT (%d)",
-                    rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
-                            (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
-                    rule->filename != NULL ? rule->filename : "-",
-                    rule->line_num,rc);
+        if (!g_use_regex_integrator) {
+            rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
+            if ((rc != 0) || (jit != 1)) {
+                *error_msg = apr_psprintf(rule->ruleset->mp,
+                        "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
+                        "Execution error - "
+                        "Does not support JIT (%d)",
+                        rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
+                                (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
+                        rule->filename != NULL ? rule->filename : "-",
+                        rule->line_num,rc);
+            }   
         }
             #endif
         #endif
@@ -972,7 +993,7 @@ static int msre_op_rx_param_init(msre_rule *rule, char **error_msg) {
 }
 
 static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, char **error_msg) {
-    msc_regex_t *regex = (msc_regex_t *)rule->op_param_data;
+    void *regex = rule->op_param_data;
     msc_string *re_pattern = (msc_string *)apr_pcalloc(msr->mp, sizeof(msc_string));
     const char *target;
     const char *errptr = NULL;
@@ -1018,27 +1039,34 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
                 msr_log(msr, 6, "Escaping pattern [%s]",pattern);
             }
 
-            regex = msc_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
+            regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
+
             if (regex == NULL) {
-                *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
+                if (g_use_regex_integrator) {
+                    *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
+                } else {
+                    *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                         erroffset, errptr);
+                }
                 return 0;
             }
 
             #ifdef WITH_PCRE_STUDY
                 #ifdef WITH_PCRE_JIT
             if (msr->txcfg->debuglog_level >= 4) {
-                rc = msc_fullinfo(regex, PCRE_INFO_JIT, &jit);
-                if ((rc != 0) || (jit != 1)) {
-                    *error_msg = apr_psprintf(rule->ruleset->mp,
-                            "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
-                            "Execution error - "
-                            "Does not support JIT (%d)",
-                            rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
-                                    (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
-                            rule->filename != NULL ? rule->filename : "-",
-                            rule->line_num,rc);
-                    msr_log(msr, 4, "%s.", *error_msg);
+                if (!g_use_regex_integrator) {
+                    rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
+                    if ((rc != 0) || (jit != 1)) {
+                        *error_msg = apr_psprintf(rule->ruleset->mp,
+                                "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
+                                "Execution error - "
+                                "Does not support JIT (%d)",
+                                rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
+                                        (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
+                                rule->filename != NULL ? rule->filename : "-",
+                                rule->line_num,rc);
+                        msr_log(msr, 4, "%s.", *error_msg);
+                    }
                 }
             }
                 #endif
@@ -1072,11 +1100,13 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
 
     /* Show when the regex captures but "capture" is not set */
     if (msr->txcfg->debuglog_level >= 6) {
-        int capcount = 0;
-        rc = msc_fullinfo(regex, PCRE_INFO_CAPTURECOUNT, &capcount);
-        if (msr->txcfg->debuglog_level >= 6) {
-            if ((capture == 0) && (capcount > 0)) {
-                msr_log(msr, 6, "Ignoring regex captures since \"capture\" action is not enabled.");
+        if (! g_use_regex_integrator) {
+            int capcount = 0;
+            rc = msc_regex_fullinfo(regex, PCRE_INFO_CAPTURECOUNT, &capcount);
+            if (msr->txcfg->debuglog_level >= 6) {
+                if ((capture == 0) && (capcount > 0)) {
+                    msr_log(msr, 6, "Ignoring regex captures since \"capture\" action is not enabled.");
+                }
             }
         }
     }
@@ -1084,7 +1114,7 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
     /* We always use capture so that ovector can be used as working space
      * and no memory has to be allocated for any backreferences.
      */
-    rc = msc_regexec_capture(regex, target, target_length, ovector, 30, &my_error_msg);
+    rc = msc_regex_regexec_capture(regex, target, target_length, ovector, 30, &my_error_msg);
     if ((rc == PCRE_ERROR_MATCHLIMIT) || (rc == PCRE_ERROR_RECURSIONLIMIT)) {
         msc_string *s = (msc_string *)apr_pcalloc(msr->mp, sizeof(msc_string));
 
@@ -1178,7 +1208,8 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
 
     if (rc != PCRE_ERROR_NOMATCH) { /* Match. */
         /* We no longer escape the pattern here as it is done when logging */
-        char *pattern = apr_pstrdup(msr->mp, log_escape(msr->mp, regex->pattern ? regex->pattern : "<Unknown Match>"));
+        const char * original_pattern = msc_regex_pattern(regex);
+        char *pattern = apr_pstrdup(msr->mp, log_escape(msr->mp, original_pattern ? original_pattern : "<Unknown Match>"));
 
         /* This message will be logged. */
         if (strlen(pattern) > 252) {
@@ -1621,14 +1652,13 @@ static int verify_gsb(gsb_db *gsb, modsec_rec *msr, const char *match, unsigned 
 static int msre_op_gsbLookup_param_init(msre_rule *rule, char **error_msg) {
     const char *errptr = NULL;
     int erroffset;
-    msc_regex_t *regex;
+    void *regex;
 
     if (error_msg == NULL) return -1;
     *error_msg = NULL;
 
     /* Compile rule->op_param */
-    regex = msc_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
-
+    regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
         *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                 erroffset, errptr);
@@ -1653,7 +1683,7 @@ static int msre_op_gsbLookup_param_init(msre_rule *rule, char **error_msg) {
  * \retval 0 On No Match
  */
 static int msre_op_gsbLookup_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, char **error_msg) {
-    msc_regex_t *regex = (msc_regex_t *)rule->op_param_data;
+    void *regex = rule->op_param_data;
     char *my_error_msg = NULL;
     int ovector[33];
     unsigned int offset = 0;
@@ -1695,7 +1725,7 @@ static int msre_op_gsbLookup_execute(modsec_rec *msr, msre_rule *rule, msre_var 
 
     memcpy(data,var->value,var->value_len);
 
-    while (offset < size && (rv = msc_regexec_ex(regex, data, size, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg)) >= 0)
+    while (offset < size && (rv = msc_regex_regexec_ex(regex, data, size, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg)) >= 0)
     {
         for(i = 0; i < rv; ++i)
         {
@@ -2729,16 +2759,20 @@ static int luhn_verify(const char *ccnumber, int len) {
 static int msre_op_verifyCC_init(msre_rule *rule, char **error_msg) {
     const char *errptr = NULL;
     int erroffset;
-    msc_regex_t *regex;
+    void *regex;
 
     if (error_msg == NULL) return -1;
     *error_msg = NULL;
 
     /* Compile rule->op_param */
-    regex = msc_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
+    regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
-        *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
+        if (g_use_regex_integrator) {
+            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s",errptr);
+        } else {
+            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                 erroffset, errptr);
+        }
         return 0;
     }
 
@@ -2748,7 +2782,7 @@ static int msre_op_verifyCC_init(msre_rule *rule, char **error_msg) {
 }
 
 static int msre_op_verifyCC_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, char **error_msg) {
-    msc_regex_t *regex = (msc_regex_t *)rule->op_param_data;
+    void *regex = rule->op_param_data;
     const char *target;
     unsigned int target_length;
     char *my_error_msg = NULL;
@@ -2779,17 +2813,19 @@ static int msre_op_verifyCC_execute(modsec_rec *msr, msre_rule *rule, msre_var *
     #ifdef WITH_PCRE_STUDY
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
-        rc = msc_fullinfo(regex, PCRE_INFO_JIT, &jit);
-        if ((rc != 0) || (jit != 1)) {
-            *error_msg = apr_psprintf(rule->ruleset->mp,
-                    "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
-                    "Execution error - "
-                    "Does not support JIT (%d)",
-                    rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
-                            (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
-                    rule->filename != NULL ? rule->filename : "-",
-                    rule->line_num,rc);
-            msr_log(msr, 4, "%s.", *error_msg);
+        if (!g_use_regex_integrator) {
+            rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
+            if ((rc != 0) || (jit != 1)) {
+                *error_msg = apr_psprintf(rule->ruleset->mp,
+                        "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
+                        "Execution error - "
+                        "Does not support JIT (%d)",
+                        rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
+                                (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
+                        rule->filename != NULL ? rule->filename : "-",
+                        rule->line_num,rc);
+                msr_log(msr, 4, "%s.", *error_msg);
+            }
         }
     }
         #endif
@@ -2815,7 +2851,7 @@ static int msre_op_verifyCC_execute(modsec_rec *msr, msre_rule *rule, msre_var *
             }
         }
 
-        rc = msc_regexec_ex(regex, target, target_length, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg);
+        rc = msc_regex_regexec_ex(regex, target, target_length, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg);
 
         /* If there was no match, then we are done. */
         if (rc == PCRE_ERROR_NOMATCH) {
@@ -2916,7 +2952,7 @@ static int msre_op_verifyCC_execute(modsec_rec *msr, msre_rule *rule, msre_var *
 
         /* This message will be logged. */
         *error_msg = apr_psprintf(msr->mp, "CC# match \"%s\" at %s. [offset \"%d\"]",
-                regex->pattern, var->name, offset);
+                msc_regex_pattern(regex), var->name, offset);
 
         return 1;
     }
@@ -3025,16 +3061,20 @@ static int cpf_verify(const char *cpfnumber, int len) {
 static int msre_op_verifyCPF_init(msre_rule *rule, char **error_msg) {
     const char *errptr = NULL;
     int erroffset;
-    msc_regex_t *regex;
+    void *regex;
 
     if (error_msg == NULL) return -1;
     *error_msg = NULL;
 
     /* Compile rule->op_param */
-    regex = msc_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
+    regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
-        *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
+        if (g_use_regex_integrator) {
+            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);    
+        } else {
+            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                 erroffset, errptr);
+        }
         return 0;
     }
 
@@ -3056,7 +3096,7 @@ static int msre_op_verifyCPF_init(msre_rule *rule, char **error_msg) {
  * \retval 0 On No Match
  */
 static int msre_op_verifyCPF_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, char **error_msg) {
-    msc_regex_t *regex = (msc_regex_t *)rule->op_param_data;
+    void *regex = rule->op_param_data;
     const char *target;
     unsigned int target_length;
     char *my_error_msg = NULL;
@@ -3088,17 +3128,19 @@ static int msre_op_verifyCPF_execute(modsec_rec *msr, msre_rule *rule, msre_var 
     #ifdef WITH_PCRE_STUDY
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
-        rc = msc_fullinfo(regex, PCRE_INFO_JIT, &jit);
-        if ((rc != 0) || (jit != 1)) {
-            *error_msg = apr_psprintf(rule->ruleset->mp,
-                    "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
-                    "Execution error - "
-                    "Does not support JIT (%d)",
-                    rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
-                            (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
-                    rule->filename != NULL ? rule->filename : "-",
-                    rule->line_num,rc);
-            msr_log(msr, 4, "%s.", *error_msg);
+        if (!g_use_regex_integrator) {
+            rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
+            if ((rc != 0) || (jit != 1)) {
+                *error_msg = apr_psprintf(rule->ruleset->mp,
+                        "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
+                        "Execution error - "
+                        "Does not support JIT (%d)",
+                        rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
+                                (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
+                        rule->filename != NULL ? rule->filename : "-",
+                        rule->line_num,rc);
+                msr_log(msr, 4, "%s.", *error_msg);
+            }
         }
     }
         #endif
@@ -3123,7 +3165,7 @@ static int msre_op_verifyCPF_execute(modsec_rec *msr, msre_rule *rule, msre_var 
             }
         }
 
-        rc = msc_regexec_ex(regex, target, target_length, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg);
+        rc = msc_regex_regexec_ex(regex, target, target_length, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg);
 
         /* If there was no match, then we are done. */
         if (rc == PCRE_ERROR_NOMATCH) {
@@ -3223,7 +3265,7 @@ static int msre_op_verifyCPF_execute(modsec_rec *msr, msre_rule *rule, msre_var 
 
         /* This message will be logged. */
         *error_msg = apr_psprintf(msr->mp, "CPF# match \"%s\" at %s. [offset \"%d\"]",
-            regex->pattern, var->name, offset);
+            msc_regex_pattern(regex), var->name, offset);
 
         return 1;
     }
@@ -3317,16 +3359,20 @@ invalid:
 static int msre_op_verifySSN_init(msre_rule *rule, char **error_msg) {
     const char *errptr = NULL;
     int erroffset;
-    msc_regex_t *regex;
+    void *regex;
 
     if (error_msg == NULL) return -1;
     *error_msg = NULL;
 
     /* Compile rule->op_param */
-    regex = msc_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
+    regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
-        *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
-            erroffset, errptr);
+        if (g_use_regex_integrator) {
+            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
+        } else {
+            *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
+                erroffset, errptr);
+        }
         return 0;
     }
 
@@ -3348,7 +3394,7 @@ static int msre_op_verifySSN_init(msre_rule *rule, char **error_msg) {
 * \retval 0 On No Match
 */
 static int msre_op_verifySSN_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, char **error_msg) {
-    msc_regex_t *regex = (msc_regex_t *)rule->op_param_data;
+    void *regex = rule->op_param_data;
     const char *target;
     unsigned int target_length;
     char *my_error_msg = NULL;
@@ -3380,17 +3426,19 @@ static int msre_op_verifySSN_execute(modsec_rec *msr, msre_rule *rule, msre_var 
     #ifdef WITH_PCRE_STUDY
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
-        rc = msc_fullinfo(regex, PCRE_INFO_JIT, &jit);
-        if ((rc != 0) || (jit != 1)) {
-            *error_msg = apr_psprintf(rule->ruleset->mp,
-                    "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
-                    "Execution error - "
-                    "Does not support JIT (%d)",
-                    rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
-                            (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
-                    rule->filename != NULL ? rule->filename : "-",
-                    rule->line_num,rc);
-            msr_log(msr, 4, "%s.", *error_msg);
+        if (g_use_regex_integrator) {
+            rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
+            if ((rc != 0) || (jit != 1)) {
+                *error_msg = apr_psprintf(rule->ruleset->mp,
+                        "Rule %pp [id \"%s\"][file \"%s\"][line \"%d\"] - "
+                        "Execution error - "
+                        "Does not support JIT (%d)",
+                        rule,((rule->actionset != NULL)&&((rule->actionset->id != NULL)&&
+                                (rule->actionset->id != NOT_SET_P))) ? rule->actionset->id : "-",
+                        rule->filename != NULL ? rule->filename : "-",
+                        rule->line_num,rc);
+                msr_log(msr, 4, "%s.", *error_msg);
+            }
         }
     }
         #endif
@@ -3415,7 +3463,7 @@ static int msre_op_verifySSN_execute(modsec_rec *msr, msre_rule *rule, msre_var 
             }
         }
 
-        rc = msc_regexec_ex(regex, target, target_length, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg);
+        rc = msc_regex_regexec_ex(regex, target, target_length, offset, PCRE_NOTEMPTY, ovector, 30, &my_error_msg);
 
         /* If there was no match, then we are done. */
         if (rc == PCRE_ERROR_NOMATCH) {
@@ -3515,7 +3563,7 @@ static int msre_op_verifySSN_execute(modsec_rec *msr, msre_rule *rule, msre_var 
 
         /* This message will be logged. */
         *error_msg = apr_psprintf(msr->mp, "SSN# match \"%s\" at %s. [offset \"%d\"]",
-            regex->pattern, var->name, offset);
+            msc_regex_pattern(regex), var->name, offset);
 
         return 1;
     }

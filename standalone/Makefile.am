@@ -45,7 +45,9 @@ standalone_la_SOURCES = ../apache2/acmp.c \
     filters.c \
     hooks.c \
     regex.c \
-    server.c
+    server.c \
+    ../apache2/msc_ri.c \
+    ../apache2/msc_regex.c
 
     # FIXME: Standalone does not mean that it will be a nginx build.
 standalone_la_CFLAGS = -DVERSION_NGINX \

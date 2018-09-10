@@ -269,7 +269,7 @@ struct msre_var {
     char                    *param;
     const void              *param_data;
     msre_var_metadata       *metadata;
-    msc_regex_t             *param_regex;
+    void             *param_regex;
     unsigned int             is_negated;
     unsigned int             is_counting;
 };

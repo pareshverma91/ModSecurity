@@ -214,7 +214,7 @@ static void copy_rules_phase(apr_pool_t *mp,
                         if ((rule->actionset != NULL)&&(rule->actionset->msg != NULL)) {
                             char *my_error_msg = NULL;
 
-                            int rc = msc_regexec(exceptions[j]->param_data,
+                            int rc = msc_regex_regexec(exceptions[j]->param_data,
                                     rule->actionset->msg, strlen(rule->actionset->msg),
                                     &my_error_msg);
                             if (rc >= 0) copy--;
@@ -234,7 +234,7 @@ static void copy_rules_phase(apr_pool_t *mp,
                                 msre_action *action = (msre_action *)telts[c].val;
                                 if(strcmp("tag", action->metadata->name) == 0)  {
 
-                                    int rc = msc_regexec(exceptions[j]->param_data,
+                                    int rc = msc_regex_regexec(exceptions[j]->param_data,
                                             action->param, strlen(action->param),
                                             &my_error_msg);
                                     if (rc >= 0) copy--;
@@ -1367,7 +1367,7 @@ static const char *cmd_audit_log_relevant_status(cmd_parms *cmd, void *_dcfg,
 {
     directory_config *dcfg = _dcfg;
 
-    dcfg->auditlog_relevant_regex = msc_pregcomp(cmd->pool, p1, PCRE_DOTALL, NULL, NULL);
+    dcfg->auditlog_relevant_regex = msc_regex_pregcomp(cmd->pool, p1, PCRE_DOTALL, NULL, NULL);
     if (dcfg->auditlog_relevant_regex == NULL) {
         return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p1);
     }
@@ -2247,7 +2247,7 @@ static const char *cmd_rule_update_target_by_tag(cmd_parms *cmd, void *_dcfg,
 
     re->type = RULE_EXCEPTION_REMOVE_TAG;
     re->param = p1;
-    re->param_data = msc_pregcomp(cmd->pool, p1, 0, NULL, NULL);
+    re->param_data = msc_regex_pregcomp(cmd->pool, p1, 0, NULL, NULL);
     if (re->param_data == NULL) {
         return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p1);
     }
@@ -2282,7 +2282,7 @@ static const char *cmd_rule_update_target_by_msg(cmd_parms *cmd, void *_dcfg,
 
     re->type = RULE_EXCEPTION_REMOVE_MSG;
     re->param = p1;
-    re->param_data = msc_pregcomp(cmd->pool, p1, 0, NULL, NULL);
+    re->param_data = msc_regex_pregcomp(cmd->pool, p1, 0, NULL, NULL);
     if (re->param_data == NULL) {
         return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p1);
     }
@@ -2521,7 +2521,7 @@ static const char *cmd_rule_remove_by_tag(cmd_parms *cmd, void *_dcfg,
 
     re->type = RULE_EXCEPTION_REMOVE_TAG;
     re->param = p1;
-    re->param_data = msc_pregcomp(cmd->pool, p1, 0, NULL, NULL);
+    re->param_data = msc_regex_pregcomp(cmd->pool, p1, 0, NULL, NULL);
     if (re->param_data == NULL) {
         return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p1);
     }
@@ -2546,7 +2546,7 @@ static const char *cmd_rule_remove_by_msg(cmd_parms *cmd, void *_dcfg,
 
     re->type = RULE_EXCEPTION_REMOVE_MSG;
     re->param = p1;
-    re->param_data = msc_pregcomp(cmd->pool, p1, 0, NULL, NULL);
+    re->param_data = msc_regex_pregcomp(cmd->pool, p1, 0, NULL, NULL);
     if (re->param_data == NULL) {
         return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p1);
     }
@@ -2953,7 +2953,7 @@ static const char *cmd_hash_method_rx(cmd_parms *cmd, void *_dcfg,
     if (strcasecmp(p1, "HashHref") == 0) {
         re->type = HASH_URL_HREF_HASH_RX;
         re->param = _p2;
-        re->param_data = msc_pregcomp(cmd->pool, p2, 0, NULL, NULL);
+        re->param_data = msc_regex_pregcomp(cmd->pool, p2, 0, NULL, NULL);
         if (re->param_data == NULL) {
             return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p2);
         }
@@ -2962,7 +2962,7 @@ static const char *cmd_hash_method_rx(cmd_parms *cmd, void *_dcfg,
     else if (strcasecmp(p1, "HashFormAction") == 0) {
         re->type = HASH_URL_FACTION_HASH_RX;
         re->param = _p2;
-        re->param_data = msc_pregcomp(cmd->pool, p2, 0, NULL, NULL);
+        re->param_data = msc_regex_pregcomp(cmd->pool, p2, 0, NULL, NULL);
         if (re->param_data == NULL) {
             return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p2);
         }
@@ -2971,7 +2971,7 @@ static const char *cmd_hash_method_rx(cmd_parms *cmd, void *_dcfg,
     else if (strcasecmp(p1, "HashLocation") == 0) {
         re->type = HASH_URL_LOCATION_HASH_RX;
         re->param = _p2;
-        re->param_data = msc_pregcomp(cmd->pool, p2, 0, NULL, NULL);
+        re->param_data = msc_regex_pregcomp(cmd->pool, p2, 0, NULL, NULL);
         if (re->param_data == NULL) {
             return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p2);
         }
@@ -2980,7 +2980,7 @@ static const char *cmd_hash_method_rx(cmd_parms *cmd, void *_dcfg,
     else if (strcasecmp(p1, "HashIframeSrc") == 0) {
         re->type = HASH_URL_IFRAMESRC_HASH_RX;
         re->param = _p2;
-        re->param_data = msc_pregcomp(cmd->pool, p2, 0, NULL, NULL);
+        re->param_data = msc_regex_pregcomp(cmd->pool, p2, 0, NULL, NULL);
         if (re->param_data == NULL) {
             return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p2);
         }
@@ -2989,7 +2989,7 @@ static const char *cmd_hash_method_rx(cmd_parms *cmd, void *_dcfg,
     else if (strcasecmp(p1, "HashFrameSrc") == 0) {
         re->type = HASH_URL_FRAMESRC_HASH_RX;
         re->param = _p2;
-        re->param_data = msc_pregcomp(cmd->pool, p2, 0, NULL, NULL);
+        re->param_data = msc_regex_pregcomp(cmd->pool, p2, 0, NULL, NULL);
         if (re->param_data == NULL) {
             return apr_psprintf(cmd->pool, "ModSecurity: Invalid regular expression: %s", p2);
         }
@@ -3270,6 +3270,18 @@ static const char *cmd_cache_transformations(cmd_parms *cmd, void *_dcfg,
     return NULL;
 }
 
+/* Enable regex integrator */
+static const char *cmd_regex_integrator(cmd_parms *cmd, void *_dcfg, const char *p1) {
+    extern unsigned int g_use_regex_integrator;
+    if (strncasecmp(p1, "on", 2) == 0) {
+        g_use_regex_integrator = 1;
+    } else if (strncasecmp(p1, "off", 3) == 0) {
+        g_use_regex_integrator = 0;
+    } else {
+        return "Error paramenter to SecRegexIntegrator.";
+    }
+    return NULL;
+}
 
 /* -- Configuration directives definitions -- */
 
@@ -4053,5 +4065,12 @@ const command_rec module_directives[] = {
         "Set waf lock owner"
     ),
 #endif
+    AP_INIT_TAKE1 (
+        "SecRegexIntegrator",
+        cmd_regex_integrator,
+        NULL,
+        CMD_SCOPE_ANY,
+        "On or Off"
+    ),
     { NULL }
 };

@@ -543,7 +543,7 @@ int msre_ruleset_rule_matches_exception(msre_rule *rule, rule_exception *re)   {
                 if ((rule->actionset != NULL)&&(rule->actionset->msg != NULL)) {
                     char *my_error_msg = NULL;
 
-                    int rc = msc_regexec(re->param_data,
+                    int rc = msc_regex_regexec(re->param_data,
                             rule->actionset->msg, strlen(rule->actionset->msg),
                             &my_error_msg);
                     if (rc >= 0) {
@@ -566,7 +566,7 @@ int msre_ruleset_rule_matches_exception(msre_rule *rule, rule_exception *re)   {
                         msre_action *action = (msre_action *)telts[act].val;
                         if((action != NULL) && (action->metadata != NULL) && (strcmp("tag", action->metadata->name) == 0))  {
 
-                            int rc = msc_regexec(re->param_data,
+                            int rc = msc_regex_regexec(re->param_data,
                                     action->param, strlen(action->param),
                                     &my_error_msg);
                             if (rc >= 0)    {
@@ -1650,7 +1650,7 @@ static apr_status_t msre_ruleset_process_phase_(msre_ruleset *ruleset, modsec_re
                         msr_log(msr, 9, "Checking removal of rule msg=\"%s\" against: %s", rule->actionset->msg, re->param);
                     }
 
-                    rc = msc_regexec(re->param_data,
+                    rc = msc_regex_regexec(re->param_data,
                             rule->actionset->msg, strlen(rule->actionset->msg),
                             &my_error_msg);
                     if (rc >= 0)    {
@@ -1700,7 +1700,7 @@ static apr_status_t msre_ruleset_process_phase_(msre_ruleset *ruleset, modsec_re
                                 msr_log(msr, 9, "Checking removal of rule tag=\"%s\" against: %s", var->value, re->param);
                             }
 
-                            rc = msc_regexec(re->param_data,
+                            rc = msc_regex_regexec(re->param_data,
                                     var->value, strlen(var->value),
                                     &my_error_msg);
                             if (rc >= 0)    {
@@ -2099,7 +2099,7 @@ static int msre_ruleset_phase_rule_remove_with_exception(msre_ruleset *ruleset, 
                         if ((rule->actionset != NULL)&&(rule->actionset->msg != NULL)) {
                             char *my_error_msg = NULL;
 
-                            int rc = msc_regexec(re->param_data,
+                            int rc = msc_regex_regexec(re->param_data,
                                     rule->actionset->msg, strlen(rule->actionset->msg),
                                     &my_error_msg);
                             if (rc >= 0) {
@@ -2122,7 +2122,7 @@ static int msre_ruleset_phase_rule_remove_with_exception(msre_ruleset *ruleset, 
                                 msre_action *action = (msre_action *)telts[act].val;
                                 if((action != NULL) && (action->metadata != NULL) && (strcmp("tag", action->metadata->name) == 0))  {
 
-                                    int rc = msc_regexec(re->param_data,
+                                    int rc = msc_regex_regexec(re->param_data,
                                             action->param, strlen(action->param),
                                             &my_error_msg);
                                     if (rc >= 0)    {

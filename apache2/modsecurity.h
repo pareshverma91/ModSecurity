@@ -37,6 +37,7 @@ typedef struct msc_parm msc_parm;
 #include "msc_logging.h"
 #include "msc_multipart.h"
 #include "msc_pcre.h"
+#include "msc_regex.h"
 #include "msc_util.h"
 #include "msc_json.h"
 #include "msc_xml.h"
@@ -575,7 +576,7 @@ struct directory_config {
     /* A regular expression that determines if a response
      * status is treated as relevant.
      */
-    msc_regex_t         *auditlog_relevant_regex;
+    void         *auditlog_relevant_regex;
 
     /* Upload */
     const char          *tmp_dir;
