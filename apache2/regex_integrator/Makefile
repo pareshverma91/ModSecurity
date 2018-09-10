@@ -1,3 +1,8 @@
+
+PREFIX = /usr/local
+HEADER_DEST = $(PREFIX)/include/regex_integrator
+LIB_DEST = $(PREFIX)/lib
+
 3RD = 3rd
 RE2_SITE = https://github.com/google/re2.git
 RE2_DIR = $(3RD)/re2
@@ -17,15 +22,9 @@ TARGET = bin/libregex_integrator.so
 OBJS = objs/ri_pcre.o objs/ri_re2.o objs/ri_api.o
 
 # initialize enviroment
-ifeq ($(wildcard $(3RD)), )
-$(shell mkdir $(3RD))
-endif
-ifeq ($(wildcard objs), )
-$(shell mkdir objs)
-endif
-ifeq ($(wildcard bin), )
-$(shell mkdir bin)
-endif
+$(shell mkdir -p $(3RD))
+$(shell mkdir -p objs)
+$(shell mkdir -p bin)
 
 all: build_pcre build_re2 $(TARGET) test
 
@@ -60,6 +59,12 @@ test: tester.cpp
 	$(CXX) $(CXXFLAGS) $(CINCLUDES) $(CXXINCLUDES) $< $(shell pwd)/$(TARGET) -Wl,-rpath=$(shell pwd)/bin -o bin/$@
 	@bin/$@
 	@echo 'Test Success'
+
+install:
+	mkdir -p $(HEADER_DEST)
+	install ri_api.h $(HEADER_DEST)
+	install $(TARGET) $(LIB_DEST)
+	ldconfig
 
 clean:
 	rm -rf objs

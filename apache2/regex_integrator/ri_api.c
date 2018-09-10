@@ -396,7 +396,7 @@ static int ri_update_priority(struct ri_priority * priority_dst,
                 return error_code;
         } else {
             // Use the setting of users
-            *priority_dst = *priority_dst;
+            *priority_dst = *priority_src;
         }
     } else {
         // Use default setting
