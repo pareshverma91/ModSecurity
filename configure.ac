@@ -615,6 +615,22 @@ AC_ARG_ENABLE(waf_json_logging,
 # Always Enable json waf logging support
 waf_lock="-I"`pwd`"/apache2/waf_lock"
 
+# Enable regex integrator support
+AC_ARG_ENABLE(regex_integrator,
+              AS_HELP_STRING([--enable-regex_integrator],
+                             [Enable library regex integrator (no is disable, other is enable).]),
+[
+  if test "$enableval" != "no"; then
+    regex_integrator="-I"`pwd`"/apache2/ag_mdb -DREGEX_INTEGRATOR"
+    MODSEC_EXTRA_CFLAGS="$MODSEC_EXTRA_CFLAGS $regex_integrator"
+  else
+    regex_integrator=""
+  fi
+],
+[
+  regex_integrator=""
+])
+
 # Ignore configure errors
 AC_ARG_ENABLE(errors,
               AS_HELP_STRING([--disable-errors],
@@ -881,7 +897,7 @@ else
   fi
 fi
 
-MODSEC_EXTRA_CFLAGS="$pcre_study $pcre_match_limit $pcre_match_limit_recursion $pcre_jit $request_early $htaccess_config $lua_cache $debug_conf $debug_cache $debug_acmp $debug_mem $perf_meas $modsec_api $cpu_type $unique_id $log_filename $log_server $log_collection_delete_problem $log_dechunk $log_stopwatch $log_handler $log_server_context $collection_global_lock $large_stream_input $collection_memory_database $waf_json_logging $waf_lock"
+MODSEC_EXTRA_CFLAGS="$pcre_study $pcre_match_limit $pcre_match_limit_recursion $pcre_jit $request_early $htaccess_config $lua_cache $debug_conf $debug_cache $debug_acmp $debug_mem $perf_meas $modsec_api $cpu_type $unique_id $log_filename $log_server $log_collection_delete_problem $log_dechunk $log_stopwatch $log_handler $log_server_context $collection_global_lock $large_stream_input $collection_memory_database $waf_json_logging $waf_lock $regex_integrator"
 
 APXS_WRAPPER=build/apxs-wrapper
 APXS_EXTRA_CFLAGS=""

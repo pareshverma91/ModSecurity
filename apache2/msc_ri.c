@@ -1,6 +1,8 @@
 /* Copyright (c) Microsoft Corporation. All rights reserved.
    Licensed under the MIT License. */
 
+#ifdef REGEX_INTEGRATOR
+
 #include "msc_ri.h"
 
 
@@ -129,3 +131,4 @@ int msc_ri_regexec(msc_ri_regex_t * regex, const char *s, unsigned int slen,
     return msc_ri_regexec_ex(regex, s, slen, 0, 0, NULL, 0, error_msg);
 }
 
+#endif

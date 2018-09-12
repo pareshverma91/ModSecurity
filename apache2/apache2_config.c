@@ -3270,6 +3270,8 @@ static const char *cmd_cache_transformations(cmd_parms *cmd, void *_dcfg,
     return NULL;
 }
 
+#ifdef REGEX_INTEGRATOR
+
 /* Enable regex integrator */
 static const char *cmd_regex_integrator(cmd_parms *cmd, void *_dcfg, const char *p1) {
     extern unsigned int g_use_regex_integrator;
@@ -3282,6 +3284,8 @@ static const char *cmd_regex_integrator(cmd_parms *cmd, void *_dcfg, const char 
     }
     return NULL;
 }
+
+#endif
 
 /* -- Configuration directives definitions -- */
 
@@ -4065,6 +4069,9 @@ const command_rec module_directives[] = {
         "Set waf lock owner"
     ),
 #endif
+
+#ifdef REGEX_INTEGRATOR
+
     AP_INIT_TAKE1 (
         "SecRegexIntegrator",
         cmd_regex_integrator,
@@ -4072,5 +4079,8 @@ const command_rec module_directives[] = {
         CMD_SCOPE_ANY,
         "On or Off"
     ),
+
+#endif
+
     { NULL }
 };

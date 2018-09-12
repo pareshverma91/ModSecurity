@@ -4,11 +4,12 @@
 #ifndef _MSC_RI_H_
 #define _MSC_RI_H_
 
+#ifdef REGEX_INTEGRATOR
+
 typedef struct msc_ri_regex_t msc_ri_regex_t;
 
 #include "apr_general.h"
 #include "modsecurity.h"
-
 
 #include <regex_integrator/ri_api.h>
 
@@ -41,5 +42,7 @@ int msc_ri_regexec_capture(msc_ri_regex_t * regex, const char *s,
 /* Executes regular expression but ignores any of the subexpression captures. */
 int msc_ri_regexec(msc_ri_regex_t * regex, const char *s,
         unsigned int slen, char **error_msg);
+
+#endif
 
 #endif

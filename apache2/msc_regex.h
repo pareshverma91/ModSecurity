@@ -5,9 +5,14 @@
 #define _MSC_REGEX_H_
 
 #include "msc_pcre.h"
+
+#ifdef REGEX_INTEGRATOR
+
 #include "msc_ri.h"
 
 extern unsigned int g_use_regex_integrator;
+
+#endif
 
 /* Compiles the provided regular expression pattern. */
 void * msc_regex_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,

@@ -698,9 +698,12 @@ static int msre_op_validateHash_param_init(msre_rule *rule, char **error_msg) {
     if(strstr(pattern,"%{") == NULL) {
         regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern,0, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion) ;
         if (regex == NULL) {
+#ifdef REGEX_INTEGRATOR
             if (g_use_regex_integrator) {
                 *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern: %s", errptr);
-            } else {
+            } else 
+#endif
+            {
                 *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                     erroffset, errptr);
             }
@@ -709,7 +712,11 @@ static int msre_op_validateHash_param_init(msre_rule *rule, char **error_msg) {
 
         #ifdef WITH_PCRE_STUDY
             #ifdef WITH_PCRE_JIT
-        if (!g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+        if (!g_use_regex_integrator) 
+#endif
+        {
+
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
             if ((rc != 0) || (jit != 1)) {
                 *error_msg = apr_psprintf(rule->ruleset->mp,
@@ -794,9 +801,12 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
             regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, 
                     &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
             if (regex == NULL) {
+#ifdef REGEX_INTEGRATOR
                 if (g_use_regex_integrator) {
                     *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
-                } else {
+                } else 
+#endif
+                {
                     *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                         erroffset, errptr);
                 }
@@ -806,7 +816,10 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
             #ifdef WITH_PCRE_STUDY
                 #ifdef WITH_PCRE_JIT
             if (msr->txcfg->debuglog_level >= 4) {
-                if (!g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+                if (!g_use_regex_integrator) 
+#endif
+                {
                     rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
                     if ((rc != 0) || (jit != 1)) {
                         *error_msg = apr_psprintf(rule->ruleset->mp,
@@ -842,7 +855,7 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
      * and no memory has to be allocated for any backreferences.
      */
     
-    rc = msc_regex_regexec_capture((msc_ri_regex_t *)regex, target, target_length, ovector, 30, &my_error_msg);
+    rc = msc_regex_regexec_capture(regex, target, target_length, ovector, 30, &my_error_msg);
     if ((rc == PCRE_ERROR_MATCHLIMIT) || (rc == PCRE_ERROR_RECURSIONLIMIT)) {
         msc_string *s = (msc_string *)apr_pcalloc(msr->mp, sizeof(msc_string));
 
@@ -955,9 +968,13 @@ static int msre_op_rx_param_init(msre_rule *rule, char **error_msg) {
     if(strstr(pattern,"%{") == NULL)    {
         regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
         if (regex == NULL) {
-            if (g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+            if (g_use_regex_integrator) 
+            {
                 *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
-            } else {
+            } else 
+#endif
+            {
                 *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                     erroffset, errptr);
             }
@@ -966,7 +983,10 @@ static int msre_op_rx_param_init(msre_rule *rule, char **error_msg) {
 
         #ifdef WITH_PCRE_STUDY
             #ifdef WITH_PCRE_JIT
-        if (!g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+        if (!g_use_regex_integrator) 
+#endif
+        {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
             if ((rc != 0) || (jit != 1)) {
                 *error_msg = apr_psprintf(rule->ruleset->mp,
@@ -1042,9 +1062,12 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
             regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
 
             if (regex == NULL) {
+#ifdef REGEX_INTEGRATOR
                 if (g_use_regex_integrator) {
                     *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
-                } else {
+                } else 
+#endif
+                {
                     *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                         erroffset, errptr);
                 }
@@ -1054,7 +1077,10 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
             #ifdef WITH_PCRE_STUDY
                 #ifdef WITH_PCRE_JIT
             if (msr->txcfg->debuglog_level >= 4) {
-                if (!g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+                if (!g_use_regex_integrator) 
+#endif
+                {
                     rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
                     if ((rc != 0) || (jit != 1)) {
                         *error_msg = apr_psprintf(rule->ruleset->mp,
@@ -1100,7 +1126,10 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
 
     /* Show when the regex captures but "capture" is not set */
     if (msr->txcfg->debuglog_level >= 6) {
-        if (! g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+        if (! g_use_regex_integrator) 
+#endif
+        {
             int capcount = 0;
             rc = msc_regex_fullinfo(regex, PCRE_INFO_CAPTURECOUNT, &capcount);
             if (msr->txcfg->debuglog_level >= 6) {
@@ -2767,9 +2796,12 @@ static int msre_op_verifyCC_init(msre_rule *rule, char **error_msg) {
     /* Compile rule->op_param */
     regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
+#ifdef REGEX_INTEGRATOR
         if (g_use_regex_integrator) {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s",errptr);
-        } else {
+        } else 
+#endif
+        {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                 erroffset, errptr);
         }
@@ -2813,7 +2845,10 @@ static int msre_op_verifyCC_execute(modsec_rec *msr, msre_rule *rule, msre_var *
     #ifdef WITH_PCRE_STUDY
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
-        if (!g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+        if (!g_use_regex_integrator) 
+#endif
+        {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
             if ((rc != 0) || (jit != 1)) {
                 *error_msg = apr_psprintf(rule->ruleset->mp,
@@ -3069,9 +3104,12 @@ static int msre_op_verifyCPF_init(msre_rule *rule, char **error_msg) {
     /* Compile rule->op_param */
     regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
+#ifdef REGEX_INTEGRATOR
         if (g_use_regex_integrator) {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);    
-        } else {
+        } else 
+#endif
+        {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                 erroffset, errptr);
         }
@@ -3128,7 +3166,10 @@ static int msre_op_verifyCPF_execute(modsec_rec *msr, msre_rule *rule, msre_var 
     #ifdef WITH_PCRE_STUDY
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
-        if (!g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+        if (!g_use_regex_integrator) 
+#endif
+        {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
             if ((rc != 0) || (jit != 1)) {
                 *error_msg = apr_psprintf(rule->ruleset->mp,
@@ -3367,9 +3408,12 @@ static int msre_op_verifySSN_init(msre_rule *rule, char **error_msg) {
     /* Compile rule->op_param */
     regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
+#ifdef REGEX_INTEGRATOR
         if (g_use_regex_integrator) {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
-        } else {
+        } else 
+#endif
+        {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern (offset %d): %s",
                 erroffset, errptr);
         }
@@ -3426,7 +3470,10 @@ static int msre_op_verifySSN_execute(modsec_rec *msr, msre_rule *rule, msre_var 
     #ifdef WITH_PCRE_STUDY
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
-        if (g_use_regex_integrator) {
+#ifdef REGEX_INTEGRATOR
+        if (g_use_regex_integrator) 
+#endif
+        {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
             if ((rc != 0) || (jit != 1)) {
                 *error_msg = apr_psprintf(rule->ruleset->mp,
