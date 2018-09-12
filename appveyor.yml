@@ -5,6 +5,7 @@ install:
 
 build_script:
 #- cmd: ./build_release_amd64.bat
+- cmd: echo "alon test"
 
 after_build:
 - ps: |
