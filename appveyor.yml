@@ -3,6 +3,7 @@ install:
 - ps: getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
 
 build_script:
+- cmd: cd iis
 - cmd: ./build_release_amd64.bat
 
 after_build:
