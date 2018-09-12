@@ -4,10 +4,10 @@ install:
 - ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
 
 build_script:
-- cmd: ./build_release_amd64.bat
+#- cmd: ./build_release_amd64.bat
 
 after_build:
-- ps: >-
+- ps: |
     Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
     Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
     Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
