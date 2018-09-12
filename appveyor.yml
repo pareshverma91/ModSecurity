@@ -2,14 +2,13 @@ version: 1.0.{build}
 install:
 - cmd: cd iis
 - ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
-- cmd: echo "alon test - install"
 
 before_build:
-- cmd: echo "alon test - before build"
 - ps: |
     & {iisreset /start}
     curl http://localhost/
     curl http://google.com
+    Get-WebBinding -Name "Default Web Site"
 #    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
 #    $Res
 
@@ -38,7 +37,6 @@ test_script:
 - cmd: echo "alon test"
 - ps: |
     & {iisreset /status}
-    curl http://localhost/
     curl http://localhost/
   
   
