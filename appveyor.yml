@@ -1,11 +1,11 @@
 version: 1.0.{build}
 install:
 - cmd: cd iis
-#- ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
+- ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
 - cmd: echo "alon test - install"
 
 build_script:
-#- cmd: ./build_release_amd64.bat
+- cmd: ./build_release_amd64.bat
 - cmd: echo "alon test - build"
 
 after_build:
