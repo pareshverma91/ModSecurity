@@ -15,16 +15,18 @@ after_build:
     Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
     Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
     Start-Process msiexec.exe -Wait -ArgumentList '/I ModSecurityIIS_2.9.1-RC1-64b.msi /passive'
-    #TODO - copy ModSecurityIIS.dll from the repo to the correct location
     # remove not wanted modules
     C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
     C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
     # configure globale ModSecurity
-    C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\Program Files (x86)\ModSecurity IIS\inetsrv\ModSecurityIIS.dll"
-    C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\Program Files\ModSecurity IIS\inetsrv\ModSecurityIIS.dll"
+    C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"ModSecurityIIS.dll"
     # enable sites
-    C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files (x86)\ModSecurity IIS\modsecurity_iis.conf"
     C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
+    #restart iis
+    & {iisreset}
+    # test getting info
+    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
+    $Res
     
     
 notifications:
