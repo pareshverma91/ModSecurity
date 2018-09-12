@@ -25,7 +25,7 @@ void * msc_regex_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,
 }
 
 /**
- * Compiles the provided regular expression pattern.  Calls msc_pregcomp_ex()
+ * Compiles the provided regular expression pattern.  Calls msc_regex_pregcomp_ex()
  * with default limits.
  */
 void * msc_regex_pregcomp(apr_pool_t *pool, const char *pattern, int options,

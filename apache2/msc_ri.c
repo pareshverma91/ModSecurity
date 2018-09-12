@@ -71,7 +71,7 @@ msc_ri_regex_t * msc_ri_pregcomp_ex(apr_pool_t *pool, const char *pattern, int o
 }
 
 /**
- * Compiles the provided regular expression pattern.  Calls msc_pregcomp_ex()
+ * Compiles the provided regular expression pattern.  Calls msc_ri_pregcomp_ex()
  * with default limits.
  */
 msc_ri_regex_t * msc_ri_pregcomp(apr_pool_t *pool, const char *pattern, int options,

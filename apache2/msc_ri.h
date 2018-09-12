@@ -23,7 +23,7 @@ extern unsigned int g_use_regex_integrator;
 msc_ri_regex_t * msc_ri_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,
         const char **_errptr, int match_limit, int match_limit_recursion);
 
-/* Compiles the provided regular expression pattern.  Calls msc_pregcomp_ex()
+/* Compiles the provided regular expression pattern.  Calls msc_ri_pregcomp_ex()
  * with default limits. */
 msc_ri_regex_t * msc_ri_pregcomp(apr_pool_t *pool, const char *pattern, int options,
         const char **_errptr);
