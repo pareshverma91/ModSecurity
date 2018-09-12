@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 
 PREFIX = /usr/local
 HEADER_DEST = $(PREFIX)/include/regex_integrator
