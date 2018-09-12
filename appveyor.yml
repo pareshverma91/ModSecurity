@@ -11,6 +11,8 @@ before_build:
     Get-WebBinding -Name "Default Web Site"
     ping localhost
     Get-NetIPAddress
+    curl http://127.0.0.1/
+    curl http://localhost/
 #    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
 #    $Res
 
