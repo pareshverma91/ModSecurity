@@ -10,7 +10,8 @@ before_build:
     & {iisreset /start}
 #    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
 #    $Res
-#    curl http://localhost/
+    curl http://localhost/
+    curl http://google.com
 
 build_script:
 - cmd: ./build_release_amd64.bat
