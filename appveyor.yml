@@ -1,19 +1,32 @@
 version: 1.0.{build}
 install:
 - cmd: cd iis
-- ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
+#- ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
+- cmd: echo "alon test - install"
 
 build_script:
 #- cmd: ./build_release_amd64.bat
-- cmd: echo "alon test"
+- cmd: echo "alon test - build"
 
 after_build:
 - ps: |
+    # copy the required pkgs from the ModSecurity blob and install them (c++ & ModSecurity)
     Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
     Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
     Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
     Start-Process msiexec.exe -Wait -ArgumentList '/I ModSecurityIIS_2.9.1-RC1-64b.msi /passive'
-
+    #TODO - copy ModSecurityIIS.dll from the repo to the correct location
+    # remove not wanted modules
+    C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
+    C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
+    # configure globale ModSecurity
+    C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\Program Files (x86)\ModSecurity IIS\inetsrv\ModSecurityIIS.dll"
+    C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\Program Files\ModSecurity IIS\inetsrv\ModSecurityIIS.dll"
+    # enable sites
+    C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files (x86)\ModSecurity IIS\modsecurity_iis.conf"
+    C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
+    
+    
 notifications:
 - provider: GitHubPullRequest
   on_build_success: true
