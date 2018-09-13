@@ -8,7 +8,9 @@ before_build:
     & {iisreset /start}
     curl http://google.com
     Get-WebBinding -Name "Default Web Site"
+    Install-WindowsFeature web-mgmt-console
     Get-IISSite
+    Get-IISAppPool   
     curl http://127.0.0.1/
 #    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
 #    $Res
