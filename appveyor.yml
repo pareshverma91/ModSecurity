@@ -1,4 +1,8 @@
 version: 1.0.{build}
+
+services:
+  - iis                 # start IIS
+  
 install:
 - cmd: cd iis
 - ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
