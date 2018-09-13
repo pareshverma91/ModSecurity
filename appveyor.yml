@@ -12,6 +12,10 @@ before_build:
     $ENV:PROCESSOR_ARCHITECTURE
     try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
     $Res
+    #restart iis
+    & {iisreset}
+    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
+    $Res
 
 build_script:
 - cmd: ./build_release_amd64.bat
