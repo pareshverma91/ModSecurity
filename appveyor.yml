@@ -14,6 +14,7 @@ before_build:
     $Res
     #restart iis
     & {iisreset}
+    Start-Sleep -s 10
     try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value__ }
     $Res
 
