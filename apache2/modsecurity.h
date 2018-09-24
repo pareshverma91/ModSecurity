@@ -173,8 +173,10 @@ extern DSOLOCAL char *msc_waf_resourceId;
 extern DSOLOCAL char *msc_waf_instanceId;
 #endif
 
+#ifndef _WIN32
 extern DSOLOCAL char *msc_waf_lock_user;
 extern DSOLOCAL char *msc_waf_lock_group;
+#endif
 
 #define AUDITLOG_LOCK_ID                1
 #define WAFJSONLOG_LOCK_ID              2

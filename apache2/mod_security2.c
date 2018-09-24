@@ -97,8 +97,10 @@ char DSOLOCAL *msc_waf_resourceId = NULL;
 char DSOLOCAL *msc_waf_instanceId = NULL;
 #endif
 
+#ifndef _WIN32
 char DSOLOCAL *msc_waf_lock_user;
 char DSOLOCAL *msc_waf_lock_group;
+#endif
 
 #if defined(WIN32) || defined(VERSION_NGINX)
 int (*modsecDropAction)(request_rec *r) = NULL;

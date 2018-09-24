@@ -1202,6 +1202,7 @@ static const char *cmd_waf_instanceId(cmd_parms *cmd,
 }
 #endif
 
+#ifndef _WIN32
 static const char *cmd_waf_lock_user(cmd_parms *cmd,
         void *_dcfg, const char *p1)
 {
@@ -1227,6 +1228,7 @@ static const char *cmd_waf_lock_group(cmd_parms *cmd,
 
     return NULL;
 }
+#endif
 
 static const char *cmd_action(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
@@ -4059,19 +4061,21 @@ const command_rec module_directives[] = {
         "Set waf instanceId"
     ),
 #endif
+#ifndef _WIN32
     AP_INIT_TAKE1 (
         "SecWafLockUser",
         cmd_waf_lock_user,
         NULL,
         CMD_SCOPE_ANY,
-        "Set waf lock owner"
+        "Set waf lock user"
     ),
     AP_INIT_TAKE1 (
         "SecWafLockGroup",
         cmd_waf_lock_group,
         NULL,
         CMD_SCOPE_ANY,
-        "Set waf lock owner"
+        "Set waf lock group"
     ),
+#endif
     { NULL }
 };
