@@ -10,7 +10,7 @@ LIB_DEST?=$(PREFIX)/lib
 BIN_DIR?=$(BASEPATH)/bin
 OBJ_DIR=$(BASEPATH)/objs
 
-TARGET?=$(BIN_DIR)/libregex_integrator.a
+TARGET?=$(BIN_DIR)/libregex_integrator.so
 HEADER_API?=$(BASEPATH)/ri_api.h
 
 OBJS=$(OBJ_DIR)/ri_pcre.o $(OBJ_DIR)/ri_re2.o $(OBJ_DIR)/ri_api.o
@@ -33,8 +33,8 @@ CC?=gcc
 CXX?=g++
 CINCLUDES?=-I$(PCRE_DIR)
 CXXINCLUDES=-I$(RE2_DIR) 
-CFLAGS?=-g -O3 -Wall -Werror -std=c99
-CXXFLAGS?=-g -O3 -Wall -Werror -std=c++11
+CFLAGS?= -fPIC -g -O3 -Wall -Werror -std=c99
+CXXFLAGS?= -fPIC -g -O3 -Wall -Werror -std=c++11
 LIBS?=-pthread
 
 CLEAN_OBJS?=$(BIN_DIR) $(OBJ_DIR)
@@ -50,7 +50,7 @@ build_pcre:
 ifeq ($(wildcard $(PCRE_DIR)), )
 	@cd $(3RD) && wget $(PCRE_SITE)
 	@cd $(3RD) && tar -xvzf $(PCRE_VER).tar.gz
-	@cd $(PCRE_DIR) && ./configure --enable-jit
+	@cd $(PCRE_DIR) && CFLAGS="-fPIC -g -O3" ./configure --enable-jit
 endif
 	@cd $(PCRE_DIR) && make -j
 
@@ -61,7 +61,7 @@ ifeq ($(wildcard $(RE2_DIR)), )
 else
 	@cd $(RE2_DIR) && git pull
 endif
-	@cd $(RE2_DIR) && make -j;
+	@cd $(RE2_DIR) && CXXFLAGS="-fPIC -g -O3"  make -j;
 
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(CINCLUDES) -c $< -o $@
@@ -72,7 +72,7 @@ $(OBJ_DIR)/%.o: %.cpp %.h
 $(TARGET): $(OBJS)
 	@cd $(OBJ_DIR) && $(AR) -x $(PCRE_LIB)
 	@cd $(OBJ_DIR) && $(AR) -x $(RE2_LIB)
-	$(AR) rcs -o $@ $(OBJ_DIR)/*.o
+	$(CXX) -shared $(CXXFLAGS) -o $@ $(OBJ_DIR)/*.o
 	@echo $(TARGET)" Compile Success"
 
 test: tester.cpp
