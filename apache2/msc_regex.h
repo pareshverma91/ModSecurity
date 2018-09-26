@@ -11,6 +11,7 @@
 #include "msc_ri.h"
 
 extern unsigned int g_use_regex_integrator;
+extern struct ri_priority g_default_ri_priority;
 
 #endif
 

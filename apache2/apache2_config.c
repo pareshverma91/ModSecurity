@@ -3274,15 +3274,48 @@ static const char *cmd_cache_transformations(cmd_parms *cmd, void *_dcfg,
 
 /* Enable regex integrator */
 static const char *cmd_regex_integrator(cmd_parms *cmd, void *_dcfg, const char *p1) {
-    extern unsigned int g_use_regex_integrator;
-    if (strncasecmp(p1, "on", 2) == 0) {
-        g_use_regex_integrator = 1;
-    } else if (strncasecmp(p1, "off", 3) == 0) {
-        g_use_regex_integrator = 0;
-    } else {
-        return "Error paramenter to SecRegexIntegrator.";
+	struct priority_map {
+		const char * name;
+		ri_engine_t value;
+	};
+	const static struct priority_map valid_priority[] = {
+		// the longer priority_map.name need before the shorter.
+		{ "PCRE-JIT", RI_PCRE_JIT },
+		{ "PCRE", RI_PCRE},
+		{ "RE2", RI_RE2 },
+	};
+	int i = 0;
+	const char * last = p1;
+    int selected_count = 0;
+	while (p1 != NULL && *p1) {
+		last = p1;
+		// ignore speces
+		while (*p1 == ' ') { p1++; }
+
+		for (i = 0; i < sizeof(valid_priority)/sizeof(valid_priority[0]); i++) {
+			if (valid_priority[i].name != NULL 
+                    && strcasestr(p1, valid_priority[i].name) == p1) {
+				// skip a delimiter
+				p1 += strlen(valid_priority[i].name);
+				// set default priority to valid_prority value
+				g_default_ri_priority.engines[selected_count ++] = valid_priority[i].value;
+			}
+		}
+
+		if (last == p1) {
+			// no character be eaten
+            g_use_regex_integrator = 0;
+            selected_count = 0;
+            break;
+		}
+	}
+    if (selected_count == 0) {
+        return apr_psprintf(
+            cmd->pool, "error character(%s) in SecRegexIntegrator", p1);
     }
+    g_use_regex_integrator = 1;
     return NULL;
+
 }
 
 #endif

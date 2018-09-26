@@ -5,6 +5,10 @@
 
 #include "msc_ri.h"
 
+struct ri_priority g_default_ri_priority = {
+    {RI_RE2, RI_PCRE_JIT, RI_PCRE},
+    3,
+};
 
 /**
  * Releases the resources used by a single regular expression pattern.
@@ -32,10 +36,8 @@ msc_ri_regex_t * msc_ri_pregcomp_ex(apr_pool_t *pool, const char *pattern, int o
 {
     int error_code = 0;
     int ri_options = RI_COMP_DEFAULT;
-    const static struct ri_priority priority = {
-        {RI_RE2, RI_PCRE_JIT, RI_PCRE},
-        3,
-    };
+    const struct ri_priority priority = g_default_ri_priority;
+
     const struct ri_params params = {
         // Set PCRE params
         {
@@ -91,7 +93,6 @@ int msc_ri_regexec_ex(msc_ri_regex_t * regex, const char *s, unsigned int slen,
     int startoffset, int options, int *ovector, int ovecsize, char **error_msg)
 {
     int ri_options = RI_EXEC_DEFAULT;
-    int rv = 0;
 
     if (error_msg == NULL)
          return -1000; /* To differentiate from PCRE as it already uses -1. */
