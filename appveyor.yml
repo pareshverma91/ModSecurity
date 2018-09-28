@@ -48,11 +48,12 @@ after_build:
     C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
     #restart iis
     & {iisreset}
+    Start-Service W3SVC
+    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
     
 test_script:
 - cmd: echo "alon test"
 - ps: |
-    & {iisreset /status}
     curl http://localhost/
   
   
