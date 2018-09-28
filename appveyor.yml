@@ -2,10 +2,16 @@ version: 1.0.{build}
 
 services:
   - iis                 # start IIS
-  
+
+environment:
+  matrix:
+    - PYTHON_VERSION: 2.7
+
 install:
-- cmd: cd iis
-- ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
+    - cmd: cd iis
+    - ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
+    - pip install virtualenv
+
 
 before_build:
 - ps: |
