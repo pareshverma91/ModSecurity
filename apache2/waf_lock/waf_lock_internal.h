@@ -153,7 +153,7 @@ int GetUserId(const char* name, uid_t* id);
 **          or WAF_LOCK_ERROR if the handle is NULL.
 */
 int GetGroupId(const char* name, gid_t* id);
-#endif
+#endif // _WIN32
 
 #ifdef __cplusplus
 }

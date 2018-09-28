@@ -1228,7 +1228,7 @@ static const char *cmd_waf_lock_group(cmd_parms *cmd,
 
     return NULL;
 }
-#endif
+#endif // _WIN32
 
 static const char *cmd_action(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
@@ -4076,6 +4076,6 @@ const command_rec module_directives[] = {
         CMD_SCOPE_ANY,
         "Set waf lock group"
     ),
-#endif
+#endif // __WIN32
     { NULL }
 };
