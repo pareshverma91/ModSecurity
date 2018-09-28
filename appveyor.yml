@@ -8,7 +8,7 @@ install:
     - ps: |
         pip install --upgrade pip
         pip install virtualenv
-        git clone owasp-modsecurity-crs
+        git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git
     - cmd: cd iis
     - ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
 
