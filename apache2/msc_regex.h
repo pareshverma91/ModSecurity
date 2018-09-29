@@ -10,8 +10,18 @@
 
 #include "msc_ri.h"
 
-extern unsigned int g_use_regex_integrator;
-extern struct ri_priority g_default_ri_priority;
+typedef enum {
+    REGEX_ORIGINAL_MODE,
+    REGEX_INTEGRATED_MODE,
+} regex_mode_t;
+
+extern regex_mode_t g_regex_mode;
+
+typedef enum {
+    REGEX_UNSTART,
+    REGEX_START,
+} regex_status_t;
+extern regex_status_t g_start_regex;
 
 #endif
 

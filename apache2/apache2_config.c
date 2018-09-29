@@ -830,7 +830,7 @@ static const char *add_rule(cmd_parms *cmd, directory_config *dcfg, int type,
     }
 
 #ifndef ALLOW_ID_NOT_UNIQUE
-	/* Rules must have uniq ID */
+    /* Rules must have uniq ID */
     type_rule = (dcfg->tmp_chain_starter == NULL);
 #if defined(WITH_LUA)
             type_rule = (type != RULE_TYPE_LUA && type_rule);
@@ -1065,7 +1065,6 @@ static const char *add_marker(cmd_parms *cmd, directory_config *dcfg,
     if (dcfg->tmp_rule_placeholders != NULL) {
         apr_table_unset(dcfg->tmp_rule_placeholders, rule->actionset->id);
     }
-
     return NULL;
 }
 
@@ -3274,48 +3273,60 @@ static const char *cmd_cache_transformations(cmd_parms *cmd, void *_dcfg,
 
 /* Enable regex integrator */
 static const char *cmd_regex_integrator(cmd_parms *cmd, void *_dcfg, const char *p1) {
-	struct priority_map {
-		const char * name;
-		ri_engine_t value;
-	};
-	const static struct priority_map valid_priority[] = {
-		// the longer priority_map.name need before the shorter.
-		{ "PCRE-JIT", RI_PCRE_JIT },
-		{ "PCRE", RI_PCRE},
-		{ "RE2", RI_RE2 },
-	};
-	int i = 0;
-	const char * last = p1;
+
+    struct priority_map {
+        const char * name;
+        ri_engine_t value;
+    };
+    const static struct priority_map valid_priority[] = {
+        // the longer priority_map.name need before the shorter.
+        { "PCRE-JIT", RI_PCRE_JIT },
+        { "PCRE", RI_PCRE},
+        { "RE2", RI_RE2 },
+    };
+    const int priority_count = sizeof(valid_priority)/sizeof(valid_priority[0]);
+    int i = 0;
+    const char * last = p1;
     int selected_count = 0;
-	while (p1 != NULL && *p1) {
-		last = p1;
-		// ignore speces
-		while (*p1 == ' ') { p1++; }
 
-		for (i = 0; i < sizeof(valid_priority)/sizeof(valid_priority[0]); i++) {
-			if (valid_priority[i].name != NULL 
-                    && strcasestr(p1, valid_priority[i].name) == p1) {
-				// skip a delimiter
-				p1 += strlen(valid_priority[i].name);
-				// set default priority to valid_prority value
-				g_default_ri_priority.engines[selected_count ++] = valid_priority[i].value;
-			}
-		}
-
-		if (last == p1) {
-			// no character be eaten
-            g_use_regex_integrator = 0;
-            selected_count = 0;
-            break;
-		}
-	}
-    if (selected_count == 0) {
-        return apr_psprintf(
-            cmd->pool, "error character(%s) in SecRegexIntegrator", p1);
+    if ( g_start_regex == REGEX_START ) {
+        return "SecRegexIntegrator directive is after some rules.";
     }
-    g_use_regex_integrator = 1;
-    return NULL;
 
+    while (p1 != NULL && *p1) {
+        last = p1;
+        // ignore speces
+        while (*p1 == ' ') { p1++; }
+
+        for (i = 0; i <  priority_count
+                    && selected_count < RI_ENGINE_COUNT;
+                    i++) {
+            if (valid_priority[i].name != NULL 
+                    && strcasestr(p1, valid_priority[i].name) == p1) {
+                // skip a delimiter
+                p1 += strlen(valid_priority[i].name);
+                // set default priority to valid_prority value
+                g_default_ri_priority.engines[selected_count ++] = valid_priority[i].value;
+                g_default_ri_priority.engine_count = selected_count;
+            }
+        }
+
+        if (last == p1) {
+            // no character be eaten
+            break;
+        }
+    }
+    if (selected_count == 0 || (p1 != NULL && *p1)) {
+        const char * valid_options = "";
+        for (i = 0; i < priority_count; i++) {
+            valid_options = apr_pstrcat(cmd->pool, valid_options, valid_priority[i].name, " ", NULL);
+        }
+        return apr_psprintf(
+            cmd->pool, "error character(%s) in SecRegexIntegrator, valid options include (%s) separated by space.", p1, valid_options);
+    }
+    g_regex_mode = REGEX_INTEGRATED_MODE;
+
+    return NULL;
 }
 
 #endif

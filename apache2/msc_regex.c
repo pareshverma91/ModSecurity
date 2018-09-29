@@ -5,7 +5,8 @@
 
 #ifdef REGEX_INTEGRATOR
 
-unsigned int g_use_regex_integrator = 0;
+regex_mode_t g_regex_mode = REGEX_ORIGINAL_MODE;
+regex_status_t g_start_regex = REGEX_UNSTART;
 
 #endif
 
@@ -22,7 +23,8 @@ void * msc_regex_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,
                       int match_limit, int match_limit_recursion)
 {
 #ifdef REGEX_INTEGRATOR
-    if (g_use_regex_integrator) {
+    g_start_regex = REGEX_START;
+    if (g_regex_mode == REGEX_INTEGRATED_MODE) {
         return msc_ri_pregcomp_ex(pool, pattern, options, _errptr, match_limit, match_limit_recursion);
     } else 
 #endif
@@ -40,7 +42,8 @@ void * msc_regex_pregcomp(apr_pool_t *pool, const char *pattern, int options,
                    const char **_errptr, int *_erroffset)
 {
 #ifdef REGEX_INTEGRATOR
-    if (g_use_regex_integrator) {
+    g_start_regex = REGEX_START;
+    if (g_regex_mode == REGEX_INTEGRATED_MODE) {
         return msc_ri_pregcomp(pool, pattern, options, _errptr);
     } else 
 #endif
@@ -48,6 +51,7 @@ void * msc_regex_pregcomp(apr_pool_t *pool, const char *pattern, int options,
         return msc_pregcomp(pool, pattern, options, _errptr, _erroffset);
     }
 }
+
 
 /**
  * Executes regular expression with extended options.
@@ -58,7 +62,7 @@ int msc_regex_regexec_ex(const void * regex, const char *s, unsigned int slen,
     int startoffset, int options, int *ovector, int ovecsize, char **error_msg)
 {
 #ifdef REGEX_INTEGRATOR
-    if (g_use_regex_integrator) {
+    if (g_regex_mode == REGEX_INTEGRATED_MODE) {
         return msc_ri_regexec_ex((msc_ri_regex_t *)regex, s, slen, startoffset, options, ovector, ovecsize, error_msg);
     } else 
 #endif
@@ -76,7 +80,7 @@ int msc_regex_regexec_capture(const void * regex, const char *s, unsigned int sl
     int *ovector, int ovecsize, char **error_msg)
 {
 #ifdef REGEX_INTEGRATOR
-    if (g_use_regex_integrator) {
+    if (g_regex_mode == REGEX_INTEGRATED_MODE) {
         return msc_ri_regexec_capture((msc_ri_regex_t *)regex, s, slen, ovector, ovecsize, error_msg);
     } else 
 #endif
@@ -93,7 +97,7 @@ int msc_regex_regexec(const void * regex, const char *s, unsigned int slen,
     char **error_msg)
 {
 #ifdef REGEX_INTEGRATOR
-    if (g_use_regex_integrator) {
+    if (g_regex_mode == REGEX_INTEGRATED_MODE) {
         return msc_ri_regexec((msc_ri_regex_t *)regex, s, slen, error_msg);
     } else 
 #endif
@@ -108,7 +112,7 @@ int msc_regex_regexec(const void * regex, const char *s, unsigned int slen,
 int msc_regex_fullinfo(const void * regex, int what, void *where)
 {
 #ifdef REGEX_INTEGRATOR
-    if (g_use_regex_integrator) {
+    if (g_regex_mode == REGEX_INTEGRATED_MODE) {
         return -1000;   /* To differentiate from PCRE as it already uses -1. */
     } else 
 #endif
@@ -119,7 +123,7 @@ int msc_regex_fullinfo(const void * regex, int what, void *where)
 
 const char * msc_regex_pattern(const void * regex) {
 #ifdef REGEX_INTEGRATOR
-    if (g_use_regex_integrator) {
+    if (g_regex_mode == REGEX_INTEGRATED_MODE) {
         return ((msc_ri_regex_t * )regex)->pattern;
     } else 
 #endif

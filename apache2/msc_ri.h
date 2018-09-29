@@ -18,7 +18,7 @@ struct msc_ri_regex_t {
     const char      *pattern;
 };
 
-extern unsigned int g_use_regex_integrator;
+extern struct ri_priority g_default_ri_priority;
 
 /* Compiles the provided regular expression pattern. */
 msc_ri_regex_t * msc_ri_pregcomp_ex(apr_pool_t *pool, const char *pattern, int options,

@@ -699,7 +699,7 @@ static int msre_op_validateHash_param_init(msre_rule *rule, char **error_msg) {
         regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern,0, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion) ;
         if (regex == NULL) {
 #ifdef REGEX_INTEGRATOR
-            if (g_use_regex_integrator) {
+            if ((g_regex_mode == REGEX_INTEGRATED_MODE)) {
                 *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern: %s", errptr);
             } else 
 #endif
@@ -713,7 +713,7 @@ static int msre_op_validateHash_param_init(msre_rule *rule, char **error_msg) {
         #ifdef WITH_PCRE_STUDY
             #ifdef WITH_PCRE_JIT
 #ifdef REGEX_INTEGRATOR
-        if (!g_use_regex_integrator) 
+        if (!(g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
         {
 
@@ -802,7 +802,7 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
                     &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
             if (regex == NULL) {
 #ifdef REGEX_INTEGRATOR
-                if (g_use_regex_integrator) {
+                if ((g_regex_mode == REGEX_INTEGRATED_MODE)) {
                     *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
                 } else 
 #endif
@@ -817,7 +817,7 @@ static int msre_op_validateHash_execute(modsec_rec *msr, msre_rule *rule, msre_v
                 #ifdef WITH_PCRE_JIT
             if (msr->txcfg->debuglog_level >= 4) {
 #ifdef REGEX_INTEGRATOR
-                if (!g_use_regex_integrator) 
+                if (!(g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
                 {
                     rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
@@ -969,7 +969,7 @@ static int msre_op_rx_param_init(msre_rule *rule, char **error_msg) {
         regex = msc_regex_pregcomp_ex(rule->ruleset->mp, pattern, PCRE_DOTALL | PCRE_DOLLAR_ENDONLY, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
         if (regex == NULL) {
 #ifdef REGEX_INTEGRATOR
-            if (g_use_regex_integrator) 
+            if ((g_regex_mode == REGEX_INTEGRATED_MODE)) 
             {
                 *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
             } else 
@@ -984,7 +984,7 @@ static int msre_op_rx_param_init(msre_rule *rule, char **error_msg) {
         #ifdef WITH_PCRE_STUDY
             #ifdef WITH_PCRE_JIT
 #ifdef REGEX_INTEGRATOR
-        if (!g_use_regex_integrator) 
+        if (!(g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
         {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
@@ -1063,7 +1063,7 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
 
             if (regex == NULL) {
 #ifdef REGEX_INTEGRATOR
-                if (g_use_regex_integrator) {
+                if ((g_regex_mode == REGEX_INTEGRATED_MODE)) {
                     *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
                 } else 
 #endif
@@ -1078,7 +1078,7 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
                 #ifdef WITH_PCRE_JIT
             if (msr->txcfg->debuglog_level >= 4) {
 #ifdef REGEX_INTEGRATOR
-                if (!g_use_regex_integrator) 
+                if (!(g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
                 {
                     rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
@@ -1127,7 +1127,7 @@ static int msre_op_rx_execute(modsec_rec *msr, msre_rule *rule, msre_var *var, c
     /* Show when the regex captures but "capture" is not set */
     if (msr->txcfg->debuglog_level >= 6) {
 #ifdef REGEX_INTEGRATOR
-        if (! g_use_regex_integrator) 
+        if (! (g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
         {
             int capcount = 0;
@@ -2797,7 +2797,7 @@ static int msre_op_verifyCC_init(msre_rule *rule, char **error_msg) {
     regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
 #ifdef REGEX_INTEGRATOR
-        if (g_use_regex_integrator) {
+        if ((g_regex_mode == REGEX_INTEGRATED_MODE)) {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s",errptr);
         } else 
 #endif
@@ -2846,7 +2846,7 @@ static int msre_op_verifyCC_execute(modsec_rec *msr, msre_rule *rule, msre_var *
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
 #ifdef REGEX_INTEGRATOR
-        if (!g_use_regex_integrator) 
+        if (!(g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
         {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
@@ -3105,7 +3105,7 @@ static int msre_op_verifyCPF_init(msre_rule *rule, char **error_msg) {
     regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
 #ifdef REGEX_INTEGRATOR
-        if (g_use_regex_integrator) {
+        if ((g_regex_mode == REGEX_INTEGRATED_MODE)) {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);    
         } else 
 #endif
@@ -3167,7 +3167,7 @@ static int msre_op_verifyCPF_execute(modsec_rec *msr, msre_rule *rule, msre_var 
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
 #ifdef REGEX_INTEGRATOR
-        if (!g_use_regex_integrator) 
+        if (!(g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
         {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
@@ -3409,7 +3409,7 @@ static int msre_op_verifySSN_init(msre_rule *rule, char **error_msg) {
     regex = msc_regex_pregcomp_ex(rule->ruleset->mp, rule->op_param, PCRE_DOTALL | PCRE_MULTILINE, &errptr, &erroffset, msc_pcre_match_limit, msc_pcre_match_limit_recursion);
     if (regex == NULL) {
 #ifdef REGEX_INTEGRATOR
-        if (g_use_regex_integrator) {
+        if ((g_regex_mode == REGEX_INTEGRATED_MODE)) {
             *error_msg = apr_psprintf(rule->ruleset->mp, "Error compiling pattern : %s", errptr);
         } else 
 #endif
@@ -3471,7 +3471,7 @@ static int msre_op_verifySSN_execute(modsec_rec *msr, msre_rule *rule, msre_var 
         #ifdef WITH_PCRE_JIT
     if (msr->txcfg->debuglog_level >= 4) {
 #ifdef REGEX_INTEGRATOR
-        if (g_use_regex_integrator) 
+        if ((g_regex_mode == REGEX_INTEGRATED_MODE)) 
 #endif
         {
             rc = msc_regex_fullinfo(regex, PCRE_INFO_JIT, &jit);
