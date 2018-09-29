@@ -10,7 +10,7 @@
 #include <pcre.h>
 #include "ri_api.h"
 
-#define OVECCOUNT 30
+#define OVECCOUNT 1024
 
 #define BENCH_TIME 3 // seconds
 #define BENCH(STATEMENT, OPS) do{                               \
@@ -30,6 +30,12 @@
         OPS = (((double)_time / _eslapse) * 1000);              \
     }while(0);
     
+
+struct ri_priority g_default_ri_priority = {
+    {RI_PCRE, RI_PCRE_JIT, RI_PCRE},
+    3,
+};
+
 const char * human_readable(double number) {
     static char buffer[1024] = {0};
     char unit = ' ';
@@ -78,7 +84,6 @@ int test(
             exec_expect);
 
 
-
     // Regex Integrator
 
     {
@@ -88,7 +93,7 @@ int test(
 
         ri_set_log_level(RI_LOG_ERROR);
 
-        ret = ri_create(&ri_regex, pattern_str.c_str(), comp_opt, NULL, NULL, &log);
+        ret = ri_create(&ri_regex, pattern_str.c_str(), comp_opt, &g_default_ri_priority, NULL, &log);
         if (ret != RI_SUCCESS)
         {
             fprintf(stderr, "RI compilation fail: %s\n", ri_get_error_msg(ret));
@@ -96,7 +101,7 @@ int test(
         }
 
         BENCH(
-            ret = ri_exec(ri_regex, subject_str.c_str(), subject_str.length(), 0, exec_opt, NULL, ovector, OVECCOUNT, NULL);
+            ret = ri_exec(ri_regex, subject_str.c_str(), subject_str.length(), 0, exec_opt,NULL , ovector, OVECCOUNT, NULL);
             if (ret != exec_expect) {
                 fprintf(stderr, "RI match result is unmatched.\n");
                 fprintf(stderr, "%s\n", ri_get_error_msg(ret));
@@ -196,19 +201,22 @@ int test(
             pcre_options |= PCRE_DOLLAR_ENDONLY;
 
         void * pcre_regex = pcre_compile(pattern_str.c_str(), pcre_options, &error_ptr, &error_offset, NULL);
+        void * pcre_pe = NULL;
+        if (pcre_regex != NULL) {
+            pcre_pe = pcre_study((pcre *)pcre_regex, 0, &error_ptr);
+        }
         if ( pcre_regex ==NULL ) {
             fprintf(stderr, "PCRE compilation fail : %s, offset = %d\n", error_ptr, error_offset);
             goto pcre_finish;
         }
-
         pcre_options = 0;
-        if (exec_expect & RI_EXEC_NOTEMPTY)
+        if (exec_opt & RI_EXEC_NOTEMPTY)
             pcre_options |= PCRE_NOTEMPTY;
 
         BENCH({
             rt = pcre_exec(
                 (pcre *)pcre_regex, 
-                NULL, 
+                (pcre_extra *)pcre_pe, 
                 subject_str.c_str(), 
                 subject_str.length(), 
                 0, 
@@ -260,7 +268,7 @@ int test(
         }
 
         pcre_options = 0;
-        if (exec_expect & RI_EXEC_NOTEMPTY)
+        if (exec_opt & RI_EXEC_NOTEMPTY)
             pcre_options |= PCRE_NOTEMPTY;
 
         BENCH({
@@ -294,8 +302,16 @@ int test(
 
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     ri_init();
+
+    if(argc == 4) {
+        if (test(argv[1], argv[2], RI_COMP_DEFAULT, RI_EXEC_DEFAULT, atoi(argv[3])) != 0) {
+            goto exit_error;
+        }
+        ri_release();
+        return 0;
+    }
 
     // Normal match
     if (test("abc", "abc", RI_COMP_DEFAULT, RI_EXEC_DEFAULT, 1) != 0) {
