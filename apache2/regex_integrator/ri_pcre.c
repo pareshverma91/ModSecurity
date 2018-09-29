@@ -82,11 +82,11 @@ int ri_pcre_comp(void **re, void **pe,
     if (*pe == NULL) {
         *pe = use_pcre_jit 
             ? pcre_study((pcre *) *re, PCRE_STUDY_JIT_COMPILE, &error_ptr)
-            : pcre_study((pcre *) *re,0 , &error_ptr);
+            : pcre_study((pcre *) *re, 0, &error_ptr);
 
         // Set up the pcre_extra record if pcre_study did not do it
         if (*pe == NULL) {
-            *pe = (pcre_extra *) pcre_malloc(sizeof(pcre_extra));
+            *pe = (pcre_extra *) malloc(sizeof(pcre_extra));
             if (*pe == NULL) {
                 error_code = RI_ERROR_PCRE_MALLOC;
                 ri_fill_log(log, RI_LOG_ERROR, error_code);

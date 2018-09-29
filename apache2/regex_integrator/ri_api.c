@@ -175,7 +175,7 @@ int ri_create(ri_regex_t *regex, const char *pattern, int options,
         match_limit = params->pcre_jit.match_limit;
         match_limit_recursion = params->pcre_jit.match_limit_recursion;
     }
-    error_code = ri_pcre_comp(&(t_regex->pcre_re), &(t_regex->pcre_jit_pe),
+    error_code = ri_pcre_comp(&(t_regex->pcre_jit_re), &(t_regex->pcre_jit_pe),
         t_regex->pattern, options, match_limit, match_limit_recursion,
         1, log);
     if (error_code != RI_SUCCESS) {
@@ -223,13 +223,13 @@ int ri_exec(const ri_regex_t regex, const char *subject,
         int *ovector, int ovec_size, const char **log)
 {
     int error_code = 0;
-    struct ri_regex *t_regex = NULL;
+    struct ri_regex *t_regex = (struct ri_regex *)regex;
     // The priority for execution
     struct ri_priority priority_exec = RI_PRIORITY_DEFAULT;
     // Returned value of RE2
     int rv_re2 = 0;
 
-    if (regex == NULL) {
+    if (t_regex == NULL) {
         error_code = RI_ERROR_REGEX_NULL;
         ri_fill_log(log, RI_LOG_ERROR, error_code);
         return error_code;
@@ -240,8 +240,6 @@ int ri_exec(const ri_regex_t regex, const char *subject,
         ri_fill_log(log, RI_LOG_ERROR, error_code);
         return error_code;
     }
-
-    t_regex = (struct ri_regex *) regex;
 
     // Get the priority for execution
     if (priority == NULL) {
@@ -257,12 +255,13 @@ int ri_exec(const ri_regex_t regex, const char *subject,
         switch (priority_exec.engines[i]) {
         case RI_PCRE:
             if (t_regex->pcre_re != NULL)
+                //return ri_pcre_exec(t_regex->pcre_re, t_regex->pcre_pe, subject,
                 return ri_pcre_exec(t_regex->pcre_re, t_regex->pcre_pe, subject,
                         subject_len, start_offset, options, ovector, ovec_size);
             break;
         case RI_PCRE_JIT:
-            if (t_regex->pcre_re != NULL)
-                return ri_pcre_exec(t_regex->pcre_re, t_regex->pcre_jit_pe,
+            if (t_regex->pcre_jit_re != NULL)
+                return ri_pcre_exec(t_regex->pcre_jit_re, t_regex->pcre_jit_pe,
                         subject, subject_len, start_offset, options,
                         ovector, ovec_size);
             break;
@@ -276,7 +275,7 @@ int ri_exec(const ri_regex_t regex, const char *subject,
                 // 2) the match is an empty string, i.e., ovector[1] == ovector[0]
                 // Otherwise, return the result.
                 if (!(rv_re2 >= 0 && (options & RI_EXEC_NOTEMPTY) &&
-                      (!ovector || ovector[1] == ovector[0]))) {
+                     (!ovector || ovector[1] == ovector[0]))) {
                     return rv_re2;
                 }
             }

@@ -9,6 +9,7 @@ struct ri_regex {
     char *pattern;             // The regex pattern
     void *pcre_re;             // pcre*, compiled PCRE regex
     void *pcre_pe;             // pcre_extra* for PCRE
+    void *pcre_jit_re;         // pcre*, compiled PCRE regex
     void *pcre_jit_pe;         // pcre_extra* for PCRE-JIT
     void *re2_re;              // RE2*, compiled RE2 regex
     struct ri_priority priority; // The priority of regex engines for the pattern
