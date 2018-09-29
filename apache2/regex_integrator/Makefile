@@ -20,7 +20,8 @@ OBJS=$(OBJ_DIR)/ri_pcre.o $(OBJ_DIR)/ri_re2.o $(OBJ_DIR)/ri_api.o
 PCRE_VER?=pcre-8.42
 PCRE_SITE?=https://ftp.pcre.org/pub/pcre/$(PCRE_VER).tar.gz
 PCRE_DIR?=$(3RD)/$(PCRE_VER)
-PCRE_LIB?=$(PCRE_DIR)/.libs/libpcre.a
+PCRE_BUILD?=$(PCRE_DIR)/build
+PCRE_LIB?=$(PCRE_BUILD)/lib/libpcre.a
 PCRE_INCLUDE?=$(PCRE_DIR)
 
 RE2_SITE?=https://github.com/google/re2.git
@@ -50,14 +51,14 @@ build_pcre:
 ifeq ($(wildcard $(PCRE_DIR)), )
 	@cd $(3RD) && wget $(PCRE_SITE)
 	@cd $(3RD) && tar -xvzf $(PCRE_VER).tar.gz
-	@cd $(PCRE_DIR) && CFLAGS="-fPIC -g -O3" ./configure --enable-jit
-endif
+	@cd $(PCRE_DIR) && CFLAGS="-fPIC -g -O3" ./configure --enable-jit --prefix $(PCRE_BUILD)
 	@cd $(PCRE_DIR) && make -j
+	@cd $(PCRE_DIR) && make install
+endif
 
 build_re2:
 ifeq ($(wildcard $(RE2_DIR)), )
 	@git clone $(RE2_SITE) $(RE2_DIR)
-	@cd $(RE2_DIR)
 else
 	@cd $(RE2_DIR) && git pull
 endif
