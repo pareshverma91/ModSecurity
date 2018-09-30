@@ -23,9 +23,10 @@ PCRE_DIR?=$(3RD)/$(PCRE_VER)
 PCRE_BUILD?=$(PCRE_DIR)/build
 PCRE_LIB?=$(PCRE_BUILD)/lib/libpcre.a
 PCRE_INCLUDE?=$(PCRE_DIR)
+PCRE_OPT?=
 
 RE2_SITE?=https://github.com/google/re2.git
-RE2_DIR?= $(3RD)/re2
+RE2_DIR?=$(3RD)/re2
 RE2_LIB?=$(RE2_DIR)/obj/libre2.a
 RE2_INCLUDE?=$(RE2_DIR)
 
@@ -34,11 +35,14 @@ CC?=gcc
 CXX?=g++
 CINCLUDES?=-I$(PCRE_DIR)
 CXXINCLUDES=-I$(RE2_DIR) 
-CFLAGS?= -fPIC -g -O3 -Wall -Werror -std=c99
-CXXFLAGS?= -fPIC -g -O3 -Wall -Werror -std=c++11
+WARNING?=-Wall -Werror
+CSTD?=-std=c99
+CXXSTD?=-std=c++11
+CFLAGS?=-fPIC -g -O3
+CXXFLAGS?=-fPIC -g -O3
 LIBS?=-pthread
 
-CLEAN_OBJS?=$(BIN_DIR) $(OBJ_DIR)
+CLEAN_OBJS?=$(BIN_DIR) $(OBJ_DIR) $(3RD)
 
 # initialize enviroment
 $(shell mkdir -p $(3RD))
@@ -51,10 +55,11 @@ build_pcre:
 ifeq ($(wildcard $(PCRE_DIR)), )
 	@cd $(3RD) && wget $(PCRE_SITE)
 	@cd $(3RD) && tar -xvzf $(PCRE_VER).tar.gz
-	@cd $(PCRE_DIR) && CFLAGS="-fPIC -g -O3" ./configure --enable-jit --prefix $(PCRE_BUILD)
+endif
+	@cd $(PCRE_DIR) && autoreconf -f -i
+	@cd $(PCRE_DIR) && CFLAGS="$(CFLAGS)" ./configure --enable-jit --prefix $(PCRE_BUILD) $(PCRE_OPT)
 	@cd $(PCRE_DIR) && make -j
 	@cd $(PCRE_DIR) && make install
-endif
 
 build_re2:
 ifeq ($(wildcard $(RE2_DIR)), )
@@ -62,27 +67,27 @@ ifeq ($(wildcard $(RE2_DIR)), )
 else
 	@cd $(RE2_DIR) && git pull
 endif
-	@cd $(RE2_DIR) && CXXFLAGS="-fPIC -g -O3"  make -j;
+	@cd $(RE2_DIR) && CXXFLAGS="$(CXXFLAGS)"  make -j;
 
 $(OBJ_DIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(CINCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(CSTD) $(WARNING) $(CINCLUDES) -c $< -o $@
 
 $(OBJ_DIR)/%.o: %.cpp %.h
-	$(CXX) $(CXXFLAGS) $(CXXINCLUDES) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CXXSTD) $(WARNING) $(CXXINCLUDES) -c $< -o $@
 
 $(TARGET): $(OBJS)
 	@cd $(OBJ_DIR) && $(AR) -x $(PCRE_LIB)
 	@cd $(OBJ_DIR) && $(AR) -x $(RE2_LIB)
-	$(CXX) -shared $(CXXFLAGS) -o $@ $(OBJ_DIR)/*.o
+	$(CXX) -shared $(CXXFLAGS) $(CXXSTD) $(WARNING) -o $@ $(OBJ_DIR)/*.o
 	@echo $(TARGET)" Compile Success"
 
 test: tester.cpp
-	$(CXX) $(CXXFLAGS) -I$(BASEPATH) $< $(TARGET) $(LIBS) -o $(BIN_DIR)/$@
+	$(CXX) $(CXXFLAGS) $(CXXSTD) $(WARNING) -I$(BASEPATH) $< $(TARGET) $(LIBS) -o $(BIN_DIR)/$@
 	@bin/$@
 	@echo 'Test Success'
 
 bench: bench.cpp
-	$(CXX) $(CXXFLAGS) -I$(BASEPATH) $(CINCLUDES) $(CXXINCLUDES) $< $(TARGET) $(LIBS) -o $(BIN_DIR)/$@
+	$(CXX) $(CXXFLAGS) $(CXXSTD) $(WARNING) -I$(BASEPATH) $(CINCLUDES) $(CXXINCLUDES) $< $(TARGET) $(LIBS) -o $(BIN_DIR)/$@
 	@bin/$@
 	@echo 'Bench Success'
 
