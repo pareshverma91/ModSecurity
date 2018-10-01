@@ -42,11 +42,11 @@ build_script:
 
 after_build:
     - ps: |
-        # remove not wanted modules
-        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
-        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
         # configure globale ModSecurity
-        #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\ModSecurityIIS.dll"
+        C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\ModSecurityIIS.dll"
+        # remove not wanted modules
+        C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
+        C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
         #get the content of the config file
         get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
         # enable sites
@@ -60,6 +60,7 @@ test_script:
     - cmd: echo "alon test - build"
     - ps: |
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
+        $Res
 
 notifications:
 - provider: GitHubPullRequest
