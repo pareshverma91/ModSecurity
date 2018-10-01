@@ -17,54 +17,48 @@ install:
 
 
 before_build:
-- ps: |
-    Write-Host "Alon - before restart"
-    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
-    $Res
-    #restart iis
-    & {iisreset}
-    Start-Service W3SVC
-    Write-Host "Alon - after restart"
-    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
-    $Res
+    - ps: |
+        Write-Host "Alon - before restart"
+        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
+        $Res
+        #restart iis
+        & {iisreset}
+        Start-Service W3SVC
+        Write-Host "Alon - after restart"
+        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
+        $Res
+        # copy the required pkgs from the ModSecurity blob and install them (c++ & ModSecurity)
+        Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
+        Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
+        Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
+        Start-Process msiexec.exe -ArgumentList '/I ModSecurityIIS_2.9.1-RC1-64b.msi /passive'
 
 build_script:
-- ps: |
-    Write-Host "Alon - build_script"
-    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
-    $Res
-- cmd: ./build_release_amd64.bat
-- cmd: echo "alon test - build"
+    - ps: |
+        Write-Host "Alon - build_script"
+        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
+        $Res
+    - cmd: ./build_release_amd64.bat
 
 after_build:
-- ps: |
-    # copy the required pkgs from the ModSecurity blob and install them (c++ & ModSecurity)
-    Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
-    Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
-    Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
-    Start-Process msiexec.exe -ArgumentList '/I ModSecurityIIS_2.9.1-RC1-64b.msi /passive'
-    
-    # remove not wanted modules
-    #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
-    #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
-    
-    # configure globale ModSecurity
-    #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\ModSecurityIIS.dll"
-    
-    #get the content of the config file
-    #get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
-    get-Content C:\Windows\SysWOW64\inetsrv\Config\applicationHost.config
-    
-    # enable sites
-    # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
-    #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
-    
-    #restart iis
-    & {iisreset}
-    Start-Service W3SVC
-    try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
+    - ps: |
+        # remove not wanted modules
+        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
+        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
+        # configure globale ModSecurity
+        #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\ModSecurityIIS.dll"
+        #get the content of the config file
+        #get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
+        # enable sites
+        # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
+        #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
+        #restart iis
+        & {iisreset}
+        Start-Service W3SVC
+        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
     
 test_script:
+    - cmd: echo "alon test - build"
   
 notifications:
 - provider: GitHubPullRequest
