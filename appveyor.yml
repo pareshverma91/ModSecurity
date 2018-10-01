@@ -37,18 +37,18 @@ build_script:
     - ps: |
         Write-Host "Alon - build_script"
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
-        $Res
     - cmd: ./build_release_amd64.bat
 
 after_build:
     - ps: |
         # configure globale ModSecurity
-        C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\ModSecurityIIS.dll"
+        ls C:\ModSecurity\iis\release\amd64
+        C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\release\amd64\ModSecurityIIS.dll"        
         # remove not wanted modules
         C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
         C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
         #get the content of the config file
-        get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
+        #get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
         # enable sites
         # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
         #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
