@@ -51,16 +51,17 @@ after_build:
         # enable sites
         # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
         #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
-        Add-Content C:\Program Files\ModSecurity IIS\modsecurity.conf ""
 
 test_script:
     - cmd: echo "alon test - build"
     - ps: |
         $dbg_dir = "C:\ModSecurity\modsec_debug.log"
         New-Item -ItemType directory -Path $dbg_dir
-        Add-Content "C:\Program Files\ModSecurity IIS\modsecurity.conf" "SecDebugLog $dbg_dir"
-        Add-Content "C:\Program Files\ModSecurity IIS\modsecurity.conf" "SecDebugLogLevel 3"
-        get-Content "C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
+        $modsec_conf = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
+        Add-Content $modsec_conf "SecDebugLog $dbg_dir"
+        Add-Content $modsec_conf "SecDebugLogLevel 3"
+        $modsec_iis_conf = "C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
+        get-Content $modsec_iis_conf
         #restart iis
         & {iisreset}
         Start-Service W3SVC
