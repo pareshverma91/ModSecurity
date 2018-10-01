@@ -52,7 +52,8 @@ after_build:
     #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\ModSecurityIIS.dll"
     
     #get the content of the config file
-    get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
+    #get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
+    get-Content C:\Windows\SysWOW64\inetsrv\Config\applicationHost.config
     
     # enable sites
     # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
