@@ -52,13 +52,13 @@ after_build:
         # enable sites
         # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
         #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
-        #restart iis
-        & {iisreset}
-        Start-Service W3SVC
 
 test_script:
     - cmd: echo "alon test - build"
     - ps: |
+        #restart iis
+        & {iisreset}
+        Start-Service W3SVC
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
         $Res
 
