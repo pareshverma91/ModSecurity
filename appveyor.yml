@@ -40,8 +40,9 @@ build_script:
 after_build:
     - ps: |
         # configure globale ModSecurity
-        ls C:\ModSecurity\iis\release\
-        C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\release\ModSecurityIIS.dll"        
+        ls C:\projects\ModSecurity\iis\release\
+        ls C:\projects\ModSecurity\iis\release\amd64
+        C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\projects\ModSecurity\iis\release\amd64\ModSecurityIIS.dll"        
         # remove not wanted modules
         C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
         C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
