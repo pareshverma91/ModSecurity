@@ -48,18 +48,19 @@ after_build:
         # configure globale ModSecurity
         #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\ModSecurity\iis\ModSecurityIIS.dll"
         #get the content of the config file
-        #get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
+        get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
         # enable sites
         # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
         #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
         #restart iis
         & {iisreset}
         Start-Service W3SVC
-        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
-    
+
 test_script:
     - cmd: echo "alon test - build"
-  
+    - ps: |
+        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}
+
 notifications:
 - provider: GitHubPullRequest
   on_build_success: true
