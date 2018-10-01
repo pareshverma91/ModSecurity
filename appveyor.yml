@@ -10,6 +10,7 @@ install:
         #pip install virtualenv - already installed
         cd C:\
         git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git C:\projects\owasp-modsecurity-crs
+        ls C:\projects\owasp-modsecurity-crs
         cd C:\projects\modsecurity
     - cmd: cd iis
     - ps: .\getModSecurityPkgs.ps1 https://modsecurity.blob.core.windows.net/windows-artifacts
