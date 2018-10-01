@@ -9,7 +9,7 @@ install:
         #pip install --upgrade pip - already installed
         #pip install virtualenv - already installed
         cd C:\
-        git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git C:\projects\owasp-modsecurity-crs
+        git -q clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git C:\projects\owasp-modsecurity-crs
         ls C:\projects\owasp-modsecurity-crs
         cd C:\projects\modsecurity
     - cmd: cd iis
@@ -52,11 +52,11 @@ after_build:
     C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\C:\ModSecurity\iis\ModSecurityIIS.dll"    
     
     #get the content of the config file
-    get-Content 
+    get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
     
     # enable sites
     # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
-    C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
+    #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
     
     #restart iis
     & {iisreset}
