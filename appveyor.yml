@@ -39,14 +39,14 @@ build_script:
 after_build:
     - ps: |
         # configure globale ModSecurity
-        ls C:\projects\ModSecurity\iis\release\
-        ls C:\projects\ModSecurity\iis\release\amd64
         C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\projects\ModSecurity\iis\release\amd64\ModSecurityIIS.dll"
         # remove not wanted modules
         #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
         C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
         #get the content of the config file
         get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
+        & {iisreset}; Start-Service W3SVC
+        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
         # enable sites
         # <ModSecurity enabled="true" configFile="C:\Program Files\ModSecurity IIS\modsecurity_iis.conf" />
         #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
@@ -66,7 +66,6 @@ test_script:
         get-Content $modsec_iis_conf
         #restart iis
         & {iisreset}; Start-Service W3SVC
-        #$a = Get-EventLog -Newest 10 -LogName "Application" -Source "W3SVC-WP"
         $a = Get-EventLog -Newest 30 -LogName "Application" -EntryType Error
         $a | Format-List -Property *
         $a
