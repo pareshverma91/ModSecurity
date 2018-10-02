@@ -67,8 +67,9 @@ test_script:
         #restart iis
         & {iisreset}; Start-Service W3SVC
         #$a = Get-EventLog -Newest 10 -LogName "Application" -Source "W3SVC-WP"
-        $a = Get-EventLog -Newest 30 -LogName "Application" -Message "*ModSecurityIIS*"
+        $a = Get-EventLog -Newest 30 -LogName "Application" -EntryType Error
         $a | Format-List -Property *
+        $a
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
     - cmd: echo "alon test - finished"
 notifications:
