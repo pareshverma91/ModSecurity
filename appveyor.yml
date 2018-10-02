@@ -43,7 +43,7 @@ after_build:
         C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\projects\ModSecurity\iis\release\amd64\ModSecurityIIS.dll"
         # remove not wanted modules
         C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
-        C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
+        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
         #get the content of the config file
         get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
         # enable sites
