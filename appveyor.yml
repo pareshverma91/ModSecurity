@@ -21,7 +21,8 @@ before_build:
         Write-Host "Alon - before restart"
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
         #restart iis
-        & {iisreset}; Start-Service W3SVC        Write-Host "Alon - after restart"
+        & {iisreset}; Start-Service W3SVC
+        Write-Host "Alon - after restart"
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
         # copy the required pkgs from the ModSecurity blob and install them (c++ & ModSecurity)
         Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
@@ -42,8 +43,8 @@ after_build:
         ls C:\projects\ModSecurity\iis\release\amd64
         C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\projects\ModSecurity\iis\release\amd64\ModSecurityIIS.dll"
         # remove not wanted modules
-        C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
-        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
+        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
+        C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
         #get the content of the config file
         get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
         # enable sites
