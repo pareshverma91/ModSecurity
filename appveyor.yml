@@ -45,7 +45,7 @@ after_build:
         #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
         C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
         #get the content of the config file
-        get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
+        #get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
         # enable sites
         #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
 
@@ -54,21 +54,21 @@ test_script:
     - ps: |
         & {iisreset}; Start-Service W3SVC
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
-        $dbg_dir = "C:\ModSecurity\modsec_debug.log"
+        $dbg_dir = "C:\projects\ModSecurity"
         New-Item -ItemType directory -Path $dbg_dir
         $modsec_conf = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
-        Add-Content $modsec_conf "SecDebugLog $dbg_dir"
-        Add-Content $modsec_conf "SecDebugLogLevel 3"
+        Add-Content $modsec_conf "SecDebugLog $dbg_dir\modsec_debug.log`r`nSecDebugLogLevel 3"
+        #Add-Content $modsec_conf "SecDebugLogLevel 3"
         & {iisreset}; Start-Service W3SVC
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
         $modsec_iis_conf = "C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
-        get-Content $modsec_conf
-        get-Content $modsec_iis_conf
+        #get-Content $modsec_conf
+        #get-Content $modsec_iis_conf
         #restart iis
         & {iisreset}; Start-Service W3SVC
-        $a = Get-EventLog -Newest 30 -LogName "Application" -EntryType Error
+        #$a = Get-EventLog -Newest 30 -LogName "Application" -EntryType Error
         #$a | Format-List -Property *
-        $a
+        #$a
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
     - cmd: echo "alon test - finished"
 notifications:
