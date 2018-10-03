@@ -57,8 +57,12 @@ test_script:
         $dbg_file = "C:\projects\ModSecurity\modsec_debug.log"
         $modsec_conf = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
         Add-Content $modsec_conf "SecDebugLog $dbg_file`r`nSecDebugLogLevel 3"
+        echo "get modsec conf `n`r ************************************************************** `n`r"
+        get-Content $modsec_conf
         $modsec_iis_conf = "C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
         Rename-Item -Path "$crs_path\crs-setup.conf.example" -NewName "crs-setup.conf"
+        echo "get crs-setup conf  `n`r ************************************************************** `n`r""
+        get-Content $crs_path/crs-setup.conf
         Clear-Content $modsec_iis_conf
         #configure modsecurity_iis.conf for crs 3 and for runnig the python tests
         Add-Content $modsec_iis_conf "Include $modsec_conf"
@@ -91,6 +95,8 @@ test_script:
         Add-Content $modsec_iis_conf "include $crs_path/rules/RESPONSE-959-BLOCKING-EVALUATION.conf"
         Add-Content $modsec_iis_conf "include $crs_path/rules/RESPONSE-980-CORRELATION.conf"
         Add-Content $modsec_iis_conf "include $crs_path/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf"
+        echo "get modsec iis conf  `n`r ************************************************************** `n`r""
+        get-Content $modsec_iis_conf
         #restart iis to pick all the changes
         & {iisreset}; Start-Service W3SVC
         $a = Get-EventLog -Newest 10 -LogName "Application" -EntryType Error; $a
@@ -100,12 +106,6 @@ test_script:
         #echo "1st try"
         try { $Res = (Invoke-WebRequest http://localhost/?test=test%FF1).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
         echo "2nd try"
-        echo "get modsec conf"
-        get-Content $modsec_conf
-        echo "get modsec iis conf"
-        get-Content $modsec_iis_conf
-        echo "get crs-setup conf"
-        get-Content $crs_path/crs-setup.conf
         ls $dbg_file
         #finished set the config for crs3
         echo "alon test - finished"
