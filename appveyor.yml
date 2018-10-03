@@ -34,7 +34,7 @@ after_build:
         new_dll_loc = "C:\projects\ModSecurity\iis\release\amd64"
         ls $new_dll_loc
         & {iisreset /stop}
-        Copy-Item "new_dll_loc\*" -Destination "C:\Windows\System32\inetsrv" -Force
+        Copy-Item "$new_dll_loc\*" -Destination "C:\Windows\System32\inetsrv" -Force
         & {iisreset /start}; Start-Service W3SVC
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
         # configure globale ModSecurity
