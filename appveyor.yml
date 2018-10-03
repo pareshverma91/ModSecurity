@@ -43,8 +43,8 @@ after_build:
         #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
 
 test_script:
-    - cmd: echo "alon test - build"
     - ps: |
+        echo "alon test - build"
         #get the crs repo
         cd C:\
         $crs_path = "C:\projects\owasp-modsecurity-crs"
@@ -93,11 +93,13 @@ test_script:
         #$a | Format-List -Property *
         #$a
         try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
+        echo "1st try"
         try { $Res = (Invoke-WebRequest http://localhost/?test=test%FF1).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
+        echo "2nd try"
         get-Content $dbg_file
         #finished set the config for crs3
+        echo "alon test - finished"
         
-    - cmd: echo "alon test - finished"
 notifications:
 - provider: GitHubPullRequest
   on_build_success: true
