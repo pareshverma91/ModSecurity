@@ -31,7 +31,7 @@ build_script:
 
 after_build:
     - ps: |
-        new_dll_loc = "C:\projects\ModSecurity\iis\release\amd64"
+        $new_dll_loc = "C:\projects\ModSecurity\iis\release\amd64"
         ls $new_dll_loc
         & {iisreset /stop}
         Copy-Item "$new_dll_loc\*" -Destination "C:\Windows\System32\inetsrv" -Force
