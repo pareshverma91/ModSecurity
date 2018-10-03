@@ -89,11 +89,11 @@ test_script:
         Add-Content $modsec_iis_conf "include $crs_path/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf"
         #restart iis to pick all the changes
         & {iisreset}; Start-Service W3SVC
-        #$a = Get-EventLog -Newest 30 -LogName "Application" -EntryType Error
+        $a = Get-EventLog -Newest 10 -LogName "Application" -EntryType Error; $a
         #$a | Format-List -Property *
         #$a
-        try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
-        echo "1st try"
+        #try { $Res = (Invoke-WebRequest http://localhost/).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
+        #echo "1st try"
         try { $Res = (Invoke-WebRequest http://localhost/?test=test%FF1).statuscode } catch { $Res = $_.Exception.Response.StatusCode.Value}; $Res
         echo "2nd try"
         get-Content $dbg_file
