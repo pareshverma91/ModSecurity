@@ -51,9 +51,9 @@ after_build:
 test_script:
     - ps: |
         echo "alon test - build"
-        Invoke-WebRequest http://localhost/).statuscode
+        Invoke-WebRequest http://localhost/
         echo "1st try start"
-        Invoke-WebRequest http://localhost/?test=test%FF1).statuscode
+        Invoke-WebRequest http://localhost/?test=test%FF1
         echo "2nd try start"
         #get the crs repo
         cd C:\
