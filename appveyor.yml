@@ -64,11 +64,11 @@ test_script:
         $modsec_conf = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
         Add-Content $modsec_conf "SecDebugLog $dbg_file`r`nSecDebugLogLevel 3"
         echo "get modsec conf `n`r ************************************************************** `n`r"
-        get-Content $modsec_conf
+        #get-Content $modsec_conf
         $modsec_iis_conf = "C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
         Rename-Item -Path "$crs_path\crs-setup.conf.example" -NewName "crs-setup.conf"
         echo "get crs-setup conf `n`r ************************************************************** `n`r"
-        get-Content $crs_path/crs-setup.conf
+        #get-Content $crs_path/crs-setup.conf
         Clear-Content $modsec_iis_conf
         #configure modsecurity_iis.conf for crs 3 and for runnig the python tests
         Add-Content $modsec_iis_conf "Include modsecurity.conf"
@@ -77,7 +77,7 @@ test_script:
         Add-Content $modsec_iis_conf "include $crs_path\crs-setup.conf"
         Add-Content $modsec_iis_conf "include $crs_path/rules/*.conf"
         echo "get modsec iis conf `n`r ************************************************************** `n`r"
-        get-Content $modsec_iis_conf
+        #get-Content $modsec_iis_conf
         #restart iis to pick all the changes
         & {iisreset}; Start-Service W3SVC
         #$a = Get-EventLog -Newest 10 -LogName "Application" -EntryType Error; $a
