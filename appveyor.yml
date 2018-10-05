@@ -59,10 +59,10 @@ after_build:
 test_script:
     - ps: |
         py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
-        #sometomes the first run fails due to 
+        #sometimes the first run fails due to i/o issues
         py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
         #running all the tests
-        py.test.exe -v CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\"
+        py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
 
 notifications:
 - provider: GitHubPullRequest
