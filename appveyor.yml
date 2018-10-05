@@ -27,7 +27,7 @@ before_build:
 build_script:
     - cmd: ./build_release_amd64.bat
 
-after_build:
+before_test:
     - ps: |
         #setup the crs repo and the modsec config
         $modsec_repo = "C:\projects\ModSecurity"
@@ -58,14 +58,19 @@ after_build:
 
 test_script:
     - ps: |
-        py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
-        #sometimes the first run fails due to i/o issues
-        py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
+        #py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
         #running all the tests
         py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
 
 notifications:
-- provider: GitHubPullRequest
-  on_build_success: true
-  on_build_failure: true
-  on_build_status_changed: true
+    - provider: GitHubPullRequest
+      on_build_success: true
+      on_build_failure: true
+      on_build_status_changed: true
+      
+      - provider: Email
+        to:
+          - alpelled@microsoft.com
+        subject: 'Build {{status}}'                  # optional
+        message: "{{message}}, {{commitId}}, ..."    # optional
+        on_build_status_changed: true      
