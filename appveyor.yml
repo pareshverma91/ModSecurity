@@ -90,7 +90,6 @@ test_script:
         & {iisreset}; Start-Service W3SVC
         #finished set the config for crs3
         py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
-        get-Content $dbg_file
         Write-Host "alon test - finished"
         
 notifications:

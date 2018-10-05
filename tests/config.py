@@ -5,7 +5,7 @@ modsecurity_conf_location = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
 #[27/Sep/2018:15:35:09 --0700] - but python has issues with %z so we trim it
 log_date_format = "%d/%b/%Y:%H:%M:%S"
 #[27/Sep/2018:15:35:09 --0700]
-log_date_regex = "\[(\d{1,2}\/[A-Z][a-z]{2}\/\d{4}:\d{1,2}:\d{1,2}:\d{1,2} --\d{4})\]"
+log_date_regex = "\[(\d{1,2}\/[A-Z][a-z]{2}\/\d{4}:\d{1,2}:\d{1,2}:\d{1,2} )"
                  
 # Regular expression to filter for timestamp in Apache Error Log
 #

@@ -74,7 +74,7 @@ class FooLogChecker(logchecker.LogChecker):
                 log_date = match.group(1)
                 print("alon, log_data: {}".format(log_date))
                 # Convert our date
-                log_date = datetime.datetime.strptime(log_date[:-7], log_date_format)
+                log_date = datetime.datetime.strptime(log_date[:-1], log_date_format)
                 ftw_start = self.start
                 print("alon, log_data / ftw_start: {}".format(log_date, ftw_start))
                 # if data is bigger than start add it, otherwise abort
