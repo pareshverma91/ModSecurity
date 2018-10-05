@@ -11,18 +11,12 @@ install:
 
 before_build:
     - ps: |
-        Write-Host "Alon - before restart"
-        Invoke-WebRequest http://localhost/?test=test%FF1
-        #restart iis
-        & {iisreset}; Start-Service W3SVC
-        Write-Host "Alon - after restart"
-        Invoke-WebRequest http://localhost/?test=test%FF1
         # copy the required pkgs from the ModSecurity blob and install them (c++ & ModSecurity)
         Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
         Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
         Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
         Start-Process msiexec.exe -ArgumentList '/I ModSecurityIIS_2.9.1-RC1-64b.msi /passive'
-        #setup the python virtual env - not a must but still ...
+        #setup the python virtual env - not a must but still
         pip install virtualenv
         virtualenv --version
         $python_proj_name = "test_crs3"
@@ -31,52 +25,28 @@ before_build:
         
 
 build_script:
-    - ps: |
-        Write-Host "Alon - build_script"
-        & {iisreset}; Start-Service W3SVC
-        Invoke-WebRequest http://localhost/?test=test%FF1
     - cmd: ./build_release_amd64.bat
 
 after_build:
     - ps: |
+        #setup the crs repo and the modsec config
         $modsec_repo = "C:\projects\ModSecurity"
-        & {iisreset /stop}
+        & {iisreset /stop}  #need to stop iis before copy of files that are used by it
         Copy-Item "$modsec_repo\iis\release\amd64\*" -Destination "C:\Windows\System32\inetsrv" -Force
-        & {iisreset /start}; Start-Service W3SVC
-        Invoke-WebRequest http://localhost/?test=test%FF1
-        # configure globale ModSecurity
-        #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"$modsec_repo\iis\release\amd64\ModSecurityIIS.dll"
-        # remove not wanted modules
-        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
-        #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
-        #get the content of the config file
-        #get-Content C:\Windows\System32\inetsrv\config\applicationHost.config
-        # enable sites
-        #C:\Windows\system32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
-
-test_script:
-    - ps: |
-        Write-Host "alon test - build"
-        Invoke-WebRequest http://localhost/
-        Write-Host "1st try start"
-        Invoke-WebRequest http://localhost/?test=test%FF1
-        Write-Host "2nd try start"
+        #& {iisreset /start}; Start-Service W3SVC
         #get the crs repo
         $crs_path = "C:\projects\owasp-modsecurity-crs"
         git clone -q https://github.com/SpiderLabs/owasp-modsecurity-crs.git $crs_path
         cd "$modsec_repo\tests"
         Copy-Item "$crs_path\util\regression-tests\requirements.txt" -Destination "$modsec_repo\tests" -Force
+        #setup the test env with depending python pkgs
         pip install -r requirements.txt
         #configure modsec to use crs 3 and set if for the python testing
         $dbg_file = "$modsec_repo\modsec_debug.log"
         $modsec_conf = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
         Add-Content $modsec_conf "SecDebugLog $dbg_file`r`nSecDebugLogLevel 3"
-        Write-Host "get modsec conf `n`r ************************************************************** `n`r"
-        #get-Content $modsec_conf
         $modsec_iis_conf = "C:\Program Files\ModSecurity IIS\modsecurity_iis.conf"
         Rename-Item -Path "$crs_path\crs-setup.conf.example" -NewName "crs-setup.conf"
-        Write-Host "get crs-setup conf `n`r ************************************************************** `n`r"
-        #get-Content $crs_path/crs-setup.conf
         Clear-Content $modsec_iis_conf
         #configure modsecurity_iis.conf for crs 3 and for runnig the python tests
         Add-Content $modsec_iis_conf "Include modsecurity.conf"
@@ -84,13 +54,11 @@ test_script:
         Add-Content $modsec_iis_conf "  setvar:tx.paranoia_level=4,\`r`n  setvar:tx.crs_validate_utf8_encoding=1,\`r`n  setvar:tx.arg_name_length=100,\`r`n  setvar:tx.arg_length=400"""
         Add-Content $modsec_iis_conf "include $crs_path\crs-setup.conf"
         Add-Content $modsec_iis_conf "include $crs_path/rules/*.conf"
-        Write-Host "get modsec iis conf `n`r ************************************************************** `n`r"
-        #get-Content $modsec_iis_conf
-        #restart iis to pick all the changes
         & {iisreset}; Start-Service W3SVC
-        #finished set the config for crs3
+
+test_script:
+    - ps: |
         py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
-        Write-Host "alon test - finished"
         
 notifications:
 - provider: GitHubPullRequest
