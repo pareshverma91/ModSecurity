@@ -63,12 +63,16 @@ class FooLogChecker(logchecker.LogChecker):
         our_logs = []
         for lline in self.reverse_readline(self.log_file):
             # Extract dates from each line
+            print(lline)
             match = re.match(pattern,lline)
+            print(match)
             if match:
                 log_date = match.group(1)
+                print(log_date)
                 # Convert our date
                 log_date = datetime.datetime.strptime(log_date[:-7], log_date_format)
                 ftw_start = self.start
+                print(log_date, ftw_start)
                 # if data is bigger than start add it, otherwise abort
                 if log_date >= ftw_start.replace(microsecond=0):
                     our_logs.append(lline)
