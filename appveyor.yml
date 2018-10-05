@@ -22,6 +22,13 @@ before_build:
         Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
         Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
         Start-Process msiexec.exe -ArgumentList '/I ModSecurityIIS_2.9.1-RC1-64b.msi /passive'
+        #setup the python virtual env - not a must but still ...
+        pip install virtualenv
+        virtualenv --version
+        $python_proj_name = "test_crs3"
+        virtualenv $python_proj_name
+        & ".\$python_proj_name\Scripts\activate.ps1"
+        
 
 build_script:
     - ps: |
@@ -32,14 +39,13 @@ build_script:
 
 after_build:
     - ps: |
-        $new_dll_loc = "C:\projects\ModSecurity\iis\release\amd64"
-        ls $new_dll_loc
+        $modsec_repo = "C:\projects\ModSecurity"
         & {iisreset /stop}
-        Copy-Item "$new_dll_loc\*" -Destination "C:\Windows\System32\inetsrv" -Force
+        Copy-Item "$modsec_repo\iis\release\amd64\*" -Destination "C:\Windows\System32\inetsrv" -Force
         & {iisreset /start}; Start-Service W3SVC
         Invoke-WebRequest http://localhost/?test=test%FF1
         # configure globale ModSecurity
-        #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"C:\projects\ModSecurity\iis\release\amd64\ModSecurityIIS.dll"
+        #C:\Windows\system32\inetsrv\appcmd.exe install module /name:"ModSecurity IIS" /image:"$modsec_repo\iis\release\amd64\ModSecurityIIS.dll"
         # remove not wanted modules
         #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (32bits)"
         #C:\Windows\system32\inetsrv\appcmd.exe uninstall module /module.name:"ModSecurity IIS (64bits)"
@@ -56,11 +62,13 @@ test_script:
         Invoke-WebRequest http://localhost/?test=test%FF1
         echo "2nd try start"
         #get the crs repo
-        cd C:\
         $crs_path = "C:\projects\owasp-modsecurity-crs"
         git clone -q https://github.com/SpiderLabs/owasp-modsecurity-crs.git $crs_path
+        cd "$modsec_repo\tests"
+        Copy-Item "$crs_path\util\regression-tests\requirements.txt" -Destination "$modsec_repo\tests" -Force
+        pip install -r requirements.txt
         #configure modsec to use crs 3 and set if for the python testing
-        $dbg_file = "C:\projects\ModSecurity\modsec_debug.log"
+        $dbg_file = "$modsec_repo\modsec_debug.log"
         $modsec_conf = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
         Add-Content $modsec_conf "SecDebugLog $dbg_file`r`nSecDebugLogLevel 3"
         echo "get modsec conf `n`r ************************************************************** `n`r"
@@ -89,6 +97,7 @@ test_script:
         echo "2nd try"
         ls $dbg_file
         #finished set the config for crs3
+        py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
         echo "alon test - finished"
         
 notifications:
