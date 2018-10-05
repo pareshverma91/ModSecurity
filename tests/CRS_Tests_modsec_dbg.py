@@ -49,11 +49,15 @@ class FooLogChecker(logchecker.LogChecker):
                 f.seek(position)
                 next_char = f.read(1)
                 if next_char == "\n":
+                    print("*********************************************************************************")
+                    print("alon1: {}".format(line[::-1]))
                     yield line[::-1]
                     line = ''
                 else:
                     line += next_char
                 position -= 1
+            print("*********************************************************************************")
+            print("alon2: {}".format(line[::-1]))
             yield line[::-1]    
 
     def get_logs(self):
@@ -61,18 +65,18 @@ class FooLogChecker(logchecker.LogChecker):
         log_date_format = config.log_date_format
         pattern = re.compile(r'%s' % log_date_regex)
         our_logs = []
+        print("reading the debug file: {}".format(self.log_file))
         for lline in self.reverse_readline(self.log_file):
             # Extract dates from each line
-            print(lline)
             match = re.match(pattern,lline)
-            print(match)
+            print ("alon, match: {}".format(match))
             if match:
                 log_date = match.group(1)
-                print(log_date)
+                print("alon, log_data: {}".format(log_date))
                 # Convert our date
                 log_date = datetime.datetime.strptime(log_date[:-7], log_date_format)
                 ftw_start = self.start
-                print(log_date, ftw_start)
+                print("alon, log_data / ftw_start: {}".format(log_date, ftw_start))
                 # if data is bigger than start add it, otherwise abort
                 if log_date >= ftw_start.replace(microsecond=0):
                     our_logs.append(lline)
