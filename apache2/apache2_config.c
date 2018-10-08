@@ -4121,7 +4121,7 @@ const command_rec module_directives[] = {
         cmd_regex_integrator,
         NULL,
         CMD_SCOPE_ANY,
-        "On or Off"
+        "The priority sequence of engine"
     ),
 
 #endif
