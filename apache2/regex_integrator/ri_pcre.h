@@ -13,8 +13,7 @@
 **                               We perform PCRE study when it is not NULL.
 ** @param pattern:               The regular expression for compilation.
 ** @param options:               The compilation options.
-** @param match_limit:           The limit on internal resource use.
-**                               It is optional. It takes effect when it is > 0.
+** @param params:                The params needed by PCRE.
 ** @param match_limit_recursion: The limit on internal recursion depth.
 **                               It is optional. It takes effect when it is > 0.
 ** @param use_pcre_jit:          The indicator to enable PCRE-JIT.
@@ -27,7 +26,7 @@
 **/
 int ri_pcre_comp(void **re, void **pe,
         const char *pattern, int options,
-        int match_limit, int match_limit_recursion,
+        const struct ri_pcre_params * params,
         int use_pcre_jit, const char **log);
 
 /**

@@ -19,9 +19,9 @@ static const struct ri_priority RI_PRIORITY_DEFAULT = {
 };
 
 // Default param
-static const struct ri_pcre_params RI_PCRE_PARAMS_DEFAULT= {
-    0,
-    0,
+static const struct ri_params RI_PARAMS_DEFAULT= {
+    {0, 0 },
+    {0, 0 },
 };
 
 // Global log level
@@ -106,8 +106,7 @@ int ri_create(ri_regex_t *regex, const char *pattern, int options,
 {
     int error_code = 0;
     struct ri_regex *t_regex = NULL;
-    int match_limit = 0;
-    int match_limit_recursion = 0;
+    struct ri_params comp_params = RI_PARAMS_DEFAULT;
 
     if (regex == NULL) {
         error_code = RI_ERROR_REGEX_NULL;
@@ -150,16 +149,12 @@ int ri_create(ri_regex_t *regex, const char *pattern, int options,
         return error_code;
     }
 
-    // PCRE compile
-    if (params == NULL) {
-        match_limit = RI_PCRE_PARAMS_DEFAULT.match_limit;
-        match_limit_recursion = RI_PCRE_PARAMS_DEFAULT.match_limit_recursion;
-    } else {
-        match_limit = params->pcre.match_limit;
-        match_limit_recursion = params->pcre.match_limit_recursion;
+    if (params != NULL) {
+        comp_params = *params;   
     }
+    // PCRE compile
     error_code = ri_pcre_comp(&(t_regex->pcre_re), &(t_regex->pcre_pe),
-        t_regex->pattern, options, match_limit, match_limit_recursion,
+        t_regex->pattern, options, &comp_params.pcre,
         0, log);
     if (error_code != RI_SUCCESS) {
         ri_free(*regex);
@@ -168,15 +163,8 @@ int ri_create(ri_regex_t *regex, const char *pattern, int options,
     }
 
     // PCRE-JIT compile
-    if (params == NULL) {
-        match_limit = RI_PCRE_PARAMS_DEFAULT.match_limit;
-        match_limit_recursion = RI_PCRE_PARAMS_DEFAULT.match_limit_recursion;
-    } else {
-        match_limit = params->pcre_jit.match_limit;
-        match_limit_recursion = params->pcre_jit.match_limit_recursion;
-    }
     error_code = ri_pcre_comp(&(t_regex->pcre_jit_re), &(t_regex->pcre_jit_pe),
-        t_regex->pattern, options, match_limit, match_limit_recursion,
+        t_regex->pattern, options, &comp_params.pcre_jit,
         1, log);
     if (error_code != RI_SUCCESS) {
         ri_free(*regex);
@@ -226,8 +214,6 @@ int ri_exec(const ri_regex_t regex, const char *subject,
     struct ri_regex *t_regex = (struct ri_regex *)regex;
     // The priority for execution
     struct ri_priority priority_exec = RI_PRIORITY_DEFAULT;
-    // Returned value of RE2
-    int rv_re2 = 0;
 
     if (t_regex == NULL) {
         error_code = RI_ERROR_REGEX_NULL;
@@ -267,17 +253,12 @@ int ri_exec(const ri_regex_t regex, const char *subject,
             break;
         case RI_RE2:
             if (t_regex->re2_re != NULL) {
-                rv_re2 = ri_re2_exec(t_regex->re2_re, subject, subject_len,
-                        start_offset, ovector, ovec_size);
-                // When the string matches the regex and EXEC_NOTEMPTY is on,
-                // use PCRE to do matching again if:
-                // 1) ovector == NULL;
-                // 2) the match is an empty string, i.e., ovector[1] == ovector[0]
-                // Otherwise, return the result.
-                if (!(rv_re2 >= 0 && (options & RI_EXEC_NOTEMPTY) &&
-                     (!ovector || ovector[1] == ovector[0]))) {
-                    return rv_re2;
+                // RE2 don't support EXEC_NOTEMPTY
+                if (options & RI_EXEC_NOTEMPTY) {
+                    break;
                 }
+                return ri_re2_exec(t_regex->re2_re, subject, subject_len,
+                        start_offset, ovector, ovec_size);
             }
             break;
         case RI_AUTO:

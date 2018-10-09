@@ -26,10 +26,7 @@ static int ri_pcre_translate_exec_options(int options);
 **                               We perform PCRE study when it is not NULL.
 ** @param pattern:               The regular expression for compilation.
 ** @param options:               The compilation options.
-** @param match_limit:           The limit on internal resource use.
-**                               It is optional. It takes effect when it is > 0.
-** @param match_limit_recursion: The limit on internal recursion depth.
-**                               It is optional. It takes effect when it is > 0.
+** @param params:                The params needed by PCRE.
 ** @param use_pcre_jit:          The indicator to enable PCRE-JIT.
 **                               0 means disabling PCRE-JIT;
 **                               otherwise, enable PCRE-JIT.
@@ -40,7 +37,7 @@ static int ri_pcre_translate_exec_options(int options);
 **/
 int ri_pcre_comp(void **re, void **pe,
         const char *pattern, int options,
-        int match_limit, int match_limit_recursion,
+        const struct ri_pcre_params * params,
         int use_pcre_jit, const char **log)
 {
     int error_code = 0;
@@ -97,27 +94,29 @@ int ri_pcre_comp(void **re, void **pe,
 
         pcre_extra *t_pe = (pcre_extra *) *pe;
 
+        if (params) {
 #ifdef PCRE_EXTRA_MATCH_LIMIT
-        // If match limit is available, then use it
-        if (match_limit > 0) {
-            t_pe->match_limit = match_limit;
-            t_pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
-        }
+            // If match limit is available, then use it
+            if (params->match_limit > 0) {
+                t_pe->match_limit = params->match_limit;
+                t_pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
+            }
 #else
 #pragma message ("This PCRE version does not support match limits! Upgrade to \
         at least PCRE v6.5.")
 #endif /* PCRE_EXTRA_MATCH_LIMIT */
 
 #ifdef PCRE_EXTRA_MATCH_LIMIT_RECURSION
-        // If match limit recursion is available, then use it
-        if (match_limit_recursion > 0) {
-            t_pe->match_limit_recursion = match_limit_recursion;
-            t_pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
-        }
+            // If match limit recursion is available, then use it
+            if (params->match_limit_recursion > 0) {
+                t_pe->match_limit_recursion = params->match_limit_recursion;
+                t_pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
+            }
 #else
 #pragma message ("This PCRE version does not support match recursion limits! \
         Upgrade to at least PCRE v6.5.")
 #endif /* PCRE_EXTRA_MATCH_LIMIT_RECURSION */
+        }
     }
 
     return RI_SUCCESS;
