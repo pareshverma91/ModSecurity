@@ -58,11 +58,12 @@ before_test:
 
 test_script:
     - ps: |
-        #py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
+        py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
         #running all the tests
         py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
-        Select-String -Path res.xml -Pattern TestError
-        get-content res.txt
+        python Parse_test_res.py
+        #Select-String -Path res.xml -Pattern TestError
+        #get-content res.txt
 
 notifications:
     - provider: GitHubPullRequest
