@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os, sys
+import config
 
 def main():
     fname = sys.argv[1]
@@ -21,7 +22,10 @@ def main():
 
     print("No response from server: {}".format(no_res))
     print("Assert failure: {}".format(bad_assert))
-    if bad_assert:
+    known_fail = config.failing_tests
+    unknown_fail = [x for x in bad_assert if x not in known_fail]
+    print("unknown failure: {}".format(unknown_fail))
+    if unknown_fail:
         print("Test failed")
         exit(1)
 
