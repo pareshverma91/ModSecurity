@@ -31,7 +31,8 @@ before_test:
         $modsec_iis_conf = "$modsec_repo\iis\wix\modsecurity_iis.conf"
         & {iisreset /stop}  #need to stop iis before copy of files that are used by it
         #copy the xml file to the schema
-        Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "$($env:SystemRoot)\System32\inetsrv\config\schema" -Force
+        Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "$env:SystemRoot\System32\inetsrv\config\schema" -Force
+        Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
         #set modsecurity in applicationhost.cofig 
         [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
         $sm = new-object Microsoft.Web.Administration.ServerManager
