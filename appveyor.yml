@@ -34,7 +34,6 @@ before_test:
         Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "C:\Windows\System32\inetsrv\config\schema" -Force
         #set modsecurity in applicationhost.cofig 
         C:\Windows\System32\inetsrv\appcmd.exe install module /name:"ModSecurity" /image:"$modsec_repo\iis\release\amd64\ModSecurityIIS.dll"
-        C:\Windows\System32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files (x86)\ModSecurity IIS\modsecurity_iis.conf"
         $pspath = 'MACHINE/WEBROOT/APPHOST'
         $filter = "/system.webServer"
         $propertyName = "sections"
@@ -44,6 +43,7 @@ before_test:
         $find = '            <section name="ModSecurity" />'
         $replace = '            <section name="ModSecurity" overrideModeDefault="Deny" allowDefinition="Everywhere" />'
         (Get-Content $file).replace($find, $replace) | Set-Content $file
+        C:\Windows\System32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files (x86)\ModSecurity IIS\modsecurity_iis.conf"
         #setup the crs repo and the modsec config
         #Copy-Item "$modsec_repo\iis\release\amd64\*" -Destination "C:\Windows\System32\inetsrv" -Force
         #get the crs repo
