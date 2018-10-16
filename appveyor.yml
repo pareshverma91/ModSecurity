@@ -19,10 +19,16 @@ before_build:
         $python_proj_name = "test_crs3"
         virtualenv $python_proj_name
         & ".\$python_proj_name\Scripts\activate.ps1"
-        
+        Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
+        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
+        $sm = new-object Microsoft.Web.Administration.ServerManager
+        $rootSG = $sm.GetApplicationHostConfiguration().RootSectionGroup
+        $rootSG.SectionGroups["system.webServer"].Sections.Add("ModSecurity")
+        $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].OverrideModeDefault = "Deny"
+        $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].AllowDefinition = "Everywhere"
+        $sm.CommitChanges()
 
 build_script:
-    - ps: Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
     - cmd: ./build_release_amd64.bat
 
 before_test:
