@@ -22,7 +22,7 @@ before_build:
         
 
 build_script:
-    - cmd: ./build_release_amd64.bat
+    #- cmd: ./build_release_amd64.bat
 
 before_test:
     - ps: |
@@ -68,8 +68,8 @@ test_script:
         #usually the first test fail, due to i/o
         py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
         #running all the tests
-        py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
-        python Parse_test_res.py res.txt
+        #py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
+        #python Parse_test_res.py res.txt
 
 notifications:
     - provider: GitHubPullRequest
