@@ -33,17 +33,17 @@ before_test:
         #copy the xml file to the schema
         Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "$($env:SystemRoot)\System32\inetsrv\config\schema" -Force
         #set modsecurity in applicationhost.cofig 
-        $($env:SystemRoot)\System32\inetsrv\appcmd.exe install module /name:"ModSecurity" /image:"$modsec_repo\iis\release\amd64\ModSecurityIIS.dll"
+        & "$env:SystemRoot\System32\inetsrv\appcmd.exe" install module /name:"ModSecurity" /image:"$modsec_repo\iis\release\amd64\ModSecurityIIS.dll"
         $pspath = 'MACHINE/WEBROOT/APPHOST'
         $filter = "/system.webServer"
         $propertyName = "sections"
         $propertyValue =  "ModSecurity"
         Add-WebConfigurationProperty -pspath $pspath -filter $filter -name $propertyName -value $propertyValue
-        $file = '$($env:SystemRoot)\System32\inetsrv\config\applicationHost.config'
+        $file = '$env:SystemRoot\System32\inetsrv\config\applicationHost.config'
         $find = '            <section name="ModSecurity" />'
         $replace = '            <section name="ModSecurity" overrideModeDefault="Deny" allowDefinition="Everywhere" />'
         (Get-Content $file).replace($find, $replace) | Set-Content $file
-        $($env:SystemRoot)\System32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:$modsec_iis_conf"
+        & "$env:SystemRoot\System32\inetsrv\appcmd.exe" set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:$modsec_iis_conf"
         #setup the crs repo and the modsec config
         $crs_path = "C:\projects\owasp-modsecurity-crs"
         git clone -q https://github.com/SpiderLabs/owasp-modsecurity-crs.git $crs_path
