@@ -33,13 +33,14 @@ before_test:
         #copy the xml file to the schema
         Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "$($env:SystemRoot)\System32\inetsrv\config\schema" -Force
         #set modsecurity in applicationhost.cofig 
-        & "$env:SystemRoot\System32\inetsrv\appcmd.exe" install module /name:"ModSecurity" /image:"$modsec_repo\iis\release\amd64\ModSecurityIIS.dll"
+        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
         $sm = new-object Microsoft.Web.Administration.ServerManager
         $rootSG = $sm.GetApplicationHostConfiguration().RootSectionGroup
         $rootSG.SectionGroups["system.webServer"].Sections.Add("ModSecurity")
         $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].OverrideModeDefault = "Deny"
         $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].AllowDefinition = "Everywhere"
         $sm.CommitChanges()
+        & "$env:SystemRoot\System32\inetsrv\appcmd.exe" install module /name:"ModSecurity" /image:"$modsec_repo\iis\release\amd64\ModSecurityIIS.dll"
         & "$env:SystemRoot\System32\inetsrv\appcmd.exe" set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:$modsec_iis_conf"
         #setup the crs repo and the modsec config
         $crs_path = "C:\projects\owasp-modsecurity-crs"
