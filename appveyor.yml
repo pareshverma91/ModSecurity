@@ -1,7 +1,7 @@
 version: 1.0.{build}
 
 services:
-  - iis                 # start IIS
+    - iis                 # start IIS
 
 install:
     - "python --version"
@@ -12,9 +12,7 @@ before_build:
     - ps: |
         # copy the required pkgs from the ModSecurity blob and install them (c++ & ModSecurity)
         Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
-        #Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/ModSecurityIIS_2.9.1-RC1-64b.msi -OutFile ModSecurityIIS_2.9.1-RC1-64b.msi
         Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
-        #Start-Process msiexec.exe -ArgumentList '/I ModSecurityIIS_2.9.1-RC1-64b.msi /passive'
         #setup the python virtual env - not a must but still
         pip install virtualenv
         virtualenv --version
@@ -29,6 +27,8 @@ build_script:
 before_test:
     - ps: |
         $modsec_repo = "C:\projects\ModSecurity"
+        $modsec_conf = "$modsec_repo\iis\wix\modsecurity.conf"
+        $modsec_iis_conf = "$modsec_repo\iis\wix\modsecurity_iis.conf"
         & {iisreset /stop}  #need to stop iis before copy of files that are used by it
         #copy the xml file to the schema
         Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "C:\Windows\System32\inetsrv\config\schema" -Force
@@ -43,10 +43,8 @@ before_test:
         $find = '            <section name="ModSecurity" />'
         $replace = '            <section name="ModSecurity" overrideModeDefault="Deny" allowDefinition="Everywhere" />'
         (Get-Content $file).replace($find, $replace) | Set-Content $file
-        C:\Windows\System32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:C:\Program Files (x86)\ModSecurity IIS\modsecurity_iis.conf"
+        C:\Windows\System32\inetsrv\appcmd.exe set config /section:"system.webServer/ModSecurity" /"enabled:true" /"configFile:$modsec_iis_conf"
         #setup the crs repo and the modsec config
-        #Copy-Item "$modsec_repo\iis\release\amd64\*" -Destination "C:\Windows\System32\inetsrv" -Force
-        #get the crs repo
         $crs_path = "C:\projects\owasp-modsecurity-crs"
         git clone -q https://github.com/SpiderLabs/owasp-modsecurity-crs.git $crs_path
         cd "$modsec_repo\tests"
@@ -56,9 +54,7 @@ before_test:
         pip install -r requirements.txt
         #configure modsec to use crs 3 and set if for the python testing
         $dbg_file = "$modsec_repo\modsec_debug.log"
-        $modsec_conf = "$modsec_repo\iis\wix\modsecurity.conf"
         Add-Content $modsec_conf "SecDebugLog $dbg_file`r`nSecDebugLogLevel 3"
-        $modsec_iis_conf = "$modsec_repo\iis\wix\modsecurity_iis.conf"
         Clear-Content $modsec_iis_conf
         #configure modsecurity_iis.conf for crs 3 and for runnig the python tests
         Add-Content $modsec_iis_conf "Include modsecurity.conf"
@@ -66,10 +62,11 @@ before_test:
         Add-Content $modsec_iis_conf "  setvar:tx.paranoia_level=4,\`r`n  setvar:tx.crs_validate_utf8_encoding=1,\`r`n  setvar:tx.arg_name_length=100,\`r`n  setvar:tx.arg_length=400"""
         Add-Content $modsec_iis_conf "include $crs_path\crs-setup.conf"
         Add-Content $modsec_iis_conf "include $crs_path/rules/*.conf"
-        & {iisreset /start}; Start-Service W3SVC
+        & {iisreset /start}; Start-Service W3SVC # finished all the modsec config, start iis
 
 test_script:
     - ps: |
+        #usually the first test fail, due to i/o
         py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
         #running all the tests
         py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
