@@ -1,5 +1,5 @@
 # Location of modsecurity.conf
-modsecurity_conf_location = "C:\Program Files\ModSecurity IIS\modsecurity.conf"
+modsecurity_conf_location = "C:\projects\ModSecurity\iis\wix\modsecurity.conf"
 
 #
 #[27/Sep/2018:15:35:09 --0700] - but python has issues with %z so we trim it
