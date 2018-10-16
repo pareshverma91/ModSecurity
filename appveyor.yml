@@ -22,7 +22,10 @@ before_build:
         Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
         [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
         $sm = new-object Microsoft.Web.Administration.ServerManager
+        $sm
         $rootSG = $sm.GetApplicationHostConfiguration().RootSectionGroup
+        $rootSG
+        $rootSG.SectionGroups
         $rootSG.SectionGroups["system.webServer"].Sections.Add("ModSecurity")
         $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].OverrideModeDefault = "Deny"
         $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].AllowDefinition = "Everywhere"
