@@ -19,18 +19,6 @@ before_build:
         $python_proj_name = "test_crs3"
         virtualenv $python_proj_name
         & ".\$python_proj_name\Scripts\activate.ps1"
-        Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
-        #[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
-        [System.Reflection.Assembly]::LoadFrom("$env:systemroot\system32\inetsrv\Microsoft.Web.Administration.dll")
-        $sm = new-object Microsoft.Web.Administration.ServerManager
-        $sm
-        $rootSG = $sm.GetApplicationHostConfiguration().RootSectionGroup
-        $rootSG
-        $rootSG.SectionGroups
-        $rootSG.SectionGroups["system.webServer"].Sections.Add("ModSecurity")
-        $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].OverrideModeDefault = "Deny"
-        $rootSG.SectionGroups["system.webServer"].Sections["ModSecurity"].AllowDefinition = "Everywhere"
-        $sm.CommitChanges()
 
 build_script:
     - cmd: ./build_release_amd64.bat
@@ -44,7 +32,7 @@ before_test:
         #copy the xml file to the schema
         Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "$env:SystemRoot\System32\inetsrv\config\schema" -Force
         #set modsecurity in applicationhost.cofig 
-        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
+        [System.Reflection.Assembly]::LoadFrom("$env:systemroot\system32\inetsrv\Microsoft.Web.Administration.dll")
         $sm = new-object Microsoft.Web.Administration.ServerManager
         $rootSG = $sm.GetApplicationHostConfiguration().RootSectionGroup
         $rootSG.SectionGroups["system.webServer"].Sections.Add("ModSecurity")
@@ -78,8 +66,8 @@ test_script:
         #usually the first test fail, due to i/o
         py.test.exe -v CRS_Tests_modsec_dbg.py --rule="$crs_path\util\regression-tests\tests\test.yaml"
         #running all the tests
-        #py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
-        #python Parse_test_res.py res.txt
+        py.test.exe -q CRS_Tests_modsec_dbg.py --ruledir_recurse="$crs_path\util\regression-tests\tests\" --result-log=res.txt --tb=no --junit-xml=res.xml
+        python Parse_test_res.py res.txt
 
 notifications:
     - provider: GitHubPullRequest
