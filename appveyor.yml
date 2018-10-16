@@ -22,7 +22,8 @@ before_build:
         
 
 build_script:
-    #- cmd: ./build_release_amd64.bat
+    - ps: Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
+    - cmd: ./build_release_amd64.bat
 
 before_test:
     - ps: |
@@ -32,7 +33,6 @@ before_test:
         & {iisreset /stop}  #need to stop iis before copy of files that are used by it
         #copy the xml file to the schema
         Copy-Item "$modsec_repo\iis\ModSecurity.xml" -Destination "$env:SystemRoot\System32\inetsrv\config\schema" -Force
-        Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
         #set modsecurity in applicationhost.cofig 
         [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
         $sm = new-object Microsoft.Web.Administration.ServerManager
