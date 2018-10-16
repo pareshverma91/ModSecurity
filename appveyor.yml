@@ -80,6 +80,6 @@ notifications:
       
     - provider: Email
       to:
-        - alpelled@microsoft.com
+        - alpelled@microsoft.com, alon.pelled@gmail.com
         #subject: 'Build {{status}}'                  # optional
         #message: "{{message}}, {{commitId}}, ..."    # optional
