@@ -20,7 +20,8 @@ before_build:
         virtualenv $python_proj_name
         & ".\$python_proj_name\Scripts\activate.ps1"
         Get-Content "$env:SystemRoot\System32\inetsrv\config\applicationHost.config"
-        [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
+        #[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.Web.Administration")
+        [System.Reflection.Assembly]::LoadFrom("$env:systemroot\system32\inetsrv\Microsoft.Web.Administration.dll")
         $sm = new-object Microsoft.Web.Administration.ServerManager
         $sm
         $rootSG = $sm.GetApplicationHostConfiguration().RootSectionGroup
