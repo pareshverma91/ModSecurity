@@ -12,14 +12,16 @@ extern "C"
 
 /**
 ** Compile the provided regular expression pattern.
+** @param re:      A pointer to RE2 object if compilation succeeds,
+**                 or NULL if compilation fails.
 ** @param pattern: The regular expression for compilation.
 ** @param options: The options for compilation.
 ** @param log:     The pointer to the log. It is optional.
 **                 If it is NULL, we would not fill in detailed log message.
-** return: A pointer to RE2 object if compilation succeeds,
-**         or NULL if compilation fails.
+** return: 0 if compilation succeeds,
+**         or the error code if compilation fails.
 **/
-void *ri_re2_comp(const char *pattern, int options, const char ** log);
+int ri_re2_comp(void **re, const char *pattern, int options, const char ** log);
 
 /**
 ** Execute regular expression.

@@ -18,14 +18,16 @@ static void ri_re2_translate_comp_options(const char *pattern, int options,
 
 /**
 ** Compile the provided regular expression pattern.
+** @param re:      A pointer to RE2 object if compilation succeeds,
+**                 or NULL if compilation fails.
 ** @param pattern: The regular expression for compilation.
 ** @param options: The options for compilation.
 ** @param log:     The pointer to the log. It is optional.
 **                 If it is NULL, we would not fill in detailed log message.
-** return: A pointer to RE2 object if compilation succeeds,
-**         or NULL if compilation fails.
+** return: 0 if compilation succeeds,
+**         or the error code if compilation fails.
 **/
-void *ri_re2_comp(const char *pattern, int options, const char **log)
+int ri_re2_comp(void **re, const char *pattern, int options, const char **log)
 {
     int error_code = 0;
     RE2 *re2_re = NULL;
@@ -35,7 +37,7 @@ void *ri_re2_comp(const char *pattern, int options, const char **log)
     if (pattern == NULL) {
         error_code = RI_ERROR_PATTERN_NULL;
         ri_fill_log(log, RI_LOG_ERROR, error_code);
-        return NULL;
+        return error_code;
     }
 
     ri_re2_translate_comp_options(pattern, options,
@@ -47,14 +49,16 @@ void *ri_re2_comp(const char *pattern, int options, const char **log)
     if (re2_re == NULL) {
         error_code = RI_ERROR_RE2_CANNOT_CONSTRUCT;
         ri_fill_log(log, RI_LOG_ERROR, error_code);
-        return NULL;
+        return error_code;
     } else {
         if (re2_re->ok()) {
-            return re2_re;
+            *re = re2_re;
+            return error_code;
         } else {
             ri_fill_log_ex(log, RI_LOG_ERROR, re2_re->error().c_str());
             ri_re2_free(re2_re);
-            return NULL;
+            error_code = RI_ERROR_RE2_CANNOT_CONSTRUCT;
+            return error_code;
         }
     }
 }

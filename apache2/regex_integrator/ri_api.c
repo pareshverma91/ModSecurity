@@ -173,10 +173,14 @@ int ri_create(ri_regex_t *regex, const char *pattern, int options,
     }
 
     // RE2 compile
-    t_regex->re2_re = ri_re2_comp(t_regex->pattern, options, log);
-
-    error_code = RI_SUCCESS;
-    ri_fill_log(log, RI_LOG_ERROR, error_code);
+    error_code = ri_re2_comp(&(t_regex->re2_re), t_regex->pattern, options, log);
+    if (error_code == RI_SUCCESS) {
+        ri_fill_log(log, RI_LOG_ERROR, error_code);
+    } else {
+        // RE2 isn't mandatory
+        error_code = RI_SUCCESS;
+    }
+    
     return error_code;
 }
 
