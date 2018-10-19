@@ -77,6 +77,6 @@ notifications:
       
     - provider: Email
       to:
-        - wafcore@microsoft.com
+        - wafcore@microsoft.com, alpelled@microsoft.com
         #subject: 'Build {{status}}'                  # optional
         #message: "{{message}}, {{commitId}}, ..."    # optional
