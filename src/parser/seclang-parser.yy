@@ -17,9 +17,11 @@ class Driver;
 }
 }
 
+#include "src/rule_script.h"
 
 #include "src/actions/accuracy.h"
 #include "src/actions/audit_log.h"
+#include "src/actions/block.h"
 #include "src/actions/capture.h"
 #include "src/actions/chain.h"
 #include "src/actions/ctl/audit_log_parts.h"
@@ -27,16 +29,18 @@ class Driver;
 #include "src/actions/ctl/rule_engine.h"
 #include "src/actions/ctl/request_body_processor_json.h"
 #include "src/actions/ctl/request_body_processor_xml.h"
+#include "src/actions/ctl/request_body_processor_urlencoded.h"
 #include "src/actions/ctl/rule_remove_by_id.h"
+#include "src/actions/ctl/rule_remove_by_tag.h"
 #include "src/actions/ctl/rule_remove_target_by_id.h"
 #include "src/actions/ctl/rule_remove_target_by_tag.h"
 #include "src/actions/data/status.h"
 #include "src/actions/disruptive/allow.h"
-#include "src/actions/disruptive/block.h"
 #include "src/actions/disruptive/deny.h"
 #include "src/actions/disruptive/pass.h"
 #include "src/actions/disruptive/redirect.h"
 #include "src/actions/init_col.h"
+#include "src/actions/exec.h"
 #include "src/actions/log_data.h"
 #include "src/actions/log.h"
 #include "src/actions/maturity.h"
@@ -47,6 +51,7 @@ class Driver;
 #include "src/actions/phase.h"
 #include "src/actions/rev.h"
 #include "src/actions/rule_id.h"
+#include "src/actions/set_env.h"
 #include "src/actions/set_rsc.h"
 #include "src/actions/set_sid.h"
 #include "src/actions/set_uid.h"
@@ -173,13 +178,19 @@ class Driver;
 #include "src/variables/matched_vars.h"
 #include "src/variables/matched_vars_names.h"
 #include "src/variables/modsec_build.h"
+#include "src/variables/multipart_boundary_quoted.h"
+#include "src/variables/multipart_boundary_whitespace.h"
 #include "src/variables/multipart_crlf_lf_lines.h"
 #include "src/variables/multipart_data_after.h"
+#include "src/variables/multipart_data_before.h"
 #include "src/variables/multipart_file_limit_exceeded.h"
 #include "src/variables/multipart_file_name.h"
 #include "src/variables/multipart_header_folding.h"
 #include "src/variables/multipart_invalid_header_folding.h"
+#include "src/variables/multipart_invalid_part.h"
 #include "src/variables/multipart_invalid_quoting.h"
+#include "src/variables/multipart_lf_line.h"
+#include "src/variables/multipart_missing_semicolon.h"
 #include "src/variables/multipart_name.h"
 #include "src/variables/multipart_strict_error.h"
 #include "src/variables/multipart_unmatched_boundary.h"
@@ -221,6 +232,7 @@ class Driver;
 #include "src/variables/server_name.h"
 #include "src/variables/server_port.h"
 #include "src/variables/session_id.h"
+#include "src/variables/web_app_id.h"
 #include "src/variables/time_day.h"
 #include "src/variables/time_epoch.h"
 #include "src/variables/time.h"
@@ -233,6 +245,7 @@ class Driver;
 #include "src/variables/tx.h"
 #include "src/variables/unique_id.h"
 #include "src/variables/url_encoded_error.h"
+#include "src/variables/user.h"
 #include "src/variables/user_id.h"
 #include "src/variables/variable.h"
 #include "src/variables/xml.h"
@@ -332,6 +345,7 @@ using modsecurity::operators::Operator;
     std::unique_ptr<Variable> c(b); \
     a = std::move(c);
 
+#define CODEPAGE_SEPARATORS  " \t\n\r"
 
 }
 // The parsing context.
@@ -387,12 +401,19 @@ using modsecurity::operators::Operator;
   VARIABLE_INBOUND_DATA_ERROR   "INBOUND_DATA_ERROR"
   VARIABLE_MATCHED_VAR          "MATCHED_VAR"
   VARIABLE_MATCHED_VAR_NAME     "MATCHED_VAR_NAME"
+  VARIABLE_MULTIPART_BOUNDARY_QUOTED
+  VARIABLE_MULTIPART_BOUNDARY_WHITESPACE
   VARIABLE_MULTIPART_CRLF_LF_LINES    "MULTIPART_CRLF_LF_LINES"
   VARIABLE_MULTIPART_DATA_AFTER "MULTIPART_DATA_AFTER"
+  VARIABLE_MULTIPART_DATA_BEFORE
   VARIABLE_MULTIPART_FILE_LIMIT_EXCEEDED       "MULTIPART_FILE_LIMIT_EXCEEDED"
   VARIABLE_MULTIPART_HEADER_FOLDING            "MULTIPART_HEADER_FOLDING"
   VARIABLE_MULTIPART_INVALID_HEADER_FOLDING    "MULTIPART_INVALID_HEADER_FOLDING"
+  VARIABLE_MULTIPART_INVALID_PART
   VARIABLE_MULTIPART_INVALID_QUOTING           "MULTIPART_INVALID_QUOTING"
+  VARIABLE_MULTIPART_LF_LINE
+  VARIABLE_MULTIPART_MISSING_SEMICOLON
+  VARIABLE_MULTIPART_SEMICOLON_MISSING
   VARIABLE_MULTIPART_STRICT_ERROR              "MULTIPART_STRICT_ERROR"
   VARIABLE_MULTIPART_UNMATCHED_BOUNDARY        "MULTIPART_UNMATCHED_BOUNDARY"
   VARIABLE_OUTBOUND_DATA_ERROR  "OUTBOUND_DATA_ERROR"
@@ -430,12 +451,16 @@ using modsecurity::operators::Operator;
   VARIABLE_UNIQUE_ID            "UNIQUE_ID"
   VARIABLE_URL_ENCODED_ERROR    "URLENCODED_ERROR"
   VARIABLE_USER_ID               "USERID"
+  VARIABLE_WEB_APP_ID           "WEBAPPID"
+
+
   VARIABLE_STATUS                              "VARIABLE_STATUS"
+  VARIABLE_STATUS_LINE                         "VARIABLE_STATUS_LINE"
   VARIABLE_IP                                  "VARIABLE_IP"
   VARIABLE_GLOBAL                              "VARIABLE_GLOBAL"
   VARIABLE_TX                                  "VARIABLE_TX"
   VARIABLE_SESSION                             "VARIABLE_SESSION"
-  VARIABLE_USER                                 "VARIABLE_USER"
+  VARIABLE_USER                                "VARIABLE_USER"
   RUN_TIME_VAR_ENV                             "RUN_TIME_VAR_ENV"
   RUN_TIME_VAR_XML                             "RUN_TIME_VAR_XML"
 
@@ -444,6 +469,43 @@ using modsecurity::operators::Operator;
   SETVAR_OPERATION_EQUALS_PLUS
   SETVAR_OPERATION_EQUALS_MINUS
   NOT                                          "NOT"
+
+  OPERATOR_BEGINS_WITH                         "OPERATOR_BEGINS_WITH"
+  OPERATOR_CONTAINS                            "OPERATOR_CONTAINS"
+  OPERATOR_CONTAINS_WORD                       "OPERATOR_CONTAINS_WORD"
+  OPERATOR_DETECT_SQLI                         "OPERATOR_DETECT_SQLI"
+  OPERATOR_DETECT_XSS                          "OPERATOR_DETECT_XSS"
+  OPERATOR_ENDS_WITH                           "OPERATOR_ENDS_WITH"
+  OPERATOR_EQ                                  "OPERATOR_EQ"
+  OPERATOR_FUZZY_HASH                          "OPERATOR_FUZZY_HASH"
+  OPERATOR_GEOLOOKUP                           "OPERATOR_GEOLOOKUP"
+  OPERATOR_GE                                  "OPERATOR_GE"
+  OPERATOR_GSB_LOOKUP                          "OPERATOR_GSB_LOOKUP"
+  OPERATOR_GT                                  "OPERATOR_GT"
+  OPERATOR_INSPECT_FILE                        "OPERATOR_INSPECT_FILE"
+  OPERATOR_IP_MATCH_FROM_FILE                  "OPERATOR_IP_MATCH_FROM_FILE"
+  OPERATOR_IP_MATCH                            "OPERATOR_IP_MATCH"
+  OPERATOR_LE                                  "OPERATOR_LE"
+  OPERATOR_LT                                  "OPERATOR_LT"
+  OPERATOR_PM_FROM_FILE                        "OPERATOR_PM_FROM_FILE"
+  OPERATOR_PM                                  "OPERATOR_PM"
+  OPERATOR_RBL                                 "OPERATOR_RBL"
+  OPERATOR_RSUB                                "OPERATOR_RSUB"
+  OPERATOR_RX_CONTENT_ONLY                     "Operator RX (content only)"
+  OPERATOR_RX                                  "OPERATOR_RX"
+  OPERATOR_STR_EQ                              "OPERATOR_STR_EQ"
+  OPERATOR_STR_MATCH                           "OPERATOR_STR_MATCH"
+  OPERATOR_UNCONDITIONAL_MATCH                 "OPERATOR_UNCONDITIONAL_MATCH"
+  OPERATOR_VALIDATE_BYTE_RANGE                 "OPERATOR_VALIDATE_BYTE_RANGE"
+  OPERATOR_VALIDATE_DTD                        "OPERATOR_VALIDATE_DTD"
+  OPERATOR_VALIDATE_HASH                       "OPERATOR_VALIDATE_HASH"
+  OPERATOR_VALIDATE_SCHEMA                     "OPERATOR_VALIDATE_SCHEMA"
+  OPERATOR_VALIDATE_URL_ENCODING               "OPERATOR_VALIDATE_URL_ENCODING"
+  OPERATOR_VALIDATE_UTF8_ENCODING              "OPERATOR_VALIDATE_UTF8_ENCODING"
+  OPERATOR_VERIFY_CC                           "OPERATOR_VERIFY_CC"
+  OPERATOR_VERIFY_CPF                          "OPERATOR_VERIFY_CPF"
+  OPERATOR_VERIFY_SSN                          "OPERATOR_VERIFY_SSN"
+  OPERATOR_WITHIN                              "OPERATOR_WITHIN"
 
   CONFIG_DIR_AUDIT_LOG_FMT
   JSON
@@ -464,9 +526,11 @@ using modsecurity::operators::Operator;
   ACTION_CTL_AUDIT_LOG_PARTS                   "ACTION_CTL_AUDIT_LOG_PARTS"
   ACTION_CTL_BDY_JSON                          "ACTION_CTL_BDY_JSON"
   ACTION_CTL_BDY_XML                           "ACTION_CTL_BDY_XML"
+  ACTION_CTL_BDY_URLENCODED                    "ACTION_CTL_BDY_URLENCODED"
   ACTION_CTL_FORCE_REQ_BODY_VAR                "ACTION_CTL_FORCE_REQ_BODY_VAR"
   ACTION_CTL_REQUEST_BODY_ACCESS               "ACTION_CTL_REQUEST_BODY_ACCESS"
   ACTION_CTL_RULE_REMOVE_BY_ID                 "ACTION_CTL_RULE_REMOVE_BY_ID"
+  ACTION_CTL_RULE_REMOVE_BY_TAG                "ACTION_CTL_RULE_REMOVE_BY_TAG"
   ACTION_CTL_RULE_REMOVE_TARGET_BY_ID          "ACTION_CTL_RULE_REMOVE_TARGET_BY_ID"
   ACTION_CTL_RULE_REMOVE_TARGET_BY_TAG         "ACTION_CTL_RULE_REMOVE_TARGET_BY_TAG"
   ACTION_DENY                                  "Deny"
@@ -490,11 +554,11 @@ using modsecurity::operators::Operator;
   ACTION_PROXY                                 "Proxy"
   ACTION_REDIRECT                              "Redirect"
   ACTION_REV                                   "Rev"
-  ACTION_SANATISE_ARG                          "SanatiseArg"
-  ACTION_SANATISE_MATCHED                      "SanatiseMatched"
-  ACTION_SANATISE_MATCHED_BYTES                "SanatiseMatchedBytes"
-  ACTION_SANATISE_REQUEST_HEADER               "SanatiseRequestHeader"
-  ACTION_SANATISE_RESPONSE_HEADER              "SanatiseResponseHeader"
+  ACTION_SANITISE_ARG                          "SanitiseArg"
+  ACTION_SANITISE_MATCHED                      "SanitiseMatched"
+  ACTION_SANITISE_MATCHED_BYTES                "SanitiseMatchedBytes"
+  ACTION_SANITISE_REQUEST_HEADER               "SanitiseRequestHeader"
+  ACTION_SANITISE_RESPONSE_HEADER              "SanitiseResponseHeader"
   ACTION_SETENV                                "SetEnv"
   ACTION_SETRSC                                "SetRsc"
   ACTION_SETSID                                "SetSid"
@@ -504,9 +568,13 @@ using modsecurity::operators::Operator;
   ACTION_SKIP_AFTER                            "SkipAfter"
   ACTION_STATUS                                "Status"
   ACTION_TAG                                   "Tag"
+  ACTION_TRANSFORMATION_BASE_64_ENCODE         "ACTION_TRANSFORMATION_BASE_64_ENCODE"
+  ACTION_TRANSFORMATION_BASE_64_DECODE         "ACTION_TRANSFORMATION_BASE_64_DECODE"
+  ACTION_TRANSFORMATION_BASE_64_DECODE_EXT     "ACTION_TRANSFORMATION_BASE_64_DECODE_EXT"
   ACTION_TRANSFORMATION_CMD_LINE               "ACTION_TRANSFORMATION_CMD_LINE"
   ACTION_TRANSFORMATION_COMPRESS_WHITESPACE    "ACTION_TRANSFORMATION_COMPRESS_WHITESPACE"
   ACTION_TRANSFORMATION_CSS_DECODE             "ACTION_TRANSFORMATION_CSS_DECODE"
+  ACTION_TRANSFORMATION_ESCAPE_SEQ_DECODE      "ACTION_TRANSFORMATION_ESCAPE_SEQ_DECODE"
   ACTION_TRANSFORMATION_HEX_ENCODE             "ACTION_TRANSFORMATION_HEX_ENCODE"
   ACTION_TRANSFORMATION_HEX_DECODE             "ACTION_TRANSFORMATION_HEX_DECODE"
   ACTION_TRANSFORMATION_HTML_ENTITY_DECODE     "ACTION_TRANSFORMATION_HTML_ENTITY_DECODE"
@@ -529,13 +597,17 @@ using modsecurity::operators::Operator;
   ACTION_TRANSFORMATION_SHA1                   "ACTION_TRANSFORMATION_SHA1"
   ACTION_TRANSFORMATION_SQL_HEX_DECODE         "ACTION_TRANSFORMATION_SQL_HEX_DECODE"
   ACTION_TRANSFORMATION_TRIM                   "ACTION_TRANSFORMATION_TRIM"
+  ACTION_TRANSFORMATION_TRIM_LEFT              "ACTION_TRANSFORMATION_TRIM_LEFT"
+  ACTION_TRANSFORMATION_TRIM_RIGHT             "ACTION_TRANSFORMATION_TRIM_RIGHT"
   ACTION_TRANSFORMATION_UPPERCASE              "ACTION_TRANSFORMATION_UPPERCASE"
+  ACTION_TRANSFORMATION_URL_ENCODE             "ACTION_TRANSFORMATION_URL_ENCODE"
   ACTION_TRANSFORMATION_URL_DECODE             "ACTION_TRANSFORMATION_URL_DECODE"
   ACTION_TRANSFORMATION_URL_DECODE_UNI         "ACTION_TRANSFORMATION_URL_DECODE_UNI"
   ACTION_TRANSFORMATION_UTF8_TO_UNICODE        "ACTION_TRANSFORMATION_UTF8_TO_UNICODE"
   ACTION_VER                                   "Ver"
   ACTION_XMLNS                                 "xmlns"
   CONFIG_COMPONENT_SIG                         "CONFIG_COMPONENT_SIG"
+  CONFIG_CONN_ENGINE                           "CONFIG_CONN_ENGINE"
   CONFIG_SEC_ARGUMENT_SEPARATOR                "CONFIG_SEC_ARGUMENT_SEPARATOR"
   CONFIG_SEC_WEB_APP_ID                        "CONFIG_SEC_WEB_APP_ID"
   CONFIG_SEC_SERVER_SIG                        "CONFIG_SEC_SERVER_SIG"
@@ -551,9 +623,21 @@ using modsecurity::operators::Operator;
   CONFIG_DIR_DEBUG_LOG                         "CONFIG_DIR_DEBUG_LOG"
   CONFIG_DIR_DEBUG_LVL                         "CONFIG_DIR_DEBUG_LVL"
   CONFIG_SEC_CACHE_TRANSFORMATIONS             "CONFIG_SEC_CACHE_TRANSFORMATIONS"
+  CONFIG_SEC_DISABLE_BACKEND_COMPRESS          "CONFIG_SEC_DISABLE_BACKEND_COMPRESS"
+  CONFIG_SEC_HASH_ENGINE                       "CONFIG_SEC_HASH_ENGINE"
+  CONFIG_SEC_HASH_KEY                          "CONFIG_SEC_HASH_KEY"
+  CONFIG_SEC_HASH_PARAM                        "CONFIG_SEC_HASH_PARAM"
+  CONFIG_SEC_HASH_METHOD_RX                    "CONFIG_SEC_HASH_METHOD_RX"
+  CONFIG_SEC_HASH_METHOD_PM                    "CONFIG_SEC_HASH_METHOD_PM"
+  CONFIG_SEC_CHROOT_DIR                        "CONFIG_SEC_CHROOT_DIR"
   CONFIG_DIR_GEO_DB                            "CONFIG_DIR_GEO_DB"
+  CONFIG_DIR_GSB_DB                            "CONFIG_DIR_GSB_DB"
+  CONFIG_SEC_GUARDIAN_LOG                      "CONFIG_SEC_GUARDIAN_LOG"
   CONFIG_DIR_PCRE_MATCH_LIMIT                  "CONFIG_DIR_PCRE_MATCH_LIMIT"
   CONFIG_DIR_PCRE_MATCH_LIMIT_RECURSION        "CONFIG_DIR_PCRE_MATCH_LIMIT_RECURSION"
+  CONFIG_SEC_CONN_R_STATE_LIMIT                "CONFIG_SEC_CONN_R_STATE_LIMIT"
+  CONFIG_SEC_CONN_W_STATE_LIMIT                "CONFIG_SEC_CONN_W_STATE_LIMIT"
+  CONFIG_SEC_SENSOR_ID                         "CONFIG_SEC_SENSOR_ID"
   CONFIG_DIR_REQ_BODY                          "CONFIG_DIR_REQ_BODY"
   CONFIG_DIR_REQ_BODY_IN_MEMORY_LIMIT          "CONFIG_DIR_REQ_BODY_IN_MEMORY_LIMIT"
   CONFIG_DIR_REQ_BODY_LIMIT                    "CONFIG_DIR_REQ_BODY_LIMIT"
@@ -562,17 +646,23 @@ using modsecurity::operators::Operator;
   CONFIG_DIR_RES_BODY                          "CONFIG_DIR_RES_BODY"
   CONFIG_DIR_RES_BODY_LIMIT                    "CONFIG_DIR_RES_BODY_LIMIT"
   CONFIG_DIR_RES_BODY_LIMIT_ACTION             "CONFIG_DIR_RES_BODY_LIMIT_ACTION"
+  CONFIG_SEC_RULE_INHERITANCE                  "CONFIG_SEC_RULE_INHERITANCE"
+  CONFIG_SEC_RULE_PERF_TIME                    "CONFIG_SEC_RULE_PERF_TIME"
   CONFIG_DIR_RULE_ENG                          "CONFIG_DIR_RULE_ENG"
   CONFIG_DIR_SEC_ACTION                        "CONFIG_DIR_SEC_ACTION"
   CONFIG_DIR_SEC_DEFAULT_ACTION                "CONFIG_DIR_SEC_DEFAULT_ACTION"
   CONFIG_DIR_SEC_MARKER                        "CONFIG_DIR_SEC_MARKER"
   CONFIG_DIR_UNICODE_MAP_FILE                  "CONFIG_DIR_UNICODE_MAP_FILE"
+  CONFIG_DIR_UNICODE_CODE_PAGE                 "CONFIG_DIR_UNICODE_CODE_PAGE"
   CONFIG_SEC_COLLECTION_TIMEOUT                "CONFIG_SEC_COLLECTION_TIMEOUT"
   CONFIG_SEC_HTTP_BLKEY                        "CONFIG_SEC_HTTP_BLKEY"
+  CONFIG_SEC_INTERCEPT_ON_ERROR                "CONFIG_SEC_INTERCEPT_ON_ERROR"
   CONFIG_SEC_REMOTE_RULES_FAIL_ACTION          "CONFIG_SEC_REMOTE_RULES_FAIL_ACTION"
   CONFIG_SEC_RULE_REMOVE_BY_ID                 "CONFIG_SEC_RULE_REMOVE_BY_ID"
   CONFIG_SEC_RULE_REMOVE_BY_MSG                "CONFIG_SEC_RULE_REMOVE_BY_MSG"
+  CONFIG_SEC_RULE_REMOVE_BY_TAG                "CONFIG_SEC_RULE_REMOVE_BY_TAG"
   CONFIG_SEC_RULE_UPDATE_TARGET_BY_TAG         "CONFIG_SEC_RULE_UPDATE_TARGET_BY_TAG"
+  CONFIG_SEC_RULE_UPDATE_TARGET_BY_MSG         "CONFIG_SEC_RULE_UPDATE_TARGET_BY_MSG"
   CONFIG_SEC_RULE_UPDATE_TARGET_BY_ID          "CONFIG_SEC_RULE_UPDATE_TARGET_BY_ID"
   CONFIG_SEC_RULE_UPDATE_ACTION_BY_ID          "CONFIG_SEC_RULE_UPDATE_ACTION_BY_ID"
   CONFIG_UPDLOAD_KEEP_FILES                    "CONFIG_UPDLOAD_KEEP_FILES"
@@ -595,50 +685,15 @@ using modsecurity::operators::Operator;
   CONGIG_DIR_RESPONSE_BODY_MP                  "CONGIG_DIR_RESPONSE_BODY_MP"
   CONGIG_DIR_SEC_ARG_SEP                       "CONGIG_DIR_SEC_ARG_SEP"
   CONGIG_DIR_SEC_COOKIE_FORMAT                 "CONGIG_DIR_SEC_COOKIE_FORMAT"
+  CONFIG_SEC_COOKIEV0_SEPARATOR                "CONFIG_SEC_COOKIEV0_SEPARATOR"
   CONGIG_DIR_SEC_DATA_DIR                      "CONGIG_DIR_SEC_DATA_DIR"
   CONGIG_DIR_SEC_STATUS_ENGINE                 "CONGIG_DIR_SEC_STATUS_ENGINE"
+  CONFIG_SEC_STREAM_IN_BODY_INSPECTION         "CONFIG_SEC_STREAM_IN_BODY_INSPECTION"
+  CONFIG_SEC_STREAM_OUT_BODY_INSPECTION        "CONFIG_SEC_STREAM_OUT_BODY_INSPECTION"
   CONGIG_DIR_SEC_TMP_DIR                       "CONGIG_DIR_SEC_TMP_DIR"
   DIRECTIVE                                    "DIRECTIVE"
   DIRECTIVE_SECRULESCRIPT                      "DIRECTIVE_SECRULESCRIPT"
-  FREE_TEXT                                    "FREE_TEXT"
-  OPERATOR                                     "OPERATOR"
-  OPERATOR_BEGINS_WITH                         "OPERATOR_BEGINS_WITH"
-  OPERATOR_CONTAINS                            "OPERATOR_CONTAINS"
-  OPERATOR_CONTAINS_WORD                       "OPERATOR_CONTAINS_WORD"
-  OPERATOR_DETECT_SQLI                         "OPERATOR_DETECT_SQLI"
-  OPERATOR_DETECT_XSS                          "OPERATOR_DETECT_XSS"
-  OPERATOR_ENDS_WITH                           "OPERATOR_ENDS_WITH"
-  OPERATOR_EQ                                  "OPERATOR_EQ"
-  OPERATOR_FUZZY_HASH                          "OPERATOR_FUZZY_HASH"
-  OPERATOR_GE                                  "OPERATOR_GE"
-  OPERATOR_GEOLOOKUP                           "OPERATOR_GEOLOOKUP"
-  OPERATOR_GSB_LOOKUP                          "OPERATOR_GSB_LOOKUP"
-  OPERATOR_GT                                  "OPERATOR_GT"
-  OPERATOR_INSPECT_FILE                        "OPERATOR_INSPECT_FILE"
-  OPERATOR_IP_MATCH                            "OPERATOR_IP_MATCH"
-  OPERATOR_IP_MATCH_FROM_FILE                  "OPERATOR_IP_MATCH_FROM_FILE"
-  OPERATOR_LE                                  "OPERATOR_LE"
-  OPERATOR_LT                                  "OPERATOR_LT"
-  OPERATOR_PM                                  "OPERATOR_PM"
-  OPERATOR_PM_FROM_FILE                        "OPERATOR_PM_FROM_FILE"
-  OPERATOR_RBL                                 "OPERATOR_RBL"
-  OPERATOR_RSUB                                "OPERATOR_RSUB"
-  OPERATOR_RX                                  "OPERATOR_RX"
-  OPERATOR_RX_CONTENT_ONLY                     "Operator RX (content only)"
-  OPERATOR_STR_EQ                              "OPERATOR_STR_EQ"
-  OPERATOR_STR_MATCH                           "OPERATOR_STR_MATCH"
-  OPERATOR_UNCONDITIONAL_MATCH                 "OPERATOR_UNCONDITIONAL_MATCH"
-  OPERATOR_VALIDATE_BYTE_RANGE                 "OPERATOR_VALIDATE_BYTE_RANGE"
-  OPERATOR_VALIDATE_DTD                        "OPERATOR_VALIDATE_DTD"
-  OPERATOR_VALIDATE_HASH                       "OPERATOR_VALIDATE_HASH"
-  OPERATOR_VALIDATE_SCHEMA                     "OPERATOR_VALIDATE_SCHEMA"
-  OPERATOR_VALIDATE_URL_ENCODING               "OPERATOR_VALIDATE_URL_ENCODING"
-  OPERATOR_VALIDATE_UTF8_ENCODING              "OPERATOR_VALIDATE_UTF8_ENCODING"
-  OPERATOR_VERIFY_CC                           "OPERATOR_VERIFY_CC"
-  OPERATOR_VERIFY_CPF                          "OPERATOR_VERIFY_CPF"
-  OPERATOR_VERIFY_SSN                          "OPERATOR_VERIFY_SSN"
-  OPERATOR_WITHIN                              "OPERATOR_WITHIN"
-  OP_QUOTE                                     "OP_QUOTE"
+  FREE_TEXT_QUOTE_MACRO_EXPANSION              "FREE_TEXT_QUOTE_MACRO_EXPANSION"
   QUOTATION_MARK                               "QUOTATION_MARK"
   RUN_TIME_VAR_BLD                             "RUN_TIME_VAR_BLD"
   RUN_TIME_VAR_DUR                             "RUN_TIME_VAR_DUR"
@@ -653,8 +708,6 @@ using modsecurity::operators::Operator;
   RUN_TIME_VAR_TIME_SEC                        "RUN_TIME_VAR_TIME_SEC"
   RUN_TIME_VAR_TIME_WDAY                       "RUN_TIME_VAR_TIME_WDAY"
   RUN_TIME_VAR_TIME_YEAR                       "RUN_TIME_VAR_TIME_YEAR"
-  SETVAR_VARIABLE_PART                         "SETVAR_VARIABLE_PART"
-  SETVAR_CONTENT_PART                          "SETVAR_CONTENT_PART"
   VARIABLE                                     "VARIABLE"
   DICT_ELEMENT                                 "Dictionary element"
   DICT_ELEMENT_REGEXP                          "Dictionary element, selected by regexp"
@@ -663,8 +716,7 @@ using modsecurity::operators::Operator;
 %type <std::unique_ptr<actions::Action>> act
 
 %type <std::unique_ptr<actions::Action>> setvar_action
-%type <std::string>                      setvar_variable
-%type <std::string>                      setvar_content
+%type <std::unique_ptr<RunTimeString>>   run_time_string
 
 %type <std::unique_ptr<std::vector<std::unique_ptr<actions::Action> > > >
   actions_may_quoted
@@ -676,6 +728,7 @@ using modsecurity::operators::Operator;
   op
 ;
 
+%type <std::unique_ptr<std::vector<std::unique_ptr<Variable> > > > variables_pre_process
 %type <std::unique_ptr<std::vector<std::unique_ptr<Variable> > > > variables_may_be_quoted
 %type <std::unique_ptr<std::vector<std::unique_ptr<Variable> > > > variables
 %type <std::unique_ptr<Variable>> var
@@ -790,6 +843,11 @@ audit_log:
       {
         driver.m_uploadKeepFiles = modsecurity::RulesProperties::FalseConfigBoolean;
       }
+    | CONFIG_UPDLOAD_KEEP_FILES CONFIG_VALUE_RELEVANT_ONLY
+      {
+        driver.error(@0, "SecUploadKeepFiles RelevantOnly is not currently supported. Accepted values are On or Off");
+        YYERROR;
+      }
     | CONFIG_UPLOAD_FILE_LIMIT
       {
         driver.m_uploadFileLimit.m_set = true;
@@ -862,18 +920,19 @@ op:
             YYERROR;
         }
       }
-    | OPERATOR_RX_CONTENT_ONLY
+    | run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Rx(utils::string::removeBracketsIfNeeded($1)));
+        OPERATOR_CONTAINER($$, new operators::Rx(std::move($1)));
         std::string error;
         if ($$->init(driver.ref.back(), &error) == false) {
             driver.error(@0, error);
             YYERROR;
         }
       }
-    | NOT OPERATOR_RX_CONTENT_ONLY
+    | NOT run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Rx("Rx", utils::string::removeBracketsIfNeeded($2), true));
+        OPERATOR_CONTAINER($$, new operators::Rx(std::move($2)));
+        $$->m_negation = true;
         std::string error;
         if ($$->init(driver.ref.back(), &error) == false) {
             driver.error(@0, error);
@@ -903,140 +962,132 @@ op_before_init:
       {
         OPERATOR_CONTAINER($$, new operators::ValidateUtf8Encoding());
       }
-    | OPERATOR_INSPECT_FILE FREE_TEXT
+    | OPERATOR_INSPECT_FILE run_time_string
       {
-        /* $$ = new operators::InspectFile($1); */
-        OPERATOR_NOT_SUPPORTED("InspectFile", @0);
+        OPERATOR_CONTAINER($$, new operators::InspectFile(std::move($2)));
       }
-    | OPERATOR_FUZZY_HASH FREE_TEXT
+    | OPERATOR_FUZZY_HASH run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::FuzzyHash(utils::string::removeBracketsIfNeeded($2)));
-        std::string error;
-        if ($$->init(driver.ref.back(), &error) == false) {
-            driver.error(@0, error);
-            YYERROR;
-        }
+        OPERATOR_CONTAINER($$, new operators::FuzzyHash(std::move($2)));
       }
-    | OPERATOR_VALIDATE_BYTE_RANGE FREE_TEXT
+    | OPERATOR_VALIDATE_BYTE_RANGE run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::ValidateByteRange($2));
+        OPERATOR_CONTAINER($$, new operators::ValidateByteRange(std::move($2)));
       }
-    | OPERATOR_VALIDATE_DTD FREE_TEXT
+    | OPERATOR_VALIDATE_DTD run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::ValidateDTD($2));
+        OPERATOR_CONTAINER($$, new operators::ValidateDTD(std::move($2)));
       }
-    | OPERATOR_VALIDATE_HASH FREE_TEXT
+    | OPERATOR_VALIDATE_HASH run_time_string
       {
         /* $$ = new operators::ValidateHash($1); */
         OPERATOR_NOT_SUPPORTED("ValidateHash", @0);
       }
-    | OPERATOR_VALIDATE_SCHEMA FREE_TEXT
+    | OPERATOR_VALIDATE_SCHEMA run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::ValidateSchema($2));
+        OPERATOR_CONTAINER($$, new operators::ValidateSchema(std::move($2)));
       }
-    | OPERATOR_VERIFY_CC FREE_TEXT
+    | OPERATOR_VERIFY_CC run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::VerifyCC($2));
+        OPERATOR_CONTAINER($$, new operators::VerifyCC(std::move($2)));
       }
-    | OPERATOR_VERIFY_CPF FREE_TEXT
+    | OPERATOR_VERIFY_CPF run_time_string
       {
-        /* $$ = new operators::VerifyCPF($1); */
-        OPERATOR_NOT_SUPPORTED("VerifyCPF", @0);
+        OPERATOR_CONTAINER($$, new operators::VerifyCPF(std::move($2)));
       }
-    | OPERATOR_VERIFY_SSN FREE_TEXT
+    | OPERATOR_VERIFY_SSN run_time_string
       {
-        /* $$ = new operators::VerifySSN($1); */
-        OPERATOR_NOT_SUPPORTED("VerifySSN", @0);
+        OPERATOR_CONTAINER($$, new operators::VerifySSN(std::move($2)));
       }
-    | OPERATOR_GSB_LOOKUP FREE_TEXT
+    | OPERATOR_GSB_LOOKUP run_time_string
       {
         /* $$ = new operators::GsbLookup($1); */
         OPERATOR_NOT_SUPPORTED("GsbLookup", @0);
       }
-    | OPERATOR_RSUB FREE_TEXT
+    | OPERATOR_RSUB run_time_string
       {
         /* $$ = new operators::Rsub($1); */
         OPERATOR_NOT_SUPPORTED("Rsub", @0);
       }
-    | OPERATOR_WITHIN FREE_TEXT
+    | OPERATOR_WITHIN run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Within($2));
+        OPERATOR_CONTAINER($$, new operators::Within(std::move($2)));
       }
-    | OPERATOR_CONTAINS_WORD FREE_TEXT
+    | OPERATOR_CONTAINS_WORD run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::ContainsWord($2));
+        OPERATOR_CONTAINER($$, new operators::ContainsWord(std::move($2)));
       }
-    | OPERATOR_CONTAINS FREE_TEXT
+    | OPERATOR_CONTAINS run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Contains($2));
+        OPERATOR_CONTAINER($$, new operators::Contains(std::move($2)));
       }
-    | OPERATOR_ENDS_WITH FREE_TEXT
+    | OPERATOR_ENDS_WITH run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::EndsWith($2));
+        OPERATOR_CONTAINER($$, new operators::EndsWith(std::move($2)));
       }
-    | OPERATOR_EQ FREE_TEXT
+    | OPERATOR_EQ run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Eq($2));
+        OPERATOR_CONTAINER($$, new operators::Eq(std::move($2)));
       }
-    | OPERATOR_GE FREE_TEXT
+    | OPERATOR_GE run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Ge($2));
+        OPERATOR_CONTAINER($$, new operators::Ge(std::move($2)));
       }
-    | OPERATOR_GT FREE_TEXT
+    | OPERATOR_GT run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Gt($2));
+        OPERATOR_CONTAINER($$, new operators::Gt(std::move($2)));
       }
-    | OPERATOR_IP_MATCH_FROM_FILE FREE_TEXT
+    | OPERATOR_IP_MATCH_FROM_FILE run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::IpMatchF($2));
+        OPERATOR_CONTAINER($$, new operators::IpMatchF(std::move($2)));
       }
-    | OPERATOR_IP_MATCH FREE_TEXT
+    | OPERATOR_IP_MATCH run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::IpMatch($2));
+        OPERATOR_CONTAINER($$, new operators::IpMatch(std::move($2)));
       }
-    | OPERATOR_LE FREE_TEXT
+    | OPERATOR_LE run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Le($2));
+        OPERATOR_CONTAINER($$, new operators::Le(std::move($2)));
       }
-    | OPERATOR_LT FREE_TEXT
+    | OPERATOR_LT run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Lt($2));
+        OPERATOR_CONTAINER($$, new operators::Lt(std::move($2)));
       }
-    | OPERATOR_PM_FROM_FILE FREE_TEXT
+    | OPERATOR_PM_FROM_FILE run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::PmFromFile($2));
+        OPERATOR_CONTAINER($$, new operators::PmFromFile(std::move($2)));
       }
-    | OPERATOR_PM FREE_TEXT
+    | OPERATOR_PM run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Pm($2));
+        OPERATOR_CONTAINER($$, new operators::Pm(std::move($2)));
       }
-    | OPERATOR_RBL FREE_TEXT
+    | OPERATOR_RBL run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Rbl($2));
+        OPERATOR_CONTAINER($$, new operators::Rbl(std::move($2)));
       }
-    | OPERATOR_RX FREE_TEXT
+    | OPERATOR_RX run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::Rx($2));
+        OPERATOR_CONTAINER($$, new operators::Rx(std::move($2)));
       }
-    | OPERATOR_STR_EQ FREE_TEXT
+    | OPERATOR_STR_EQ run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::StrEq($2));
+        OPERATOR_CONTAINER($$, new operators::StrEq(std::move($2)));
       }
-    | OPERATOR_STR_MATCH FREE_TEXT
+    | OPERATOR_STR_MATCH run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::StrMatch($2));
+        OPERATOR_CONTAINER($$, new operators::StrMatch(std::move($2)));
       }
-    | OPERATOR_BEGINS_WITH FREE_TEXT
+    | OPERATOR_BEGINS_WITH run_time_string
       {
-        OPERATOR_CONTAINER($$, new operators::BeginsWith($2));
+        OPERATOR_CONTAINER($$, new operators::BeginsWith(std::move($2)));
       }
     | OPERATOR_GEOLOOKUP
       {
-#ifdef WITH_GEOIP
+#if defined(WITH_GEOIP) or defined(WITH_MAXMIND)
         OPERATOR_CONTAINER($$, new operators::GeoLookup());
 #else
         std::stringstream ss;
-            ss << "This version of ModSecurity was not compiled with GeoIP support.";
+            ss << "This version of ModSecurity was not compiled with GeoIP or MaxMind support.";
             driver.error(@0, ss.str());
             YYERROR;
 #endif  // WITH_GEOIP
@@ -1051,7 +1102,7 @@ expression:
         for (auto &i : *$4.get()) {
             a->push_back(i.release());
         }
-        std::vector<Variable *> *v = new std::vector<Variable *>();
+        Variables::Variables *v = new Variables::Variables();
         for (auto &i : *$2.get()) {
             v->push_back(i.release());
         }
@@ -1062,8 +1113,9 @@ expression:
             /* variables */ v,
             /* actions */ a,
             /* file name */ driver.ref.back(),
-            /* line number */ @0.end.line
+            /* line number */ @1.end.line
             );
+
         if (driver.addSecRule(rule) == false) {
             delete rule;
             YYERROR;
@@ -1071,7 +1123,7 @@ expression:
       }
     | DIRECTIVE variables op
       {
-        std::vector<Variable *> *v = new std::vector<Variable *>();
+        Variables::Variables *v = new Variables::Variables();
         for (auto &i : *$2.get()) {
             v->push_back(i.release());
         }
@@ -1081,7 +1133,7 @@ expression:
             /* variables */ v,
             /* actions */ NULL,
             /* file name */ driver.ref.back(),
-            /* line number */ @0.end.line
+            /* line number */ @1.end.line
             );
         if (driver.addSecRule(rule) == false) {
             delete rule;
@@ -1099,17 +1151,37 @@ expression:
             /* variables */ NULL,
             /* actions */ a,
             /* file name */ driver.ref.back(),
-            /* line number */ @0.end.line
+            /* line number */ @1.end.line
             );
         driver.addSecAction(rule);
       }
     | DIRECTIVE_SECRULESCRIPT actions
       {
-        driver.error(@0, "SecRuleScript is not yet supported.");
-        YYERROR;
+        std::string err;
+        std::vector<actions::Action *> *a = new std::vector<actions::Action *>();
+        for (auto &i : *$2.get()) {
+            a->push_back(i.release());
+        }
+        RuleScript *r = new RuleScript(
+            /* path to script */ $1,
+            /* actions */ a,
+            /* file name */ driver.ref.back(),
+            /* line number */ @1.end.line
+            );
+
+        if (r->init(&err) == false) {
+            driver.error(@0, "Failed to load script: " + err);
+            delete r;
+            YYERROR;
+        }
+        if (driver.addSecRuleScript(r) == false) {
+            delete r;
+            YYERROR;
+        }
       }
     | CONFIG_DIR_SEC_DEFAULT_ACTION actions
       {
+        bool hasDisruptive = false;
         std::vector<actions::Action *> *actions = new std::vector<actions::Action *>();
         for (auto &i : *$2.get()) {
             actions->push_back(i.release());
@@ -1119,6 +1191,9 @@ expression:
         int secRuleDefinedPhase = -1;
         for (actions::Action *a : *actions) {
             actions::Phase *phase = dynamic_cast<actions::Phase *>(a);
+            if (a->isDisruptive() == true && dynamic_cast<actions::Block *>(a) == NULL) {
+                hasDisruptive = true;
+            }
             if (phase != NULL) {
                 definedPhase = phase->m_phase;
                 secRuleDefinedPhase = phase->m_secRulesPhase;
@@ -1138,6 +1213,11 @@ expression:
         }
         if (definedPhase == -1) {
             definedPhase = modsecurity::Phases::RequestHeadersPhase;
+        }
+
+        if (hasDisruptive == false) {
+            driver.error(@0, "SecDefaultAction must specify a disruptive action.");
+            YYERROR;
         }
 
         if (!driver.m_defaultActions[definedPhase].empty()) {
@@ -1200,19 +1280,22 @@ expression:
       {
         driver.m_components.push_back($1);
       }
+    | CONFIG_CONN_ENGINE CONFIG_VALUE_ON
+      {
+        driver.error(@0, "SecConnEngine is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_CONN_ENGINE CONFIG_VALUE_OFF
+      {
+      }
     | CONFIG_SEC_WEB_APP_ID
       {
-        driver.error(@0, "SecWebAppId is not supported.");
-        YYERROR;
+        driver.m_secWebAppId.m_value = $1;
+        driver.m_secWebAppId.m_set = true;
       }
     | CONFIG_SEC_SERVER_SIG
       {
         driver.error(@0, "SecServerSignature is not supported.");
-        YYERROR;
-      }
-    | CONFIG_CONTENT_INJECTION CONFIG_VALUE_ON
-      {
-        driver.error(@0, "ContentInjection is not yet supported.");
         YYERROR;
       }
     | CONFIG_SEC_CACHE_TRANSFORMATIONS
@@ -1220,9 +1303,109 @@ expression:
         driver.error(@0, "SecCacheTransformations is not supported.");
         YYERROR;
       }
+    | CONFIG_SEC_DISABLE_BACKEND_COMPRESS CONFIG_VALUE_ON
+      {
+        driver.error(@0, "SecDisableBackendCompression is not supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_DISABLE_BACKEND_COMPRESS CONFIG_VALUE_OFF
+      {
+      }
+    | CONFIG_CONTENT_INJECTION CONFIG_VALUE_ON
+      {
+        driver.error(@0, "SecContentInjection is not yet supported.");
+        YYERROR;
+      }
     | CONFIG_CONTENT_INJECTION CONFIG_VALUE_OFF
       {
-        driver.error(@0, "ContentInjection is not yet supported.");
+      }
+    | CONFIG_SEC_CHROOT_DIR
+      {
+        driver.error(@0, "SecChrootDir is not supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_HASH_ENGINE CONFIG_VALUE_ON
+      {
+        driver.error(@0, "SecHashEngine is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_HASH_ENGINE CONFIG_VALUE_OFF
+      {
+      }
+    | CONFIG_SEC_HASH_KEY
+      {
+        driver.error(@0, "SecHashKey is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_HASH_PARAM
+      {
+        driver.error(@0, "SecHashParam is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_HASH_METHOD_RX
+      {
+        driver.error(@0, "SecHashMethodRx is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_HASH_METHOD_PM
+      {
+        driver.error(@0, "SecHashMethodPm is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_DIR_GSB_DB
+      {
+        driver.error(@0, "SecGsbLookupDb is not supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_GUARDIAN_LOG
+      {
+        driver.error(@0, "SecGuardianLog is not supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_INTERCEPT_ON_ERROR CONFIG_VALUE_ON
+      {
+        driver.error(@0, "SecInterceptOnError is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_INTERCEPT_ON_ERROR CONFIG_VALUE_OFF
+      {
+      }
+    | CONFIG_SEC_CONN_R_STATE_LIMIT
+      {
+        driver.error(@0, "SecConnReadStateLimit is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_CONN_W_STATE_LIMIT
+      {
+        driver.error(@0, "SecConnWriteStateLimit is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_SENSOR_ID
+      {
+        driver.error(@0, "SecSensorId is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_RULE_INHERITANCE CONFIG_VALUE_ON
+      {
+        driver.error(@0, "SecRuleInheritance is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_RULE_INHERITANCE CONFIG_VALUE_OFF
+      {
+      }
+    | CONFIG_SEC_RULE_PERF_TIME
+      {
+        driver.error(@0, "SecRulePerfTime is not yet supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_STREAM_IN_BODY_INSPECTION
+      {
+        driver.error(@0, "SecStreamInBodyInspection is not supported.");
+        YYERROR;
+      }
+    | CONFIG_SEC_STREAM_OUT_BODY_INSPECTION
+      {
+        driver.error(@0, "SecStreamOutBodyInspection is not supported.");
         YYERROR;
       }
     | CONFIG_SEC_RULE_REMOVE_BY_ID
@@ -1231,6 +1414,19 @@ expression:
         if (driver.m_exceptions.load($1, &error) == false) {
             std::stringstream ss;
             ss << "SecRuleRemoveById: failed to load:";
+            ss << $1;
+            ss << ". ";
+            ss << error;
+            driver.error(@0, ss.str());
+            YYERROR;
+        }
+      }
+    | CONFIG_SEC_RULE_REMOVE_BY_TAG
+      {
+        std::string error;
+        if (driver.m_exceptions.loadRemoveRuleByTag($1, &error) == false) {
+            std::stringstream ss;
+            ss << "SecRuleRemoveByTag: failed to load:";
             ss << $1;
             ss << ". ";
             ss << error;
@@ -1251,7 +1447,7 @@ expression:
             YYERROR;
         }
       }
-    | CONFIG_SEC_RULE_UPDATE_TARGET_BY_TAG variables
+    | CONFIG_SEC_RULE_UPDATE_TARGET_BY_TAG variables_pre_process
       {
         std::string error;
         if (driver.m_exceptions.loadUpdateTargetByTag($1, std::move($2), &error) == false) {
@@ -1264,7 +1460,20 @@ expression:
             YYERROR;
         }
       }
-    | CONFIG_SEC_RULE_UPDATE_TARGET_BY_ID variables
+    | CONFIG_SEC_RULE_UPDATE_TARGET_BY_MSG variables_pre_process
+      {
+        std::string error;
+        if (driver.m_exceptions.loadUpdateTargetByMsg($1, std::move($2), &error) == false) {
+            std::stringstream ss;
+            ss << "SecRuleUpdateTargetByMsg: failed to load:";
+            ss << $1;
+            ss << ". ";
+            ss << error;
+            driver.error(@0, ss.str());
+            YYERROR;
+        }
+      }
+    | CONFIG_SEC_RULE_UPDATE_TARGET_BY_ID variables_pre_process
       {
         std::string error;
         double ruleId;
@@ -1307,13 +1516,15 @@ expression:
         }
 
 
-        std::vector<actions::Action *> *a = new std::vector<actions::Action *>();
-        for (auto &i : *$2.get()) {
-            a->push_back(i.release());
+        if (driver.m_exceptions.loadUpdateActionById(ruleId, std::move($2), &error) == false) {
+            std::stringstream ss;
+            ss << "SecRuleUpdateActionById: failed to load:";
+            ss << $1;
+            ss << ". ";
+            ss << error;
+            driver.error(@0, ss.str());
+            YYERROR;
         }
-
-        driver.error(@0, "SecRuleUpdateActionById is not yet supported");
-        YYERROR;
       }
     /* Debug log: start */
     | CONFIG_DIR_DEBUG_LVL
@@ -1350,7 +1561,7 @@ expression:
     /* Debug log: end */
     | CONFIG_DIR_GEO_DB
       {
-#ifdef WITH_GEOIP
+#if defined(WITH_GEOIP) or defined(WITH_MAXMIND)
         std::string err;
         std::string file = modsecurity::utils::find_resource($1,
             driver.ref.back(), &err);
@@ -1361,16 +1572,16 @@ expression:
             driver.error(@0, ss.str());
             YYERROR;
         }
-        if (GeoLookup::getInstance().setDataBase(file) == false) {
+        if (GeoLookup::getInstance().setDataBase(file, &err) == false) {
             std::stringstream ss;
             ss << "Failed to load the GeoDB from: ";
-            ss << file;
+            ss << file << ". " << err;
             driver.error(@0, ss.str());
             YYERROR;
         }
 #else
         std::stringstream ss;
-        ss << "This version of ModSecurity was not compiled with GeoIP support.";
+        ss << "This version of ModSecurity was not compiled with GeoIP or MaxMind support.";
         driver.error(@0, ss.str());
         YYERROR;
 #endif  // WITH_GEOIP
@@ -1425,7 +1636,15 @@ expression:
         driver.m_remoteRulesActionOnFailed = Rules::OnFailedRemoteRulesAction::WarnOnFailedRemoteRulesAction;
       }
     | CONFIG_DIR_PCRE_MATCH_LIMIT_RECURSION
+/* Parser error disabled to avoid breaking default installations with modsecurity.conf-recommended
+        driver.error(@0, "SecPcreMatchLimitRecursion is not currently supported. Default PCRE values are being used for now");
+        YYERROR;
+*/
     | CONFIG_DIR_PCRE_MATCH_LIMIT
+/* Parser error disabled to avoid breaking default installations with modsecurity.conf-recommended
+        driver.error(@0, "SecPcreMatchLimit is not currently supported. Default PCRE values are being used for now");
+        YYERROR;
+*/
     | CONGIG_DIR_RESPONSE_BODY_MP
       {
         std::istringstream buf($1);
@@ -1453,13 +1672,173 @@ expression:
         driver.m_secXMLExternalEntity = modsecurity::RulesProperties::TrueConfigBoolean;
       }
     | CONGIG_DIR_SEC_TMP_DIR
+      {
+/* Parser error disabled to avoid breaking default installations with modsecurity.conf-recommended
+        std::stringstream ss;
+        ss << "As of ModSecurity version 3.0, SecTmpDir is no longer supported.";
+        ss << " Instead, you can use your web server configurations to control when";
+        ss << "and where to swap. ModSecurity will follow the web server decision.";
+        driver.error(@0, ss.str());
+        YYERROR;
+*/
+      }
     | CONGIG_DIR_SEC_DATA_DIR
+/* Parser error disabled to avoid breaking default installations with modsecurity.conf-recommended
+        std::stringstream ss;
+        ss << "SecDataDir is not currently supported.";
+        ss << " Collections are kept in memory (in_memory-per_process) for now.";
+        ss << " When using a backend such as LMDB, temp data path is currently defined by the backend.";
+        driver.error(@0, ss.str());
+        YYERROR;
+*/
     | CONGIG_DIR_SEC_ARG_SEP
     | CONGIG_DIR_SEC_COOKIE_FORMAT
+      {
+        if (atoi($1.c_str()) == 1) {
+          driver.error(@0, "SecCookieFormat 1 is not yet supported.");
+          YYERROR;
+        }
+      }
+    | CONFIG_SEC_COOKIEV0_SEPARATOR
+      {
+        driver.error(@0, "SecCookieV0Separator is not yet supported.");
+        YYERROR;
+      }
     | CONGIG_DIR_SEC_STATUS_ENGINE
+/* Parser error disabled to avoid breaking default installations with modsecurity.conf-recommended
+        driver.error(@0, "SecStatusEngine is not yet supported.");
+        YYERROR;
+*/
+    | CONFIG_DIR_UNICODE_CODE_PAGE
+      {
+        long val;
+
+        val = atol($1.c_str());
+        if (val <= 0) {
+            std::stringstream ss;
+            ss << "Invalid setting for SecUnicodeCodePage: " << $1 << " ";
+            driver.error(@0, ss.str());
+            YYERROR;
+        }
+
+        driver.m_unicodeMapTable.m_unicode_codepage = val;
+
+      }
     | CONFIG_DIR_UNICODE_MAP_FILE
+      {
+        std::string err;
+        char *buf = NULL, *p = NULL, *savedptr = NULL;
+        int found = 0;
+        int code = 0;
+        unsigned int codepage = 0;
+        int Map = 0;
+        char *ucode = NULL, *hmap = NULL;
+        int processing = 0;
+
+        std::vector<std::string> param = utils::string::ssplit($1, ' ');
+        if (param.size() <= 1) {
+            std::stringstream ss;
+            ss << "Failed to process unicode map, missing parameter: " << $1 << " ";
+            ss << err;
+            driver.error(@0, ss.str());
+            YYERROR;
+        }
+
+        int num = 0;
+        try {
+            num = std::stod(param.back());
+        } catch (...) {
+            std::stringstream ss;
+            ss << "Failed to process unicode map, last parameter is expected to be a number: " << param.back() << " ";
+            ss << err;
+            driver.error(@0, ss.str());
+            YYERROR;
+        }
+        param.pop_back();
+
+        std::string f;
+        while (param.size() > 0) {
+            f = param.back() + " " + f;
+            param.pop_back();
+        }
+
+        std::string file = modsecurity::utils::find_resource(f,
+            driver.ref.back(), &err);
+        if (file.empty()) {
+            std::stringstream ss;
+            ss << "Failed to locate the unicode map file from: " << f << " ";
+            ss << err;
+            driver.error(@0, ss.str());
+            YYERROR;
+        }
+
+        driver.m_unicodeMapTable.m_set = true;
+        driver.m_unicodeMapTable.m_unicode_map_table = static_cast<int *>(malloc(sizeof(int) * 65536));
+
+        // FIXME: that deservers to have its own file. Too much code to be here.
+
+        if (driver.m_unicodeMapTable.m_unicode_map_table  == NULL) {
+            std::stringstream ss;
+            ss << "Failed to allocate memory for the unicode map file - " << $1 << " ";
+            ss << err;
+            driver.error(@0, ss.str());
+            YYERROR;
+        }
+
+        memset(driver.m_unicodeMapTable.m_unicode_map_table, -1, (sizeof(int)*65536));
+
+        /* Setting some unicode values - http://tools.ietf.org/html/rfc3490#section-3.1 */
+
+        /* Set 0x3002 -> 0x2e */
+        driver.m_unicodeMapTable.m_unicode_map_table[0x3002] = 0x2e;
+        /* Set 0xFF61 -> 0x2e */
+        driver.m_unicodeMapTable.m_unicode_map_table[0xff61] = 0x2e;
+        /* Set 0xFF0E -> 0x2e */
+        driver.m_unicodeMapTable.m_unicode_map_table[0xff0e] = 0x2e;
+        /* Set 0x002E -> 0x2e */
+        driver.m_unicodeMapTable.m_unicode_map_table[0x002e] = 0x2e;
+
+        p = strtok_r(buf, CODEPAGE_SEPARATORS, &savedptr);
+
+        while (p != NULL)   {
+            codepage = atol(p);
+
+            if (codepage == driver.m_unicodeMapTable.m_unicode_codepage)   {
+                found = 1;
+            }
+
+            if (found == 1 && (strchr(p,':') != NULL))   {
+                char *mapping = strdup(p);
+                processing = 1;
+
+                if (mapping != NULL) {
+                    ucode = strtok_r(mapping, ":", &hmap);
+                    sscanf(ucode, "%x", &code);
+                    sscanf(hmap, "%x", &Map);
+                    if (code >= 0 && code <= 65535)    {
+                        driver.m_unicodeMapTable.m_unicode_map_table[code] = Map;
+                    }
+
+                    free(mapping);
+                    mapping = NULL;
+                }
+            }
+
+            if (processing == 1 && (strchr(p,':') == NULL)) {
+                free(buf);
+                buf = NULL;
+                break;
+            }
+
+            p = strtok_r(NULL,CODEPAGE_SEPARATORS,&savedptr);
+        }
+      }
     | CONFIG_SEC_COLLECTION_TIMEOUT
       {
+/* Parser error disabled to avoid breaking default CRS installations with crs-setup.conf-recommended
+        driver.error(@0, "SecCollectionTimeout is not yet supported.");
+        YYERROR;
+*/
       }
     | CONFIG_SEC_HTTP_BLKEY
       {
@@ -1469,6 +1848,43 @@ expression:
     ;
 
 variables:
+    variables_pre_process
+      {
+        std::unique_ptr<std::vector<std::unique_ptr<Variable> > > originalList = std::move($1);
+        std::unique_ptr<std::vector<std::unique_ptr<Variable>>> newList(new std::vector<std::unique_ptr<Variable>>());
+        std::unique_ptr<std::vector<std::unique_ptr<Variable>>> newNewList(new std::vector<std::unique_ptr<Variable>>());
+        std::unique_ptr<std::vector<std::unique_ptr<Variable>>> exclusionVars(new std::vector<std::unique_ptr<Variable>>());
+        while (!originalList->empty()) {
+            std::unique_ptr<Variable> var = std::move(originalList->back());
+            originalList->pop_back();
+            if (dynamic_cast<VariableModificatorExclusion*>(var.get())) {
+                exclusionVars->push_back(std::move(var));
+            } else {
+                newList->push_back(std::move(var));
+            }
+        }
+
+        while (!newList->empty()) {
+            bool doNotAdd = false;
+            std::unique_ptr<Variable> var = std::move(newList->back());
+            newList->pop_back();
+            for (auto &i : *exclusionVars) {
+                if (*var == *i) {
+                    doNotAdd = true;
+                }
+                if (i->belongsToCollection(var.get())) {
+                    var->addsKeyExclusion(i.get());
+                }
+            }
+            if (!doNotAdd) {
+                newNewList->push_back(std::move(var));
+            }
+        }
+        $$ = std::move(newNewList);
+      }
+    ;
+
+variables_pre_process:
     variables_may_be_quoted
       {
         $$ = std::move($1);
@@ -1760,6 +2176,10 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::FilesTmpNames_NoDictElement());
       }
+    | VARIABLE_RESOURCE run_time_string
+      {
+        VARIABLE_CONTAINER($$, new Variables::Resource_DynamicElement(std::move($2)));
+      }
     | VARIABLE_RESOURCE DICT_ELEMENT
       {
         VARIABLE_CONTAINER($$, new Variables::Resource_DictElement($2));
@@ -1772,7 +2192,10 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::Resource_NoDictElement());
       }
-
+    | VARIABLE_IP run_time_string
+      {
+        VARIABLE_CONTAINER($$, new Variables::Ip_DynamicElement(std::move($2)));
+      }
     | VARIABLE_IP DICT_ELEMENT
       {
         VARIABLE_CONTAINER($$, new Variables::Ip_DictElement($2));
@@ -1785,7 +2208,10 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::Ip_NoDictElement());
       }
-
+    | VARIABLE_GLOBAL run_time_string
+      {
+        VARIABLE_CONTAINER($$, new Variables::Global_DynamicElement(std::move($2)));
+      }
     | VARIABLE_GLOBAL DICT_ELEMENT
       {
         VARIABLE_CONTAINER($$, new Variables::Global_DictElement($2));
@@ -1798,7 +2224,26 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::Global_NoDictElement());
       }
-
+    | VARIABLE_USER run_time_string
+      {
+        VARIABLE_CONTAINER($$, new Variables::User_DynamicElement(std::move($2)));
+      }
+    | VARIABLE_USER DICT_ELEMENT
+      {
+        VARIABLE_CONTAINER($$, new Variables::User_DictElement($2));
+      }
+    | VARIABLE_USER DICT_ELEMENT_REGEXP
+      {
+        VARIABLE_CONTAINER($$, new Variables::User_DictElementRegexp($2));
+      }
+    | VARIABLE_USER
+      {
+        VARIABLE_CONTAINER($$, new Variables::User_NoDictElement());
+      }
+    | VARIABLE_TX run_time_string
+      {
+        VARIABLE_CONTAINER($$, new Variables::Tx_DynamicElement(std::move($2)));
+      }
     | VARIABLE_TX DICT_ELEMENT
       {
         VARIABLE_CONTAINER($$, new Variables::Tx_DictElement($2));
@@ -1811,7 +2256,10 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::Tx_NoDictElement());
       }
-
+    | VARIABLE_SESSION run_time_string
+      {
+        VARIABLE_CONTAINER($$, new Variables::Session_DynamicElement(std::move($2)));
+      }
     | VARIABLE_SESSION DICT_ELEMENT
       {
         VARIABLE_CONTAINER($$, new Variables::Session_DictElement($2));
@@ -1824,7 +2272,6 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::Session_NoDictElement());
       }
-
     | VARIABLE_ARGS_NAMES DICT_ELEMENT
       {
         VARIABLE_CONTAINER($$, new Variables::ArgsNames_DictElement($2));
@@ -1925,6 +2372,14 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::MatchedVarName());
       }
+    | VARIABLE_MULTIPART_BOUNDARY_QUOTED
+      {
+        VARIABLE_CONTAINER($$, new Variables::MultipartBoundaryQuoted());
+      }
+    | VARIABLE_MULTIPART_BOUNDARY_WHITESPACE
+      {
+        VARIABLE_CONTAINER($$, new Variables::MultipartBoundaryWhiteSpace());
+      }
     | VARIABLE_MULTIPART_CRLF_LF_LINES
       {
         VARIABLE_CONTAINER($$, new Variables::MultipartCrlfLFLines());
@@ -1932,6 +2387,10 @@ var:
     | VARIABLE_MULTIPART_DATA_AFTER
       {
         VARIABLE_CONTAINER($$, new Variables::MultipartDateAfter());
+      }
+    | VARIABLE_MULTIPART_DATA_BEFORE
+      {
+        VARIABLE_CONTAINER($$, new Variables::MultipartDateBefore());
       }
     | VARIABLE_MULTIPART_FILE_LIMIT_EXCEEDED
       {
@@ -1945,9 +2404,25 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::MultipartInvalidHeaderFolding());
       }
+    | VARIABLE_MULTIPART_INVALID_PART
+      {
+        VARIABLE_CONTAINER($$, new Variables::MultipartInvalidPart());
+      }
     | VARIABLE_MULTIPART_INVALID_QUOTING
       {
         VARIABLE_CONTAINER($$, new Variables::MultipartInvalidQuoting());
+      }
+    | VARIABLE_MULTIPART_LF_LINE
+      {
+        VARIABLE_CONTAINER($$, new Variables::MultipartLFLine());
+      }
+    | VARIABLE_MULTIPART_MISSING_SEMICOLON
+      {
+        VARIABLE_CONTAINER($$, new Variables::MultipartMissingSemicolon());
+      }
+    | VARIABLE_MULTIPART_SEMICOLON_MISSING
+      {
+        VARIABLE_CONTAINER($$, new Variables::MultipartMissingSemicolon());
       }
     | VARIABLE_MULTIPART_STRICT_ERROR
       {
@@ -2085,6 +2560,14 @@ var:
       {
         VARIABLE_CONTAINER($$, new Variables::Status());
       }
+    | VARIABLE_STATUS_LINE
+      {
+        VARIABLE_CONTAINER($$, new Variables::Status());
+      }
+    | VARIABLE_WEB_APP_ID
+      {
+        VARIABLE_CONTAINER($$, new Variables::WebAppId());
+      }
     | RUN_TIME_VAR_DUR
       {
         std::string name($1);
@@ -2198,7 +2681,7 @@ act:
       }
     | ACTION_BLOCK
       {
-        ACTION_CONTAINER($$, new actions::disruptive::Block($1));
+        ACTION_CONTAINER($$, new actions::Block($1));
       }
     | ACTION_CAPTURE
       {
@@ -2235,6 +2718,10 @@ act:
       {
         ACTION_CONTAINER($$, new actions::ctl::RequestBodyProcessorXML($1));
       }
+    | ACTION_CTL_BDY_URLENCODED
+      {
+        ACTION_CONTAINER($$, new actions::ctl::RequestBodyProcessorURLENCODED($1));
+      }
     | ACTION_CTL_FORCE_REQ_BODY_VAR CONFIG_VALUE_ON
       {
         //ACTION_NOT_SUPPORTED("CtlForceReequestBody", @0);
@@ -2269,6 +2756,10 @@ act:
       {
         ACTION_CONTAINER($$, new actions::ctl::RuleRemoveById($1));
       }
+    | ACTION_CTL_RULE_REMOVE_BY_TAG
+      {
+        ACTION_CONTAINER($$, new actions::ctl::RuleRemoveByTag($1));
+      }
     | ACTION_CTL_RULE_REMOVE_TARGET_BY_ID
       {
         ACTION_CONTAINER($$, new actions::ctl::RuleRemoveTargetById($1));
@@ -2292,7 +2783,7 @@ act:
       }
     | ACTION_EXEC
       {
-        ACTION_NOT_SUPPORTED("Exec", @0);
+        ACTION_CONTAINER($$, new actions::Exec($1));
       }
     | ACTION_EXPIRE_VAR
       {
@@ -2303,13 +2794,13 @@ act:
       {
         ACTION_CONTAINER($$, new actions::RuleId($1));
       }
-    | ACTION_INITCOL
+    | ACTION_INITCOL run_time_string
       {
-        ACTION_CONTAINER($$, new actions::InitCol($1));
+        ACTION_CONTAINER($$, new actions::InitCol($1, std::move($2)));
       }
-    | ACTION_LOG_DATA
+    | ACTION_LOG_DATA run_time_string
       {
-        ACTION_CONTAINER($$, new actions::LogData($1));
+        ACTION_CONTAINER($$, new actions::LogData(std::move($2)));
       }
     | ACTION_LOG
       {
@@ -2319,9 +2810,9 @@ act:
       {
         ACTION_CONTAINER($$, new actions::Maturity($1));
       }
-    | ACTION_MSG
+    | ACTION_MSG run_time_string
       {
-        ACTION_CONTAINER($$, new actions::Msg($1));
+        ACTION_CONTAINER($$, new actions::Msg(std::move($2)));
       }
     | ACTION_MULTI_MATCH
       {
@@ -2355,49 +2846,49 @@ act:
       {
         ACTION_NOT_SUPPORTED("Proxy", @0);
       }
-    | ACTION_REDIRECT
+    | ACTION_REDIRECT run_time_string
       {
-        ACTION_CONTAINER($$, new actions::disruptive::Redirect($1));
+        ACTION_CONTAINER($$, new actions::disruptive::Redirect(std::move($2)));
       }
     | ACTION_REV
       {
         ACTION_CONTAINER($$, new actions::Rev($1));
       }
-    | ACTION_SANATISE_ARG
+    | ACTION_SANITISE_ARG
       {
-        ACTION_NOT_SUPPORTED("SanatiseArg", @0);
+        ACTION_NOT_SUPPORTED("SanitiseArg", @0);
       }
-    | ACTION_SANATISE_MATCHED
+    | ACTION_SANITISE_MATCHED
       {
-        ACTION_NOT_SUPPORTED("SanatiseMatched", @0);
+        ACTION_NOT_SUPPORTED("SanitiseMatched", @0);
       }
-    | ACTION_SANATISE_MATCHED_BYTES
+    | ACTION_SANITISE_MATCHED_BYTES
       {
-        ACTION_NOT_SUPPORTED("SanatiseMatchedBytes", @0);
+        ACTION_NOT_SUPPORTED("SanitiseMatchedBytes", @0);
       }
-    | ACTION_SANATISE_REQUEST_HEADER
+    | ACTION_SANITISE_REQUEST_HEADER
       {
-        ACTION_NOT_SUPPORTED("SanatiseRequestHeader", @0);
+        ACTION_NOT_SUPPORTED("SanitiseRequestHeader", @0);
       }
-    | ACTION_SANATISE_RESPONSE_HEADER
+    | ACTION_SANITISE_RESPONSE_HEADER
       {
-        ACTION_NOT_SUPPORTED("SanatiseResponseHeader", @0);
+        ACTION_NOT_SUPPORTED("SanitiseResponseHeader", @0);
       }
-    | ACTION_SETENV
+    | ACTION_SETENV run_time_string
       {
-        ACTION_NOT_SUPPORTED("SetEnv", @0);
+        ACTION_CONTAINER($$, new actions::SetENV(std::move($2)));
       }
-    | ACTION_SETRSC
+    | ACTION_SETRSC run_time_string
       {
-        ACTION_CONTAINER($$, new actions::SetRSC($1));
+        ACTION_CONTAINER($$, new actions::SetRSC(std::move($2)));
       }
-    | ACTION_SETSID
+    | ACTION_SETSID run_time_string
       {
-        ACTION_CONTAINER($$, new actions::SetSID($1));
+        ACTION_CONTAINER($$, new actions::SetSID(std::move($2)));
       }
-    | ACTION_SETUID
+    | ACTION_SETUID run_time_string
       {
-        ACTION_CONTAINER($$, new actions::SetUID($1));
+        ACTION_CONTAINER($$, new actions::SetUID(std::move($2)));
       }
     | ACTION_SETVAR setvar_action
       {
@@ -2419,9 +2910,9 @@ act:
       {
         ACTION_CONTAINER($$, new actions::data::Status($1));
       }
-    | ACTION_TAG
+    | ACTION_TAG run_time_string
       {
-        ACTION_CONTAINER($$, new actions::Tag($1));
+        ACTION_CONTAINER($$, new actions::Tag(std::move($2)));
       }
     | ACTION_VER
       {
@@ -2447,6 +2938,18 @@ act:
       {
         ACTION_CONTAINER($$, new actions::transformations::SqlHexDecode($1));
       }
+      | ACTION_TRANSFORMATION_BASE_64_ENCODE
+      {
+        ACTION_CONTAINER($$, new actions::transformations::Base64Encode($1));
+      }
+    | ACTION_TRANSFORMATION_BASE_64_DECODE
+      {
+        ACTION_CONTAINER($$, new actions::transformations::Base64Decode($1));
+      }
+   | ACTION_TRANSFORMATION_BASE_64_DECODE_EXT
+      {
+        ACTION_CONTAINER($$, new actions::transformations::Base64DecodeExt($1));
+      }
     | ACTION_TRANSFORMATION_CMD_LINE
       {
         ACTION_CONTAINER($$, new actions::transformations::CmdLine($1));
@@ -2458,6 +2961,10 @@ act:
     | ACTION_TRANSFORMATION_MD5
       {
         ACTION_CONTAINER($$, new actions::transformations::Md5($1));
+      }
+    | ACTION_TRANSFORMATION_ESCAPE_SEQ_DECODE 
+      {
+        ACTION_CONTAINER($$, new actions::transformations::EscapeSeqDecode($1));
       }
     | ACTION_TRANSFORMATION_HEX_ENCODE
       {
@@ -2482,6 +2989,10 @@ act:
     | ACTION_TRANSFORMATION_URL_DECODE
       {
         ACTION_CONTAINER($$, new actions::transformations::UrlDecode($1));
+      }
+    | ACTION_TRANSFORMATION_URL_ENCODE
+      {
+        ACTION_CONTAINER($$, new actions::transformations::UrlEncode($1));
       }
     | ACTION_TRANSFORMATION_NONE
       {
@@ -2519,6 +3030,14 @@ act:
       {
         ACTION_CONTAINER($$, new actions::transformations::Trim($1));
       }
+    | ACTION_TRANSFORMATION_TRIM_LEFT
+      {
+        ACTION_CONTAINER($$, new actions::transformations::TrimLeft($1));
+      }
+    | ACTION_TRANSFORMATION_TRIM_RIGHT
+      {
+        ACTION_CONTAINER($$, new actions::transformations::TrimRight($1));
+      }
     | ACTION_TRANSFORMATION_NORMALISE_PATH_WIN
       {
         ACTION_CONTAINER($$, new actions::transformations::NormalisePathWin($1));
@@ -2550,52 +3069,52 @@ act:
     ;
 
 setvar_action:
-    NOT setvar_variable
+    NOT var
       {
-        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::unsetOperation, $2));
+        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::unsetOperation, std::move($2)));
       }
-    | setvar_variable
+    | var
       {
-        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::setToOneOperation, $1));
+        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::setToOneOperation, std::move($1)));
       }
-    | setvar_variable SETVAR_OPERATION_EQUALS setvar_content
+    | var SETVAR_OPERATION_EQUALS run_time_string
       {
-        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::setOperation, $1, $3));
+        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::setOperation, std::move($1), std::move($3)));
       }
-    | setvar_variable SETVAR_OPERATION_EQUALS_PLUS setvar_content
+    | var SETVAR_OPERATION_EQUALS_PLUS run_time_string
       {
-        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::sumAndSetOperation, $1, $3));
+        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::sumAndSetOperation, std::move($1), std::move($3)));
       }
-    | setvar_variable SETVAR_OPERATION_EQUALS_MINUS setvar_content
+    | var SETVAR_OPERATION_EQUALS_MINUS run_time_string
       {
-        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::substractAndSetOperation, $1, $3));
-      }
-    ;
-
-setvar_variable:
-    SETVAR_VARIABLE_PART
-      {
-        $$ = $1;
-      }
-    |
-    SETVAR_VARIABLE_PART setvar_variable
-      {
-        $$ = $1 + $2;
+        ACTION_CONTAINER($$, new actions::SetVar(actions::SetVarOperation::substractAndSetOperation, std::move($1), std::move($3)));
       }
     ;
 
-setvar_content:
-    SETVAR_CONTENT_PART
+run_time_string:
+    run_time_string FREE_TEXT_QUOTE_MACRO_EXPANSION
       {
-        $$ = $1;
+        $1->appendText($2);
+        $$ = std::move($1);
       }
-    |
-    SETVAR_CONTENT_PART setvar_content
+    | run_time_string var
       {
-        $$ = $1 + $2;
+        $1->appendVar(std::move($2));
+        $$ = std::move($1);
       }
-;
-
+    | FREE_TEXT_QUOTE_MACRO_EXPANSION
+      {
+        std::unique_ptr<RunTimeString> r(new RunTimeString());
+        r->appendText($1);
+        $$ = std::move(r);
+      }
+    | var
+      {
+        std::unique_ptr<RunTimeString> r(new RunTimeString());
+        r->appendVar(std::move($1));
+        $$ = std::move(r);
+      }
+    ;
 %%
 
 void yy::seclang_parser::error (const location_type& l, const std::string& m) {

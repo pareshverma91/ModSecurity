@@ -21,7 +21,9 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 
 EXTRA_DIST = \
-	test-cases/*
+	test-cases/* \
+	custom-test-driver \
+	test-suite.sh
 
 
 # unit_tests
@@ -31,38 +33,53 @@ unit_tests_SOURCES = \
         unit/unit.cc \
         unit/unit_test.cc
 
+
 noinst_HEADERS = \
        common/modsecurity_test.cc \
        common/*.h \
        unit/*.h \
        regression/*.h
 
+
 unit_tests_LDADD = \
 	$(top_builddir)/src/.libs/libmodsecurity.a \
 	$(CURL_LDADD) \
-	$(GEOIP_LDFLAGS) $(GEOIP_LDADD) \
-	$(PCRE_LDADD) \
-	$(YAJL_LDFLAGS) $(YAJL_LDADD) \
-	$(LMDB_LDFLAGS) $(LMDB_LDADD) \
-	$(SSDEEP_LDFLAGS) $(SSDEEP_LDADD) \
+	$(GEOIP_LDADD) \
+	$(MAXMIND_LDADD) \
+	$(GLOBAL_LDADD) \
 	$(LIBXML2_LDADD) \
-	$(GLOBAL_LDADD)
+	$(LMDB_LDADD) \
+	$(LUA_LDADD) \
+	$(PCRE_LDADD) \
+	$(SSDEEP_LDADD) \
+	$(YAJL_LDADD)
+
+
+unit_tests_LDFLAGS = \
+	$(GEOIP_LDFLAGS) \
+	$(MAXMIND_LDFLAGS) \
+	$(LMDB_LDFLAGS) \
+	$(LUA_LDFLAGS) \
+	$(SSDEEP_LDFLAGS) \
+	$(YAJL_LDFLAGS)
 
 
 unit_tests_CPPFLAGS = \
 	-std=c++11 \
 	-Icommon \
 	-I../ \
-	-O0 \
 	-g \
 	-I$(top_builddir)/headers \
 	$(CURL_CFLAGS) \
 	$(MODSEC_NO_LOGS) \
 	$(GEOIP_CFLAGS) \
+	$(MAXMIND_CFLAGS) \
 	$(GLOBAL_CPPFLAGS) \
 	$(LMDB_CFLAGS) \
 	$(PCRE_CFLAGS) \
 	$(YAJL_CFLAGS) \
+	$(LUA_CFLAGS) \
+	$(SSDEEP_CFLAGS) \
 	$(LIBXML2_CFLAGS)
 
 
@@ -77,27 +94,40 @@ regression_tests_SOURCES = \
 regression_tests_LDADD = \
 	$(top_builddir)/src/.libs/libmodsecurity.a \
 	$(CURL_LDADD) \
-	$(GEOIP_LDFLAGS) $(GEOIP_LDADD) \
-	$(PCRE_LDADD) \
-	$(YAJL_LDFLAGS) $(YAJL_LDADD) \
-	$(LMDB_LDFLAGS) $(LMDB_LDADD) \
-	$(SSDEEP_LDFLAGS) $(SSDEEP_LDADD) \
+	$(GEOIP_LDADD) \
+	$(MAXMIND_LDADD) \
+	$(GLOBAL_LDADD) \
 	$(LIBXML2_LDADD) \
-	$(GLOBAL_LDADD)
+	$(LMDB_LDADD) \
+	$(LUA_LDADD) \
+	$(PCRE_LDADD) \
+	$(SSDEEP_LDADD) \
+	$(YAJL_LDADD)
+
+
+regression_tests_LDFLAGS = \
+	$(GEOIP_LDFLAGS) \
+	$(MAXMIND_LDFLAGS) \
+	$(YAJL_LDFLAGS) \
+	$(LMDB_LDFLAGS) \
+	$(SSDEEP_LDFLAGS) \
+	$(LUA_LDFLAGS)
 
 
 regression_tests_CPPFLAGS = \
 	-std=c++11 \
 	-Icommon \
 	-I../ \
-	-O0 \
 	-g \
 	-I$(top_builddir)/headers \
 	$(CURL_CFLAGS) \
 	$(MODSEC_NO_LOGS) \
 	$(GEOIP_CFLAGS) \
+	$(MAXMIND_CFLAGS) \
 	$(GLOBAL_CPPFLAGS) \
 	$(LMDB_CFLAGS) \
+	$(LUA_CFLAGS) \
+	$(SSDEEP_CFLAGS) \
 	$(PCRE_CFLAGS) \
 	$(YAJL_CFLAGS) \
 	$(LIBXML2_CFLAGS)
@@ -113,27 +143,38 @@ rules_optimization_SOURCES = \
 rules_optimization_LDADD = \
 	$(top_builddir)/src/.libs/libmodsecurity.a \
 	$(CURL_LDADD) \
-	$(GEOIP_LDFLAGS) $(GEOIP_LDADD) \
-	$(PCRE_LDADD) \
-	$(YAJL_LDFLAGS) $(YAJL_LDADD) \
-	$(LMDB_LDFLAGS) $(LMDB_LDADD) \
-	$(SSDEEP_LDFLAGS) $(SSDEEP_LDADD) \
+	$(GEOIP_LDADD) \
+	$(MAXMIND_LDADD) \
+	$(GLOBAL_LDADD) \
 	$(LIBXML2_LDADD) \
-	$(GLOBAL_LDADD)
+	$(LMDB_LDADD) \
+	$(LUA_LDADD) \
+	$(PCRE_LDADD) \
+	$(SSDEEP_LDADD) \
+	$(YAJL_LDADD)
 
+rules_optimization_LDFLAGS = \
+	$(GEOIP_LDFLAGS) \
+	$(MAXMIND_LDFLAGS) \
+	$(LMDB_LDFLAGS) \
+	$(LUA_LDFLAGS) \
+	$(SSDEEP_LDFLAGS) \
+	$(YAJL_LDFLAGS)
 
 rules_optimization_CPPFLAGS = \
 	-std=c++11 \
 	-Icommon \
 	-I../ \
-	-O0 \
 	-g \
 	-I$(top_builddir)/headers \
 	$(CURL_CFLAGS) \
 	$(MODSEC_NO_LOGS) \
 	$(GEOIP_CFLAGS) \
+	$(MAXMIND_CFLAGS) \
 	$(GLOBAL_CPPFLAGS) \
 	$(LMDB_CFLAGS) \
+	$(LUA_CFLAGS) \
+	$(SSDEEP_CFLAGS) \
 	$(PCRE_CFLAGS) \
 	$(YAJL_CFLAGS) \
 	$(LIBXML2_CFLAGS)

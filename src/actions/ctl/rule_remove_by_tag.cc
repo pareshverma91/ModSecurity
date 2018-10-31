@@ -13,40 +13,31 @@
  *
  */
 
-#include "src/actions/disruptive/block.h"
+#include "src/actions/ctl/rule_remove_by_tag.h"
 
 #include <iostream>
 #include <string>
-#include <memory>
 
 #include "modsecurity/transaction.h"
-#include "modsecurity/rule.h"
-#include "modsecurity/rules.h"
-#include "modsecurity/intervention.h"
-#include "src/actions/data/status.h"
 
 namespace modsecurity {
 namespace actions {
-namespace disruptive {
+namespace ctl {
 
 
-bool Block::evaluate(Rule *rule, Transaction *transaction,
-    std::shared_ptr<RuleMessage> rm) {
-#ifndef NO_LOGS
-    transaction->debug(8, "Marking request as disruptive.");
-#endif
-
-    for (Action *a : transaction->m_rules->m_defaultActions[rule->m_phase]) {
-        if (a->isDisruptive() == false) {
-            continue;
-        }
-        a->evaluate(rule, transaction, rm);
-    }
+bool RuleRemoveByTag::init(std::string *error) {
+    std::string what(m_parser_payload, 16, m_parser_payload.size() - 16);
+    m_tag = what;
 
     return true;
 }
 
+bool RuleRemoveByTag::evaluate(Rule *rule, Transaction *transaction) {
+    transaction->m_ruleRemoveByTag.push_back(m_tag);
+    return true;
+}
 
-}  // namespace disruptive
+
+}  // namespace ctl
 }  // namespace actions
 }  // namespace modsecurity

@@ -20,7 +20,6 @@
 
 #include "modsecurity/transaction.h"
 #include "modsecurity/rule.h"
-#include "src/macro_expansion.h"
 
 
 namespace modsecurity {
@@ -28,25 +27,14 @@ namespace actions {
 
 
 bool SetRSC::init(std::string *error) {
-    m_collection_key = std::string(m_parser_payload, 0,
-        m_parser_payload.length());
-
-    if (m_collection_key.empty()) {
-        error->assign("Missing collection key");
-        return false;
-    }
-
     return true;
 }
 
 
 bool SetRSC::evaluate(Rule *rule, Transaction *t) {
-    std::string colNameExpanded = MacroExpansion::expand(m_collection_key, t);
-
-#ifndef NO_LOGS
-    t->debug(8, "RESOURCE initiated with value: \'"
+    std::string colNameExpanded(m_string->evaluate(t));
+    ms_dbg_a(t, 8, "RESOURCE initiated with value: \'"
         + colNameExpanded + "\'.");
-#endif
 
     t->m_collections.m_resource_collection_key = colNameExpanded;
     t->m_variableResource.set(colNameExpanded, t->m_variableOffset);

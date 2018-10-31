@@ -13,28 +13,32 @@
  *
  */
 
-#include <ctime>
-#include <iostream>
-
-#include <libxml/xmlschemas.h>
-#include <libxml/xpath.h>
 
 #include "modsecurity/modsecurity.h"
-#include "modsecurity/rule.h"
-#include "modsecurity/rule_message.h"
-#include "src/collection/backend/in_memory-per_process.h"
-#include "src/collection/backend/lmdb.h"
 #include "src/config.h"
-#include "src/unique_id.h"
-#include "src/utils/regex.h"
-#ifdef MSC_WITH_CURL
-#include <curl/curl.h>
-#endif
+
 #ifdef WITH_YAJL
 #include <yajl/yajl_tree.h>
 #include <yajl/yajl_gen.h>
 #endif
+#ifdef WITH_LIBXML2
+#include <libxml/xmlschemas.h>
+#include <libxml/xpath.h>
+#endif
+#ifdef MSC_WITH_CURL
+#include <curl/curl.h>
+#endif
 
+
+#include <ctime>
+#include <iostream>
+
+#include "modsecurity/rule.h"
+#include "modsecurity/rule_message.h"
+#include "src/collection/backend/in_memory-per_process.h"
+#include "src/collection/backend/lmdb.h"
+#include "src/unique_id.h"
+#include "src/utils/regex.h"
 #include "src/utils/geo_lookup.h"
 #include "src/actions/transformations/transformation.h"
 
@@ -57,18 +61,21 @@ namespace modsecurity {
  */
 ModSecurity::ModSecurity()
     : m_connector(""),
+    m_whoami(""),
 #ifdef WITH_LMDB
-    m_global_collection(new collection::backend::LMDB()),
-    m_resource_collection(new collection::backend::LMDB()),
-    m_ip_collection(new collection::backend::LMDB()),
-    m_session_collection(new collection::backend::LMDB()),
-    m_user_collection(new collection::backend::LMDB()),
+    m_global_collection(new collection::backend::LMDB("GLOBAL")),
+    m_resource_collection(new collection::backend::LMDB("RESOURCE")),
+    m_ip_collection(new collection::backend::LMDB("IP")),
+    m_session_collection(new collection::backend::LMDB("SESSION")),
+    m_user_collection(new collection::backend::LMDB("USER")),
 #else
-    m_global_collection(new collection::backend::InMemoryPerProcess()),
-    m_resource_collection(new collection::backend::InMemoryPerProcess()),
-    m_ip_collection(new collection::backend::InMemoryPerProcess()),
-    m_session_collection(new collection::backend::InMemoryPerProcess()),
-    m_user_collection(new collection::backend::InMemoryPerProcess()),
+    m_global_collection(new collection::backend::InMemoryPerProcess("GLOBAL")),
+    m_ip_collection(new collection::backend::InMemoryPerProcess("IP")),
+    m_resource_collection(
+        new collection::backend::InMemoryPerProcess("RESOURCE")),
+    m_session_collection(
+        new collection::backend::InMemoryPerProcess("SESSION")),
+    m_user_collection(new collection::backend::InMemoryPerProcess("USER")),
 #endif
     m_logCb(NULL) {
     UniqueId::uniqueId();
@@ -76,7 +83,9 @@ ModSecurity::ModSecurity()
 #ifdef MSC_WITH_CURL
     curl_global_init(CURL_GLOBAL_ALL);
 #endif
+#ifdef WITH_LIBXML2
     xmlInitParser();
+#endif
 }
 
 
@@ -87,8 +96,9 @@ ModSecurity::~ModSecurity() {
 #ifdef WITH_GEOIP
     Utils::GeoLookup::getInstance().cleanUp();
 #endif
+#ifdef WITH_LIBXML2
     xmlCleanupParser();
-
+#endif
     delete m_global_collection;
     delete m_resource_collection;
     delete m_ip_collection;
@@ -109,7 +119,7 @@ ModSecurity::~ModSecurity() {
  *       update it, make it in a fashion that won't break the existent parsers.
  *       (e.g. adding extra information _only_ to the end of the string)
  */
-const std::string ModSecurity::whoAmI() {
+const std::string& ModSecurity::whoAmI() {
     std::string platform("Unknown platform");
 
 #if AIX
@@ -132,8 +142,11 @@ const std::string ModSecurity::whoAmI() {
     platform = "Windows";
 #endif
 
-    return std::string("ModSecurity v" MODSECURITY_VERSION \
-        " (" + platform + ")");
+    if (m_whoami.empty()) {
+        m_whoami = "ModSecurity v" MODSECURITY_VERSION " (" + platform + ")";
+    }
+
+    return m_whoami;
 }
 
 
@@ -185,10 +198,9 @@ void ModSecurity::serverLog(void *data, std::shared_ptr<RuleMessage> rm) {
     }
 
     if (m_logProperties & TextLogProperty) {
-        char *d = strdup(rm->log().c_str());
-        const void *a = static_cast<const void *>(d);
+        std::string &&d = rm->log();
+        const void *a = static_cast<const void *>(d.c_str());
         m_logCb(data, a);
-        free(d);
         return;
     }
 
@@ -210,7 +222,6 @@ int ModSecurity::processContentOffset(const char *content, size_t len,
     Utils::Regex variables("v([0-9]+),([0-9]+)");
     Utils::Regex operators("o([0-9]+),([0-9]+)");
     Utils::Regex transformations("t:(?:(?!t:).)+");
-    int i;
     yajl_gen g;
     std::string varValue;
     std::string opValue;
@@ -303,16 +314,20 @@ int ModSecurity::processContentOffset(const char *content, size_t len,
             reinterpret_cast<const unsigned char*>(trans.back().match.c_str()),
             trans.back().match.size());
 
-        t = modsecurity::actions::transformations::Transformation::instantiate(trans.back().match.c_str());
+        t = modsecurity::actions::transformations::Transformation::instantiate(
+            trans.back().match.c_str());
         varValueRes = t->evaluate(varValue, NULL);
         varValue.assign(varValueRes);
         trans.pop_back();
 
         yajl_gen_string(g, reinterpret_cast<const unsigned char*>("value"),
             strlen("value"));
-        yajl_gen_string(g, reinterpret_cast<const unsigned char*>(varValue.c_str()),
+        yajl_gen_string(g, reinterpret_cast<const unsigned char*>(
+            varValue.c_str()),
             varValue.size());
         yajl_gen_map_close(g);
+
+        delete t;
     }
 
     yajl_gen_array_close(g);

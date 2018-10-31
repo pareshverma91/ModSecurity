@@ -20,13 +20,20 @@
 #include <memory>
 
 #include "src/operators/operator.h"
-#include "src/macro_expansion.h"
 #include "modsecurity/rule.h"
 #include "modsecurity/rule_message.h"
 
 namespace modsecurity {
 namespace operators {
 
+
+bool Rx::init(const std::string &arg, std::string *error) {
+    if (m_string->m_containsMacro == false) {
+        m_re = new Regex(m_param);
+    }
+
+    return true;
+}
 
 
 bool Rx::evaluate(Transaction *transaction, Rule *rule,
@@ -35,24 +42,26 @@ bool Rx::evaluate(Transaction *transaction, Rule *rule,
     std::list<SMatch> matches;
     Regex *re;
 
-    if (m_param.empty()) {
+    if (m_param.empty() && !m_string->m_containsMacro) {
         return true;
     }
 
-    std::string eparam = MacroExpansion::expand(m_param, transaction);
-    re = new Regex(eparam);
+    if (m_string->m_containsMacro) {
+        std::string eparam(m_string->evaluate(transaction));
+        re = new Regex(eparam);
+    } else {
+        re = m_re;
+    }
 
     matches = re->searchAll(input);
-    if (rule && rule->getActionsByName("capture").size() > 0 && transaction) {
+    if (rule && rule->m_containsCaptureAction && transaction) {
         int i = 0;
         matches.reverse();
         for (const SMatch& a : matches) {
-            transaction->m_collections.storeOrUpdateFirst("TX",
+            transaction->m_collections.m_tx_collection->storeOrUpdateFirst(
                 std::to_string(i), a.match);
-#ifndef NO_LOGS
-            transaction->debug(7, "Added regex subexpression TX." +
+            ms_dbg_a(transaction, 7, "Added regex subexpression TX." +
                 std::to_string(i) + ": " + a.match);
-#endif
             transaction->m_matched.push_back(a.match);
             i++;
         }
@@ -62,7 +71,9 @@ bool Rx::evaluate(Transaction *transaction, Rule *rule,
         logOffset(ruleMessage, i.m_offset, i.m_length);
     }
 
-    delete re;
+    if (m_string->m_containsMacro) {
+        delete re;
+    }
 
     if (matches.size() > 0) {
         return true;

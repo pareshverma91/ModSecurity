@@ -7,16 +7,25 @@ simple_request_SOURCES = \
 
 simple_request_LDADD = \
 	$(top_builddir)/src/.libs/libmodsecurity.a \
-	-lpthread \
 	$(CURL_LDADD) \
-	$(GEOIP_LDFLAGS) $(GEOIP_LDADD) \
-	$(PCRE_LDADD) \
-	$(YAJL_LDFLAGS) $(YAJL_LDADD) \
-	$(LMDB_LDFLAGS) $(LMDB_LDADD) \
-	$(SSDEEP_LDFLAGS) $(SSDEEP_LDADD) \
+	$(GEOIP_LDADD) \
+	$(GLOBAL_LDADD) \
 	$(LIBXML2_LDADD) \
-	$(GLOBAL_LDADD)
+	$(LMDB_LDADD) \
+	$(MAXMIND_LDADD) \
+	$(LUA_LDADD) \
+	$(PCRE_LDADD) \
+	$(SSDEEP_LDADD) \
+	$(YAJL_LDADD)
 
+simple_request_LDFLAGS = \
+	$(GEOIP_LDFLAGS) \
+	$(LMDB_LDFLAGS) \
+	-lpthread \
+	$(LUA_LDFLAGS) \
+	$(MAXMIND_LDFLAGS) \
+	$(SSDEEP_LDFLAGS) \
+	$(YAJL_LDFLAGS)
 
 simple_request_CPPFLAGS = \
 	$(GLOBAL_CFLAGS) \
@@ -32,6 +41,7 @@ simple_request_CPPFLAGS = \
 	$(MODSEC_NO_LOGS) \
 	$(YAJL_CFLAGS) \
 	$(LMDB_CFLAGS) \
+	$(LUA_CFLAGS) \
 	$(PCRE_CFLAGS) \
 	$(LIBXML2_CFLAGS)
 

@@ -17,7 +17,11 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#ifdef __OpenBSD__
+#include <glob.h>
+#else
 #include <wordexp.h>
+#endif
 #include <stdint.h>
 #include <inttypes.h>
 
@@ -75,7 +79,7 @@ std::string find_resource(const std::string& resource,
     delete iss;
 
     // What about `*' ?
-    if (utils::expandEnv(resource, 0).size() > 1) {
+    if (utils::expandEnv(resource, 0).size() > 0) {
         return resource;
     } else {
         err->append("'" + resource + "', ");
@@ -94,7 +98,7 @@ std::string find_resource(const std::string& resource,
     delete iss;
 
     // What about `*' ?
-    if (utils::expandEnv(f, 0).size() > 1) {
+    if (utils::expandEnv(f, 0).size() > 0) {
         return f;
     } else {
         err->append("'" + f + "'.");
@@ -119,18 +123,33 @@ std::string get_path(const std::string& file) {
 std::list<std::string> expandEnv(const std::string& var, int flags) {
     std::list<std::string> vars;
 
+#ifdef __OpenBSD__
+    glob_t p;
+    if (glob(var.c_str(), flags, NULL, &p) == false) {
+        if (p.gl_pathc) {
+            for (char** exp = p.gl_pathv; *exp; ++exp) {
+#else
     wordexp_t p;
     if (wordexp(var.c_str(), &p, flags) == false) {
         if (p.we_wordc) {
             for (char** exp = p.we_wordv; *exp; ++exp) {
-                vars.push_back(exp[0]);
+#endif
+                std::ifstream *iss = new std::ifstream(exp[0], std::ios::in);
+                if (iss->is_open()) {
+                    iss->close();
+                    vars.push_back(exp[0]);
+                }
+                delete iss;
             }
         }
+#ifdef __OpenBSD__
+        globfree(&p);
+#else
         wordfree(&p);
+#endif
     }
     return vars;
 }
-
 
 bool createDir(std::string dir, int mode, std::string *error) {
     int ret = mkdir(dir.data(), mode);

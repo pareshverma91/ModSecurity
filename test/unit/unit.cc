@@ -27,7 +27,6 @@
 #include "src/actions/transformations/transformation.h"
 #include "modsecurity/transaction.h"
 #include "modsecurity/actions/action.h"
-#include "src/actions/transformations/transformation.h"
 
 
 #include "test/common/modsecurity_test.h"
@@ -44,10 +43,9 @@ using modsecurity_test::ModSecurityTest;
 using modsecurity_test::ModSecurityTestResults;
 using modsecurity::actions::transformations::Transformation;
 using modsecurity::operators::Operator;
-using namespace modsecurity::actions::transformations;
 
 std::string default_test_path = "test-cases/secrules-language-tests/operators";
-std::list<std::string> resources;
+static std::list<std::string> resources;
 
 void print_help() {
     std::cout << "Use ./unit /path/to/file" << std::endl;
@@ -124,9 +122,18 @@ int main(int argc, char **argv) {
     ModSecurityTest<UnitTest> test;
     ModSecurityTestResults<UnitTest> results;
 
-#ifdef WITH_GEOIP
+#if defined(WITH_GEOIP) or defined(WITH_MAXMIND)
+    resources.push_back("geoip-or-maxmind");
+#endif
+
+#if defined(WITH_MAXMIND)
+    resources.push_back("maxmind");
+#endif
+
+#if defined(WITH_GEOIP)
     resources.push_back("geoip");
 #endif
+
 #ifdef WITH_CURL
     resources.push_back("curl");
 #endif

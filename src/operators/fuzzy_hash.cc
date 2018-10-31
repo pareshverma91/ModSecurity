@@ -18,7 +18,6 @@
 #include <string>
 
 #include "src/operators/operator.h"
-#include "src/macro_expansion.h"
 #include "src/utils/system.h"
 
 namespace modsecurity {
@@ -56,7 +55,8 @@ bool FuzzyHash::init(const std::string &param2, std::string *error) {
     }
 
     for (std::string line; std::getline(*iss, line); ) {
-       chunk = (struct fuzzy_hash_chunk *)calloc(1, sizeof(struct fuzzy_hash_chunk));
+       chunk = (struct fuzzy_hash_chunk *)calloc(1,
+            sizeof(struct fuzzy_hash_chunk));
 
         chunk->data = strdup(line.c_str());
         chunk->next = NULL;
@@ -77,11 +77,23 @@ bool FuzzyHash::init(const std::string &param2, std::string *error) {
     delete iss;
     return true;
 #else
-    error->assign("@fuzzyHash: SSDEEP support was not enabled during the compilation.");
+    error->assign("@fuzzyHash: SSDEEP support was not enabled " \
+        "during the compilation.");
     return false;
 #endif
 }
 
+FuzzyHash::~FuzzyHash() {
+    struct fuzzy_hash_chunk *c = m_head;
+    while (c) {
+        struct fuzzy_hash_chunk *t = c;
+        free(c->data);
+        c->data = NULL;
+        c = c->next;
+        free(t);
+    }
+    m_head = NULL;
+}
 
 
 bool FuzzyHash::evaluate(Transaction *t, const std::string &str) {
@@ -89,18 +101,16 @@ bool FuzzyHash::evaluate(Transaction *t, const std::string &str) {
     char result[FUZZY_MAX_RESULT];
     struct fuzzy_hash_chunk *chunk = m_head;
 
-    if (fuzzy_hash_buf((const unsigned char*)str.c_str(), str.size(), result))
-    {
-        t->debug(4, "Problems generating fuzzy hash");
+    if (fuzzy_hash_buf((const unsigned char*)str.c_str(),
+        str.size(), result)) {
+        ms_dbg_a(t, 4, "Problems generating fuzzy hash");
         return false;
     }
 
-    while (chunk != NULL)
-    {
+    while (chunk != NULL) {
         int i = fuzzy_compare(chunk->data, result);
-        if (i >= m_threshold)
-        {
-            t->debug(4, "Fuzzy hash: matched " \
+        if (i >= m_threshold) {
+            ms_dbg_a(t, 4, "Fuzzy hash: matched " \
                 "with score: " + std::to_string(i) + ".");
             return true;
         }

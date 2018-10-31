@@ -29,16 +29,9 @@ namespace modsecurity {
 class Transaction;
 namespace Variables {
 
-class RequestURI : public Variable {
- public:
-    RequestURI()
-        : Variable("REQUEST_URI") { }
-    void evaluate(Transaction *transaction,
-        Rule *rule,
-        std::vector<const collection::Variable *> *l) {
-        transaction->m_variableRequestURI.evaluate(l);
-    }
-};
+
+DEFINE_VARIABLE(RequestURI, REQUEST_URI, m_variableRequestURI)
+
 
 }  // namespace Variables
 }  // namespace modsecurity

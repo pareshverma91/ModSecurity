@@ -19,10 +19,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef WITH_LIBXML2
 #include <libxml/xmlschemas.h>
 #include <libxml/xpath.h>
-
+#endif
 #include <string>
+#include <memory>
+#include <utility>
 
 #include "src/operators/operator.h"
 
@@ -33,13 +36,12 @@ namespace operators {
 class ValidateSchema : public Operator {
  public:
     /** @ingroup ModSecurity_Operator */
-    ValidateSchema(std::string o, std::string p, bool i)
-        : Operator(o, p, i),
-        m_parserCtx(NULL),
-        m_validCtx(NULL),
-        m_schema(NULL) { }
-    explicit ValidateSchema(std::string param)
-        : Operator("ValidateSchema", param),
+#ifndef WITH_LIBXML2
+    explicit ValidateSchema(std::unique_ptr<RunTimeString> param)
+        : Operator("ValidateSchema", std::move(param)) { }
+#else
+    explicit ValidateSchema(std::unique_ptr<RunTimeString> param)
+        : Operator("ValidateSchema", std::move(param)),
         m_parserCtx(NULL),
         m_validCtx(NULL),
         m_schema(NULL) { }
@@ -103,9 +105,7 @@ class ValidateSchema : public Operator {
         if (len > 0) {
             s = "XML Error: " + std::string(buf);
         }
-#ifndef NO_LOGS
-        t->debug(4, s);
-#endif
+        ms_dbg_a(t, 4, s);
     }
 
 
@@ -122,9 +122,7 @@ class ValidateSchema : public Operator {
         if (len > 0) {
             s = "XML Warning: " + std::string(buf);
         }
-#ifndef NO_LOGS
-        t->debug(4, s);
-#endif
+        ms_dbg_a(t, 4, s);
     }
 
     static void null_error(void *ctx, const char *msg, ...) {
@@ -136,6 +134,7 @@ class ValidateSchema : public Operator {
     xmlSchemaPtr m_schema;
     std::string m_resource;
     std::string m_err;
+#endif
 };
 
 }  // namespace operators

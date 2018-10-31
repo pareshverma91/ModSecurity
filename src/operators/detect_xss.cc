@@ -19,28 +19,32 @@
 
 #include "src/operators/operator.h"
 #include "others/libinjection/src/libinjection.h"
-#include "src/macro_expansion.h"
+
 
 namespace modsecurity {
 namespace operators {
 
 
-bool DetectXSS::evaluate(Transaction *transaction, const std::string &input) {
+bool DetectXSS::evaluate(Transaction *t, Rule *rule,
+    const std::string& input, std::shared_ptr<RuleMessage> ruleMessage) {
     int is_xss;
 
     is_xss = libinjection_xss(input.c_str(), input.length());
 
-    if (transaction) {
-#ifndef NO_LOGS
+    if (t) {
         if (is_xss) {
-            transaction->debug(5, "detected XSS using libinjection.");
+            ms_dbg_a(t, 5, "detected XSS using libinjection.");
+            if (rule && t && rule->m_containsCaptureAction) {
+                t->m_collections.m_tx_collection->storeOrUpdateFirst(
+                    "0", std::string(input));
+                ms_dbg_a(t, 7, "Added DetectXSS match TX.0: " + \
+                    std::string(input));
+            }
         } else {
-            transaction->debug(9, "libinjection was not able to " \
+            ms_dbg_a(t, 9, "libinjection was not able to " \
                 "find any XSS in: " + input);
-        }
-#endif
+            }
     }
-
     return is_xss != 0;
 }
 

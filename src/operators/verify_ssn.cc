@@ -16,23 +16,25 @@
 #include "src/operators/verify_ssn.h"
 
 #include <string>
+#include <memory>
+#include <list>
 
 #include "src/operators/operator.h"
 
 namespace modsecurity {
 namespace operators {
 
-int VerifySSN::convert_to_int(const char c)
-{
+int VerifySSN::convert_to_int(const char c) {
     int n;
-    if ((c>='0') && (c<='9'))
+    if ((c >= '0') && (c <= '9')) {
         n = c - '0';
-    else if ((c>='A') && (c<='F'))
+    } else if ((c >= 'A') && (c <= 'F')) {
         n = c - 'A' + 10;
-    else if ((c>='a') && (c<='f'))
+    } else if ((c >= 'a') && (c <= 'f')) {
         n = c - 'a' + 10;
-    else
+    } else {
         n = 0;
+    }
     return n;
 }
 
@@ -106,7 +108,7 @@ invalid:
 }
 
 
-bool VerifySSN::evaluate(Transaction *transaction, Rule *rule,
+bool VerifySSN::evaluate(Transaction *t, Rule *rule,
     const std::string& input, std::shared_ptr<RuleMessage> ruleMessage) {
     std::list<SMatch> matches;
     bool is_ssn = false;
@@ -118,11 +120,17 @@ bool VerifySSN::evaluate(Transaction *transaction, Rule *rule,
 
     for (i = 0; i < input.size() - 1 && is_ssn == false; i++) {
         matches = m_re->searchAll(input.substr(i, input.size()));
-
         for (const auto & i : matches) {
             is_ssn = verify(i.match.c_str(), i.match.size());
-            logOffset(ruleMessage, i.m_offset, i.m_length);
             if (is_ssn) {
+                logOffset(ruleMessage, i.m_offset, i.m_length);
+                if (rule && t && rule->m_containsCaptureAction) {
+                    t->m_collections.m_tx_collection->storeOrUpdateFirst(
+                        "0", std::string(i.match));
+                    ms_dbg_a(t, 7, "Added VerifySSN match TX.0: " + \
+                        std::string(i.match));
+                }
+
                 goto out;
             }
         }

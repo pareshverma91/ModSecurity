@@ -190,9 +190,9 @@ namespace modsecurity {
 
 #define MODSECURITY_MAJOR "3"
 #define MODSECURITY_MINOR "0"
-#define MODSECURITY_PATCHLEVEL "0"
-#define MODSECURITY_TAG "rc1"
-#define MODSECURITY_TAG_NUM "051"
+#define MODSECURITY_PATCHLEVEL "2"
+#define MODSECURITY_TAG ""
+#define MODSECURITY_TAG_NUM "100"
 
 #define MODSECURITY_VERSION MODSECURITY_MAJOR "." \
     MODSECURITY_MINOR "." MODSECURITY_PATCHLEVEL \
@@ -278,7 +278,7 @@ class ModSecurity {
     ModSecurity();
     ~ModSecurity();
 
-    static const std::string whoAmI();
+    const std::string& whoAmI();
     void setConnectorInformation(std::string connector);
     void setServerLogCb(ModSecLogCb cb);
     /**
@@ -304,6 +304,7 @@ class ModSecurity {
 
  private:
     std::string m_connector;
+    std::string m_whoami;
     ModSecLogCb m_logCb;
     int m_logProperties;
 };
@@ -316,7 +317,7 @@ extern "C" {
 #endif
 
 /** @ingroup ModSecurity_C_API */
-ModSecurity *msc_init();
+ModSecurity *msc_init(void);
 /** @ingroup ModSecurity_C_API */
 const char *msc_who_am_i(ModSecurity *msc);
 /** @ingroup ModSecurity_C_API */

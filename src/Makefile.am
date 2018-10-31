@@ -8,7 +8,6 @@ SUBDIRS = \
 	$(MAYBE_PARSER)
 
 
-
 lib_LTLIBRARIES = libmodsecurity.la
 libmodsecurity_ladir = $(prefix)/include
 libmodsecurity_includesub_collectiondir = $(pkgincludedir)/collection/
@@ -27,6 +26,7 @@ EXTRA_DIST = \
 	parser/seclang-scanner.cc \
 	parser/seclang-scanner.ll \
 	parser/stack.hh
+
 
 MAINTAINERCLEANFILES = \
 	Makefile.in \
@@ -47,14 +47,13 @@ pkginclude_HEADERS = \
 	../headers/modsecurity/rules_exceptions.h \
 	../headers/modsecurity/rules_properties.h \
 	../headers/modsecurity/transaction.h \
-	../headers/modsecurity/variable_origin.h
-
+	../headers/modsecurity/variable_origin.h \
+	../headers/modsecurity/variable_value.h
 
 
 libmodsecurity_includesub_collection_HEADERS = \
 	../headers/modsecurity/collection/collection.h \
-	../headers/modsecurity/collection/collections.h \
-	../headers/modsecurity/collection/variable.h
+	../headers/modsecurity/collection/collections.h
 
 
 libmodsecurity_includesub_actions_HEADERS = \
@@ -75,7 +74,12 @@ noinst_HEADERS = \
 	request_body_processor/*.h \
 	utils/*.h \
 	variables/*.h \
+	engine/*.h \
 	*.h
+
+
+ENGINES = \
+	engine/lua.cc
 
 
 VARIABLES = \
@@ -102,21 +106,24 @@ ACTIONS = \
 	actions/accuracy.cc \
 	actions/action.cc \
 	actions/audit_log.cc \
+	actions/block.cc \
 	actions/capture.cc \
 	actions/chain.cc \
 	actions/ctl/audit_log_parts.cc \
 	actions/ctl/rule_engine.cc \
 	actions/ctl/request_body_processor_json.cc \
 	actions/ctl/request_body_processor_xml.cc \
+	actions/ctl/request_body_processor_urlencoded.cc \
 	actions/ctl/rule_remove_target_by_tag.cc \
 	actions/ctl/rule_remove_target_by_id.cc \
 	actions/ctl/rule_remove_by_id.cc \
+	actions/ctl/rule_remove_by_tag.cc \
 	actions/ctl/request_body_access.cc\
 	actions/disruptive/allow.cc \
-	actions/disruptive/block.cc \
 	actions/disruptive/deny.cc \
 	actions/disruptive/redirect.cc \
 	actions/disruptive/pass.cc \
+	actions/exec.cc \
 	actions/init_col.cc \
 	actions/log.cc \
 	actions/log_data.cc \
@@ -129,6 +136,7 @@ ACTIONS = \
 	actions/rev.cc \
 	actions/rule_id.cc \
 	actions/severity.cc \
+	actions/set_env.cc \
 	actions/set_rsc.cc \
 	actions/set_sid.cc \
 	actions/set_uid.cc \
@@ -237,7 +245,6 @@ UTILS = \
 	utils/shared_files.cc
 
 
-
 COLLECTION = \
 	collection/collections.cc \
 	collection/backend/in_memory-per_process.cc \
@@ -266,13 +273,15 @@ libmodsecurity_la_SOURCES = \
 	rules.cc \
 	debug_log/debug_log.cc \
 	debug_log/debug_log_writer.cc \
-	macro_expansion.cc \
+	run_time_string.cc \
 	rule.cc \
 	rule_message.cc \
+	rule_script.cc \
 	unique_id.cc \
 	rules_exceptions.cc \
 	${BODY_PROCESSORS} \
 	${ACTIONS} \
+	${ENGINES} \
 	${COLLECTION} \
 	${OPERATORS} \
 	${UTILS} \
@@ -298,22 +307,37 @@ libmodsecurity_la_CPPFLAGS = \
 	$(LMDB_CFLAGS) \
 	$(PCRE_CFLAGS) \
 	$(SSDEEP_CFLAGS) \
+	$(MAXMIND_CFLAGS) \
+	$(LUA_CFLAGS) \
 	$(LIBXML2_CFLAGS)
-
-libmodsecurity_la_LIBADD = \
-	$(GLOBAL_LDADD) \
-	$(CURL_LDADD) \
-	$(GEOIP_LDFLAGS) $(GEOIP_LDADD) \
-	$(PCRE_LDADD) \
-	$(YAJL_LDFLAGS) $(YAJL_LDADD) \
-	$(LMDB_LDFLAGS) $(LMDB_LDADD) \
-	$(SSDEEP_LDFLAGS) $(SSDEEP_LDADD) \
-	$(LIBXML2_LDADD) \
-	../others/libinjection.la \
-	../others/libmbedtls.la
 
 
 libmodsecurity_la_LDFLAGS = \
+	$(CURL_LDFLAGS) \
+	$(GEOIP_LDFLAGS) \
+	$(GLOBAL_LDFLAGS) \
+	$(LDFLAGS) \
+	$(LIBXML2_LDFLAGS) \
+	$(LMDB_LDFLAGS) \
+	$(LUA_LDFLAGS) \
+	$(PCRE_LDFLAGS) \
+	$(SSDEEP_LDFLAGS) \
+	$(MAXMIND_LDFLAGS) \
+	$(YAJL_LDFLAGS) \
 	-version-info @MSC_VERSION_INFO@
 
+
+libmodsecurity_la_LIBADD = \
+	$(CURL_LDADD) \
+	$(GEOIP_LDADD) \
+	$(GLOBAL_LDADD) \
+	$(LIBXML2_LDADD) \
+	$(LMDB_LDADD) \
+	$(LUA_LDADD) \
+	../others/libinjection.la \
+	../others/libmbedtls.la \
+	$(PCRE_LDADD) \
+	$(MAXMIND_LDADD) \
+	$(SSDEEP_LDADD) \
+	$(YAJL_LDADD)
 

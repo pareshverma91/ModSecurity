@@ -7,7 +7,7 @@ AC_DEFUN([MSC_GIT_HASH], m4_esyscmd_s(git log -1 --format="%h" --abbrev-commit))
 AC_DEFUN([MSC_MAJOR], m4_esyscmd_s(cat headers/modsecurity/modsecurity.h | grep "define MODSECURITY_MAJOR " | awk {'print $3'} | sed 's/\"//g'))
 AC_DEFUN([MSC_MINOR], m4_esyscmd_s(cat headers/modsecurity/modsecurity.h | grep "define MODSECURITY_MINOR " | awk {'print $3'} | sed 's/\"//g'))
 AC_DEFUN([MSC_PATCHLEVEL], m4_esyscmd_s(cat headers/modsecurity/modsecurity.h | grep "define MODSECURITY_PATCHLEVEL " | awk {'print $3'} | sed 's/\"//g'))
-AC_DEFUN([MSC_TAG], m4_esyscmd_s(cat headers/modsecurity/modsecurity.h | grep "define MODSECURITY_TAG " | awk {'print $3'} | sed 's/\"//g'))
+AC_DEFUN([MSC_TAG], m4_esyscmd_s(cat headers/modsecurity/modsecurity.h | grep "define MODSECURITY_FTAG " | awk {'print $3'} | sed 's/\"//g'))
 
 
 # Version definition to be further used by AC_INIT and 
@@ -16,14 +16,20 @@ m4_define([msc_version_major], [MSC_MAJOR])
 m4_define([msc_version_minor], [MSC_MINOR])
 m4_define([msc_version_patchlevel], [MSC_PATCHLEVEL])
 
+m4_define([msc_version_c_plus_a], [m4_eval(msc_version_major + msc_version_minor)])
+
+
 m4_define([msc_version],
     [msc_version_major.msc_version_minor])
+
+m4_define([msc_version_with_patchlevel],
+    [msc_version_major.msc_version_minor.msc_version_patchlevel])
 
 m4_define([msc_version_git],
     [m4_esyscmd_s(git describe)])
 
 m4_define([msc_version_info],
-    [msc_version_major:msc_version_minor:msc_version_patchlevel])
+    [msc_version_c_plus_a:msc_version_patchlevel:msc_version_minor])
 
 
 # Project Information
@@ -81,6 +87,10 @@ AM_CONDITIONAL([YAJL_VERSION], [test "$YAJL_VERSION" != ""])
 PROG_GEOIP
 AM_CONDITIONAL([GEOIP_CFLAGS], [test "GEOIP_CFLAGS" != ""])
 
+# Check for MaxMind
+PROG_MAXMIND
+AM_CONDITIONAL([MAXMIND_CFLAGS], [test "MAXMIND_CFLAGS" != ""])
+
 
 # Check for LMDB
 PROG_LMDB
@@ -89,6 +99,11 @@ AM_CONDITIONAL([LMDB_CFLAGS], [test "LMDB_CFLAGS" != ""])
 # Check for SSDEEP
 CHECK_SSDEEP
 AM_CONDITIONAL([SSDEEP_CFLAGS], [test "SSDEEP_CFLAGS" != ""])
+
+# Check for LUA
+CHECK_LUA
+AM_CONDITIONAL([LUA_CFLAGS], [test "LUA_CFLAGS" != ""])
+
 
 #
 # Check for curl
@@ -188,6 +203,9 @@ AC_SUBST([MSC_BASE_DIR])
 
 MSC_VERSION_INFO=msc_version_info
 AC_SUBST([MSC_VERSION_INFO])
+
+MSC_VERSION_WITH_PATCHLEVEL=msc_version_with_patchlevel
+AC_SUBST([MSC_VERSION_WITH_PATCHLEVEL])
 
 MSC_VERSION=msc_version
 AC_SUBST([MSC_VERSION])
@@ -302,7 +320,9 @@ fi
 AM_CONDITIONAL([TEST_UTILITIES], [test $buildTestUtilities = true])
 if test $buildTestUtilities = true; then
     if test $debugLogs = true; then
-        TEST_CASES=`./test/test-list.sh`
+        if test -f ./test/test-list.sh; then
+            TEST_CASES=`./test/test-list.sh`
+        fi
     fi
 fi
 
@@ -312,7 +332,7 @@ AM_CONDITIONAL([USE_MUTEX_ON_PM], [test $mutexPm = true])
 
 
 # General link options
-if test "$PLATFORM" != "MacOSX"; then
+if test "$PLATFORM" != "MacOSX" -a "$PLATFORM" != "OpenBSD"; then
     GLOBAL_LDADD="-lrt  "
 fi
 
@@ -332,6 +352,7 @@ AC_SUBST(GLOBAL_CFLAGS)
 
 # Files to be generated via autotools.
 AC_CONFIG_FILES([\
+    modsecurity.pc \
     Makefile \
     doc/Makefile \
     src/Makefile \
@@ -397,21 +418,26 @@ echo SECLANG_TEST_VERSION
 echo " "
 echo " Optional dependencies"
 
-## GeoIP
-if test "x$GEOIP_FOUND" = "x0"; then
-    echo "   + GeoIP                                         ....not found"
+
+
+## GeoIP - MaxMind
+if test "x$GEOIP_FOUND" = "x0" && test "x$MAXMIND_FOUND" = "x0"; then
+    echo "   + GeoIP/MaxMind                                 ....not found"
 fi
-if test "x$GEOIP_FOUND" = "x1"; then
-    echo -n "   + GeoIP                                         ....found "
-    if ! test "x$GEOIP_VERSION" = "x"; then
-        echo "v${GEOIP_VERSION}"
-    else
-        echo ""
+if test "x$GEOIP_FOUND" = "x1" || test "x$MAXMIND_FOUND" = "x1"; then
+    echo -n "   + GeoIP/MaxMind                                 ....found "
+    echo ""
+    if test "x$MAXMIND_FOUND" = "x1"; then
+        echo "      * (MaxMind) v${MAXMIND_VERSION}"
+        echo "         ${MAXMIND_DISPLAY}"
     fi
-    echo "      ${GEOIP_DISPLAY}"
+    if test "x$GEOIP_FOUND" = "x1"; then
+        echo "      * (GeoIP) v${GEOIP_VERSION}"
+        echo "         ${GEOIP_DISPLAY}"
+    fi
 fi
-if test "x$GEOIP_FOUND" = "x2"; then
-    echo "   + GeoIP                                         ....disabled"
+if test "x$GEOIP_FOUND" = "x2" && test "x$MAXMIND_FOUND" = "x2"; then
+    echo "   + GeoIP/MaxMind                                 ....disabled"
 fi
 
 
@@ -502,6 +528,23 @@ if test "x$SSDEEP_FOUND" = "x1"; then
 fi
 if test "x$SSDEEP_FOUND" = "x2"; then
     echo "   + SSDEEP                                        ....disabled"
+fi
+
+## LUA
+if test "x$LUA_FOUND" = "x0"; then
+    echo "   + LUA                                           ....not found"
+fi
+if test "x$LUA_FOUND" = "x1"; then
+    echo -n "   + LUA                                           ....found "
+    if ! test "x$LUA_VERSION" = "x"; then
+        echo "v${LUA_VERSION}"
+    else
+        echo ""
+    fi
+    echo "      ${LUA_DISPLAY}"
+fi
+if test "x$LUA_FOUND" = "x2"; then
+    echo "   + LUA                                           ....disabled"
 fi
 
 

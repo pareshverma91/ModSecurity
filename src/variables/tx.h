@@ -18,11 +18,13 @@
 #include <vector>
 #include <list>
 #include <utility>
+#include <memory>
 
 #ifndef SRC_VARIABLES_TX_H_
 #define SRC_VARIABLES_TX_H_
 
 #include "src/variables/variable.h"
+#include "src/run_time_string.h"
 
 namespace modsecurity {
 
@@ -36,10 +38,11 @@ class Tx_DictElement : public Variable {
         : Variable("TX:" + dictElement),
         m_dictElement("TX:" + dictElement) { }
 
-    void evaluate(Transaction *transaction,
+    void evaluate(Transaction *t,
         Rule *rule,
-        std::vector<const collection::Variable *> *l) override {
-        transaction->m_collections.resolveMultiMatches(m_dictElement, "TX", l);
+        std::vector<const VariableValue *> *l) override {
+        t->m_collections.m_tx_collection->resolveMultiMatches(
+            m_name, l, m_keyExclusion);
     }
 
     std::string m_dictElement;
@@ -51,30 +54,56 @@ class Tx_NoDictElement : public Variable {
     Tx_NoDictElement()
         : Variable("TX") { }
 
-    void evaluate(Transaction *transaction,
+    void evaluate(Transaction *t,
         Rule *rule,
-        std::vector<const collection::Variable *> *l) override {
-        transaction->m_collections.resolveMultiMatches(m_name, "TX", l);
+        std::vector<const VariableValue *> *l) override {
+        t->m_collections.m_tx_collection->resolveMultiMatches("", l,
+            m_keyExclusion);
     }
 };
 
 
-class Tx_DictElementRegexp : public Variable {
+class Tx_DictElementRegexp : public VariableRegex {
  public:
     explicit Tx_DictElementRegexp(std::string dictElement)
-        : Variable("TX"),
-        m_r(dictElement),
-        m_dictElement("TX:" + dictElement) { }
+        : VariableRegex("TX", dictElement),
+        m_dictElement(dictElement) { }
 
-    void evaluate(Transaction *transaction,
+    void evaluate(Transaction *t,
         Rule *rule,
-        std::vector<const collection::Variable *> *l) override {
-        transaction->m_collections.resolveRegularExpression(m_dictElement,
-            "TX", l);
+        std::vector<const VariableValue *> *l) override {
+        t->m_collections.m_tx_collection->resolveRegularExpression(
+            m_dictElement, l, m_keyExclusion);
     }
 
-    Utils::Regex m_r;
     std::string m_dictElement;
+};
+
+
+class Tx_DynamicElement : public Variable {
+ public:
+    explicit Tx_DynamicElement(std::unique_ptr<RunTimeString> dictElement)
+        : Variable("TX:dynamic"),
+        m_string(std::move(dictElement)) { }
+
+    void evaluate(Transaction *t,
+        Rule *rule,
+        std::vector<const VariableValue *> *l) override {
+        std::string string = m_string->evaluate(t);
+        t->m_collections.m_tx_collection->resolveMultiMatches(string, l,
+            m_keyExclusion);
+    }
+
+    void del(Transaction *t, std::string k) {
+        t->m_collections.m_tx_collection->del(k);
+    }
+
+    void storeOrUpdateFirst(Transaction *t, std::string var,
+        std::string value) {
+        t->m_collections.m_tx_collection->storeOrUpdateFirst(var, value);
+    }
+
+    std::unique_ptr<RunTimeString> m_string;
 };
 
 

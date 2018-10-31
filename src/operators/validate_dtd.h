@@ -19,10 +19,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef WITH_LIBXML2
 #include <libxml/xmlschemas.h>
 #include <libxml/xpath.h>
-
+#endif
 #include <string>
+#include <memory>
+#include <utility>
 
 #include "src/operators/operator.h"
 
@@ -33,11 +36,9 @@ namespace operators {
 class ValidateDTD : public Operator {
  public:
     /** @ingroup ModSecurity_Operator */
-    ValidateDTD(std::string o, std::string p, bool i)
-        : Operator(o, p, i),
-        m_dtd(NULL) { }
-    explicit ValidateDTD(std::string param)
-        : Operator("ValidateDTD", param) { }
+    explicit ValidateDTD(std::unique_ptr<RunTimeString> param)
+        : Operator("ValidateDTD", std::move(param)) { }
+#ifdef WITH_LIBXML2
     ~ValidateDTD() {
         if (m_dtd != NULL) {
             xmlFreeDtd(m_dtd);
@@ -62,9 +63,7 @@ class ValidateDTD : public Operator {
         if (len > 0) {
             s = "XML Error: " + std::string(buf);
         }
-#ifndef NO_LOGS
-        t->debug(4, s);
-#endif
+        ms_dbg_a(t, 4, s);
     }
 
 
@@ -81,9 +80,7 @@ class ValidateDTD : public Operator {
         if (len > 0) {
             s = "XML Warning: " + std::string(buf);
         }
-#ifndef NO_LOGS
-        t->debug(4, s);
-#endif
+        ms_dbg_a(t, 4, s);
     }
 
 
@@ -92,7 +89,8 @@ class ValidateDTD : public Operator {
 
  private:
     std::string m_resource;
-    xmlDtdPtr m_dtd;
+    xmlDtdPtr m_dtd = NULL;
+#endif
 };
 
 }  // namespace operators

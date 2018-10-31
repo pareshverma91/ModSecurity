@@ -14,15 +14,17 @@
  */
 
 #include <iostream>
-#include <string>
-#include <vector>
 #include <list>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #ifndef SRC_VARIABLES_GLOBAL_H_
 #define SRC_VARIABLES_GLOBAL_H_
 
 #include "src/variables/variable.h"
+#include "src/run_time_string.h"
 
 namespace modsecurity {
 
@@ -33,14 +35,15 @@ namespace Variables {
 class Global_DictElement : public Variable {
  public:
     explicit Global_DictElement(std::string dictElement)
-        : Variable("GLOBAL"),
+        : Variable("GLOBAL:" + dictElement),
         m_dictElement("GLOBAL:" + dictElement) { }
 
-    void evaluate(Transaction *transaction,
+    void evaluate(Transaction *t,
         Rule *rule,
-        std::vector<const collection::Variable *> *l) override {
-        transaction->m_collections.resolveMultiMatches(m_dictElement,
-		"GLOBAL", l);
+        std::vector<const VariableValue *> *l) override {
+        t->m_collections.m_global_collection->resolveMultiMatches(
+            m_name, t->m_collections.m_global_collection_key,
+            t->m_rules->m_secWebAppId.m_value, l, m_keyExclusion);
     }
 
     std::string m_dictElement;
@@ -52,30 +55,66 @@ class Global_NoDictElement : public Variable {
     Global_NoDictElement()
         : Variable("GLOBAL") { }
 
-    void evaluate(Transaction *transaction,
+    void evaluate(Transaction *t,
         Rule *rule,
-        std::vector<const collection::Variable *> *l) override {
-        transaction->m_collections.resolveMultiMatches(m_name, "GLOBAL", l);
+        std::vector<const VariableValue *> *l) override {
+        t->m_collections.m_global_collection->resolveMultiMatches("",
+            t->m_collections.m_global_collection_key,
+            t->m_rules->m_secWebAppId.m_value, l, m_keyExclusion);
     }
 };
 
 
-class Global_DictElementRegexp : public Variable {
+class Global_DictElementRegexp : public VariableRegex {
  public:
     explicit Global_DictElementRegexp(std::string dictElement)
-        : Variable("GLOBAL:regex(" + dictElement + ")"),
-        m_r(dictElement),
-        m_dictElement("GLOBAL:" + dictElement) { }
+        : VariableRegex("GLOBAL", dictElement),
+        m_dictElement(dictElement) { }
 
-    void evaluate(Transaction *transaction,
+    void evaluate(Transaction *t,
         Rule *rule,
-        std::vector<const collection::Variable *> *l) override {
-        transaction->m_collections.resolveRegularExpression(m_dictElement,
-            "GLOBAL", l);
+        std::vector<const VariableValue *> *l) override {
+        t->m_collections.m_global_collection->resolveRegularExpression(
+            m_dictElement,
+            t->m_collections.m_global_collection_key,
+            t->m_rules->m_secWebAppId.m_value, l, m_keyExclusion);
     }
 
-    Utils::Regex m_r;
     std::string m_dictElement;
+};
+
+
+class Global_DynamicElement : public Variable {
+ public:
+    explicit Global_DynamicElement(std::unique_ptr<RunTimeString> dictElement)
+        : Variable("GLOBAL:dynamic"),
+        m_string(std::move(dictElement)) { }
+
+    void evaluate(Transaction *t,
+        Rule *rule,
+        std::vector<const VariableValue *> *l) override {
+        std::string string = m_string->evaluate(t);
+        t->m_collections.m_global_collection->resolveMultiMatches(
+            string,
+            t->m_collections.m_global_collection_key,
+            t->m_rules->m_secWebAppId.m_value, l, m_keyExclusion);
+    }
+
+    void del(Transaction *t, std::string k) {
+        t->m_collections.m_global_collection->del(k,
+            t->m_collections.m_global_collection_key,
+            t->m_rules->m_secWebAppId.m_value);
+    }
+
+    void storeOrUpdateFirst(Transaction *t, std::string var,
+        std::string value) {
+        t->m_collections.m_global_collection->storeOrUpdateFirst(
+            var, t->m_collections.m_global_collection_key,
+            t->m_rules->m_secWebAppId.m_value,
+            value);
+    }
+
+    std::unique_ptr<RunTimeString> m_string;
 };
 
 

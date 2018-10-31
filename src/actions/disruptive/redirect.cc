@@ -21,7 +21,6 @@
 #include <memory>
 
 #include "modsecurity/transaction.h"
-#include "src/macro_expansion.h"
 #include "src/utils/string.h"
 
 namespace modsecurity {
@@ -30,19 +29,17 @@ namespace disruptive {
 
 
 bool Redirect::init(std::string *error) {
-    m_url = m_parser_payload;
-    m_url = utils::string::parserSanitizer(m_url);
     m_status = 302;
     return true;
 }
 
 
 bool Redirect::evaluate(Rule *rule, Transaction *transaction,
-   std::shared_ptr<RuleMessage> rm) {
-    m_urlExpanded = MacroExpansion::expand(m_url, transaction);
-
+    std::shared_ptr<RuleMessage> rm) {
+    std::string m_urlExpanded(m_string->evaluate(transaction));
     /* if it was changed before, lets keep it. */
-    if (transaction->m_it.status == 200) {
+    if (transaction->m_it.status == 200
+        || (!(transaction->m_it.status <= 307 && transaction->m_it.status >= 301))) {
         transaction->m_it.status = m_status;
     }
 
@@ -50,10 +47,10 @@ bool Redirect::evaluate(Rule *rule, Transaction *transaction,
     transaction->m_it.url = strdup(m_urlExpanded.c_str());
     transaction->m_it.disruptive = true;
     intervention::freeLog(&transaction->m_it);
+    rm->m_isDisruptive = true;
     transaction->m_it.log = strdup(
         rm->log(RuleMessage::LogMessageInfo::ClientLogMessageInfo).c_str());
 
-    rm->m_isDisruptive = true;
     return true;
 }
 

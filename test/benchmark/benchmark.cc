@@ -24,30 +24,7 @@
 
 using modsecurity::Transaction;
 
-char request_header[] =  "" \
-    "GET /tutorials/other/top-20-mysql-best-practices/ HTTP/1.1\n\r" \
-    "Host: net.tutsplus.com\n\r" \
-    "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.5)" \
-    " Gecko/20091102 Firefox/3.5.5 (.NET CLR 3.5.30729)\n\r" \
-    "Accept: text/html,application/xhtml+xml,application/xml; " \
-    "q=0.9,*/*;q=0.8\n\r" \
-    "Accept-Language: en-us,en;q=0.5\n\r" \
-    "Accept-Encoding: gzip,deflate\n\r" \
-    "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\n\r" \
-    "Keep-Alive: 300\n\r" \
-    "Connection: keep-alive\n\r" \
-    "Cookie: PHPSESSID=r2t5uvjq435r4q7ib3vtdjq120\n\r" \
-    "Pragma: no-cache\n\r" \
-    "Cache-Control: no-cache\n\r";
-
-char request_uri[] = "GET /test.pl?param1=test&para2=test2";
-
-char request_body[] = "";
-
-char response_headers[] = "" \
-    "HTTP/1.1 200 OK\n\r" \
-    "Content-Type: text/xml; charset=utf-8\n\r" \
-    "Content-Length: length\n\r";
+char request_uri[] = "/test.pl?param1=test&para2=test2";
 
 unsigned char response_body[] = "" \
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n\r" \
@@ -65,16 +42,38 @@ char ip[] = "200.249.12.31";
 
 char rules_file[] = "basic_rules.conf";
 
-
-#define NUM_REQUESTS 10000
-
+const char* const help_message = "Usage: benchmark [num_iterations|-h|-?|--help]";
 
 int main(int argc, char *argv[]) {
-    int i = 0;
+
+    unsigned long long NUM_REQUESTS(1000000);
+
+    if (argc > 1) {
+        if (0 == strcmp(argv[1], "-h") ||
+            0 == strcmp(argv[1], "-?") ||
+            0 == strcmp(argv[1], "--help")) {
+            std::cout << help_message << std::endl;
+            return 0;
+        }
+        errno = 0;
+        unsigned long long upper = strtoull(argv[1], 0, 10);
+        if (!errno && upper) {
+            NUM_REQUESTS = upper;
+        } else {
+            if (errno) {
+                perror("Invalid number of iterations");
+            } else {
+                std::cerr << "Failed to convert '" << argv[1] << "' to integer value" << std::endl
+                          << help_message << std::endl;
+                return -1;
+            }
+        }
+    }
+    std::cout << "Doing " << NUM_REQUESTS << " transactions...\n";
     modsecurity::ModSecurity *modsec;
     modsecurity::Rules *rules;
     modsecurity::ModSecurityIntervention it;
-
+    modsecurity::intervention::reset(&it);
     modsec = new modsecurity::ModSecurity();
     modsec->setConnectorInformation("ModSecurity-benchmark v0.0.1-alpha" \
             " (ModSecurity benchmark utility)");
@@ -86,8 +85,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    for (i = 0; i < NUM_REQUESTS; i++) {
-        std::cout << "Proceeding with request " << i << std::endl;
+    for (unsigned long long i = 0; i < NUM_REQUESTS; i++) {
+        //std::cout << "Proceeding with request " << i << std::endl;
 
         Transaction *modsecTransaction = new Transaction(modsec, rules, NULL);
         modsecTransaction->processConnection(ip, 12345, "127.0.0.1", 80);

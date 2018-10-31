@@ -18,7 +18,6 @@
 #include <string>
 
 #include "src/operators/operator.h"
-#include "src/macro_expansion.h"
 #include "modsecurity/rule_message.h"
 
 namespace modsecurity {
@@ -39,7 +38,7 @@ bool ContainsWord::acceptableChar(const std::string& a, size_t pos) {
 
 bool ContainsWord::evaluate(Transaction *transaction, Rule *rule,
     const std::string &input, std::shared_ptr<RuleMessage> ruleMessage) {
-    std::string paramTarget = MacroExpansion::expand(m_param, transaction);
+    std::string paramTarget(m_string->evaluate(transaction));
 
     if (paramTarget.empty()) {
         return true;

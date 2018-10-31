@@ -44,9 +44,33 @@ typedef struct Rules_t Rules;
 #include "modsecurity/anchored_variable.h"
 #include "modsecurity/intervention.h"
 #include "modsecurity/collection/collections.h"
-#include "modsecurity/collection/variable.h"
+#include "modsecurity/variable_value.h"
 #include "modsecurity/collection/collection.h"
 #include "modsecurity/variable_origin.h"
+
+#ifndef NO_LOGS
+#define ms_dbg(b, c) \
+  do { \
+      if (m_rules && m_rules->m_debugLog && m_rules->m_debugLog->m_debugLevel >= b) { \
+          m_rules->debug(b, m_id, m_uri, c); \
+      } \
+  } while (0);
+#else
+#define ms_dbg(b, c) \
+  do { } while (0);
+#endif
+
+#ifndef NO_LOGS
+#define ms_dbg_a(t, b, c) \
+  do { \
+      if (t && t->m_rules && t->m_rules->m_debugLog && t->m_rules->m_debugLog->m_debugLevel >= b) { \
+          t->debug(b, c); \
+      } \
+  } while (0);
+#else
+#define ms_dbg_a(t, b, c) \
+    do { } while (0);
+#endif
 
 
 #define LOGFY_ADD(a, b) \
@@ -108,15 +132,22 @@ class TransactionAnchoredVariables {
         m_variableInboundDataError(t, "INBOUND_DATA_ERROR"),
         m_variableMatchedVar(t, "MATCHED_VAR"),
         m_variableMatchedVarName(t, "MATCHED_VAR_NAME"),
+        m_variableMultipartBoundaryQuoted(t, "MULTIPART_BOUNDARY_QUOTED"),
+        m_variableMultipartBoundaryWhiteSpace(t,
+            "MULTIPART_BOUNDARY_WHITESPACE"),
         m_variableMultipartCrlfLFLines(t, "MULTIPART_CRLF_LF_LINES"),
         m_variableMultipartDataAfter(t, "MULTIPART_DATA_AFTER"),
+        m_variableMultipartDataBefore(t, "MULTIPART_DATA_BEFORE"),
         m_variableMultipartFileLimitExceeded(t,
             "MULTIPART_FILE_LIMIT_EXCEEDED"),
-        m_variableMultipartStrictError(t, "MULTIPART_STRICT_ERROR"),
         m_variableMultipartHeaderFolding(t, "MULTIPART_HEADER_FOLDING"),
-        m_variableMultipartInvalidQuoting(t, "MULTIPART_INVALID_QUOTING"),
         m_variableMultipartInvalidHeaderFolding(t,
             "MULTIPART_INVALID_HEADER_FOLDING"),
+        m_variableMultipartInvalidPart(t, "MULTIPART_INVALID_PART"),
+        m_variableMultipartInvalidQuoting(t, "MULTIPART_INVALID_QUOTING"),
+        m_variableMultipartLFLine(t, "MULTIPART_LF_LINE"),
+        m_variableMultipartMissingSemicolon(t, "MULTIPART_MISSING_SEMICOLON"),
+        m_variableMultipartStrictError(t, "MULTIPART_STRICT_ERROR"),
         m_variableMultipartUnmatchedBoundary(t,
             "MULTIPART_UNMATCHED_BOUNDARY"),
         m_variableOutboundDataError(t, "OUTBOUND_DATA_ERROR"),
@@ -157,8 +188,8 @@ class TransactionAnchoredVariables {
         m_variableFilesSizes(t, "FILES_SIZES"),
         m_variableFilesNames(t, "FILES_NAMES"),
         m_variableFilesTmpContent(t, "FILES_TMP_CONTENT"),
-        m_variableMultiPartFileName(t, "MULTIPART_FILENAME"),
-        m_variableMultiPartName(t, "MULTIPART_NAME"),
+        m_variableMultipartFileName(t, "MULTIPART_FILENAME"),
+        m_variableMultipartName(t, "MULTIPART_NAME"),
         m_variableMatchedVarsNames(t, "MATCHED_VARS_NAMES"),
         m_variableMatchedVars(t, "MATCHED_VARS"),
         m_variableFiles(t, "FILES"),
@@ -167,7 +198,6 @@ class TransactionAnchoredVariables {
         m_variableResponseHeaders(t, "RESPONSE_HEADERS"),
         m_variableGeo(t, "GEO"),
         m_variableRequestCookiesNames(t, "REQUEST_COOKIES_NAMES"),
-        m_variableRule(t, "RULE"),
         m_variableFilesTmpNames(t, "FILES_TMPNAMES"),
         m_variableOffset(0)
         { }
@@ -186,13 +216,19 @@ class TransactionAnchoredVariables {
     AnchoredVariable m_variableInboundDataError;
     AnchoredVariable m_variableMatchedVar;
     AnchoredVariable m_variableMatchedVarName;
+    AnchoredVariable m_variableMultipartBoundaryQuoted;
+    AnchoredVariable m_variableMultipartBoundaryWhiteSpace;
     AnchoredVariable m_variableMultipartCrlfLFLines;
     AnchoredVariable m_variableMultipartDataAfter;
+    AnchoredVariable m_variableMultipartDataBefore;
     AnchoredVariable m_variableMultipartFileLimitExceeded;
-    AnchoredVariable m_variableMultipartStrictError;
     AnchoredVariable m_variableMultipartHeaderFolding;
-    AnchoredVariable m_variableMultipartInvalidQuoting;
     AnchoredVariable m_variableMultipartInvalidHeaderFolding;
+    AnchoredVariable m_variableMultipartInvalidPart;
+    AnchoredVariable m_variableMultipartInvalidQuoting;
+    AnchoredVariable m_variableMultipartLFLine;
+    AnchoredVariable m_variableMultipartMissingSemicolon;
+    AnchoredVariable m_variableMultipartStrictError;
     AnchoredVariable m_variableMultipartUnmatchedBoundary;
     AnchoredVariable m_variableOutboundDataError;
     AnchoredVariable m_variablePathInfo;
@@ -233,8 +269,8 @@ class TransactionAnchoredVariables {
     AnchoredSetVariable m_variableFilesSizes;
     AnchoredSetVariable m_variableFilesNames;
     AnchoredSetVariable m_variableFilesTmpContent;
-    AnchoredSetVariable m_variableMultiPartFileName;
-    AnchoredSetVariable m_variableMultiPartName;
+    AnchoredSetVariable m_variableMultipartFileName;
+    AnchoredSetVariable m_variableMultipartName;
     AnchoredSetVariable m_variableMatchedVarsNames;
     AnchoredSetVariable m_variableMatchedVars;
     AnchoredSetVariable m_variableFiles;
@@ -243,7 +279,6 @@ class TransactionAnchoredVariables {
     AnchoredSetVariable m_variableResponseHeaders;
     AnchoredSetVariable m_variableGeo;
     AnchoredSetVariable m_variableRequestCookiesNames;
-    AnchoredSetVariable m_variableRule;
     AnchoredSetVariable m_variableFilesTmpNames;
 
     int m_variableOffset;
@@ -254,6 +289,8 @@ class TransactionAnchoredVariables {
 class Transaction : public TransactionAnchoredVariables {
  public:
     Transaction(ModSecurity *transaction, Rules *rules, void *logCbData);
+    Transaction(ModSecurity *transaction, Rules *rules, char *id,
+        void *logCbData);
     ~Transaction();
 
     /** TODO: Should be an structure that fits an IP address */
@@ -323,7 +360,7 @@ class Transaction : public TransactionAnchoredVariables {
     size_t getRequestBodyLength();
 
 #ifndef NO_LOGS
-    void debug(int, std::string);
+    void debug(int, std::string) const;
 #endif
     void serverLog(std::shared_ptr<RuleMessage> rm);
 
@@ -424,6 +461,11 @@ class Transaction : public TransactionAnchoredVariables {
      *
      */
     std::list<int > m_ruleRemoveById;
+
+    /**
+     *
+     */
+    std::list<std::string> m_ruleRemoveByTag;
 
     /**
      *
@@ -558,6 +600,10 @@ extern "C" {
 /** @ingroup ModSecurity_C_API */
 Transaction *msc_new_transaction(ModSecurity *ms,
     Rules *rules, void *logCbData);
+
+/** @ingroup ModSecurity_C_API */
+Transaction *msc_new_transaction_with_id(ModSecurity *ms,
+    Rules *rules, char *id, void *logCbData);
 
 /** @ingroup ModSecurity_C_API */
 int msc_process_connection(Transaction *transaction,

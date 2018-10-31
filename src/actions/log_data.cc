@@ -21,7 +21,6 @@
 
 #include "modsecurity/actions/action.h"
 #include "modsecurity/transaction.h"
-#include "src/macro_expansion.h"
 #include "modsecurity/rule.h"
 #include "modsecurity/rule_message.h"
 
@@ -34,12 +33,12 @@ bool LogData::evaluate(Rule *rule, Transaction *transaction,
     std::shared_ptr<RuleMessage> rm) {
     rm->m_data = data(transaction);
 
-    transaction->m_collections.storeOrUpdateFirst("RULE:logdata", rm->m_data);
     return true;
 }
 
 std::string LogData::data(Transaction *transaction) {
-    return MacroExpansion::expand(m_parser_payload, transaction);
+    std::string a(m_string->evaluate(transaction));
+    return a;
 }
 
 

@@ -21,7 +21,6 @@
 
 #include "modsecurity/actions/action.h"
 #include "modsecurity/transaction.h"
-#include "src/macro_expansion.h"
 #include "modsecurity/rule.h"
 #include "modsecurity/rule_message.h"
 
@@ -51,18 +50,15 @@ bool Msg::evaluate(Rule *rule, Transaction *transaction,
     std::shared_ptr<RuleMessage> rm) {
     std::string msg = data(transaction);
     rm->m_message = msg;
-#ifndef NO_LOGS
-    transaction->debug(9, "Saving msg: " + msg);
-#endif
-
-    transaction->m_collections.storeOrUpdateFirst("RULE:msg", msg);
+    ms_dbg_a(transaction, 9, "Saving msg: " + msg);
 
     return true;
 }
 
 
-std::string Msg::data(Transaction *transaction) {
-    return MacroExpansion::expand(m_parser_payload, transaction);
+std::string Msg::data(Transaction *t) {
+    std::string a(m_string->evaluate(t));
+    return a;
 }
 
 

@@ -21,7 +21,6 @@
 
 #include "modsecurity/actions/action.h"
 #include "modsecurity/transaction.h"
-#include "src/macro_expansion.h"
 #include "modsecurity/rule.h"
 #include "modsecurity/rule_message.h"
 
@@ -52,7 +51,7 @@ namespace actions {
 
 
 std::string Tag::getName(Transaction *transaction) {
-    std::string tag = MacroExpansion::expand(m_parser_payload, transaction);
+    std::string tag(m_string->evaluate(transaction));
     return tag;
 }
 
@@ -60,10 +59,7 @@ std::string Tag::getName(Transaction *transaction) {
 bool Tag::evaluate(Rule *rule, Transaction *transaction,
     std::shared_ptr<RuleMessage> rm) {
     std::string tag = getName(transaction);
-
-#ifndef NO_LOGS
-    transaction->debug(9, "Rule tag: " + tag);
-#endif
+    ms_dbg_a(transaction, 9, "Rule tag: " + tag);
 
     rm->m_tags.push_back(tag);
 

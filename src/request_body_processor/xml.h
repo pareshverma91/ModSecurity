@@ -13,9 +13,10 @@
  *
  */
 
-
+#ifdef WITH_LIBXML2
 #include <libxml/xmlschemas.h>
 #include <libxml/xpath.h>
+#endif
 
 #include <string>
 #include <iostream>
@@ -30,6 +31,7 @@
 namespace modsecurity {
 namespace RequestBodyProcessor {
 
+#ifdef WITH_LIBXML2
 
 struct xml_data {
     xmlSAXHandler *sax_handler;
@@ -51,17 +53,14 @@ class XML {
     static xmlParserInputBufferPtr unloadExternalEntity(const char *URI,
         xmlCharEncoding enc);
 
-#ifndef NO_LOGS
-    void debug(int a, std::string str) {
-        m_transaction->debug(a, str);
-    }
-#endif
     xml_data m_data;
 
  private:
     Transaction *m_transaction;
     std::string m_header;
 };
+
+#endif
 
 }  // namespace RequestBodyProcessor
 }  // namespace modsecurity

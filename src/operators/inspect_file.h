@@ -17,8 +17,11 @@
 #define SRC_OPERATORS_INSPECT_FILE_H_
 
 #include <string>
+#include <memory>
+#include <utility>
 
 #include "src/operators/operator.h"
+#include "src/engine/lua.h"
 
 
 namespace modsecurity {
@@ -27,12 +30,17 @@ namespace operators {
 class InspectFile : public Operator {
  public:
     /** @ingroup ModSecurity_Operator */
-    InspectFile(std::string o, std::string p, bool n)
-        : Operator(o, p, n) { }
-    explicit InspectFile(std::string param)
-        : Operator("InspectFile", param) { }
+    explicit InspectFile(std::unique_ptr<RunTimeString> param)
+        : Operator("InspectFile", std::move(param)),
+        m_file(""),
+        m_isScript(false) { }
 
+    bool init(const std::string &param, std::string *error) override;
     bool evaluate(Transaction *transaction, const std::string &str) override;
+ private:
+    std::string m_file;
+    bool m_isScript;
+    engine::Lua m_lua;
 };
 
 }  // namespace operators

@@ -82,9 +82,10 @@ class ConfigSet {
 
 class ConfigUnicodeMap {
  public:
-    ConfigUnicodeMap() : m_set(false), m_unicode_map_table(NULL) { }
+    ConfigUnicodeMap() : m_set(false), m_unicode_map_table(NULL), m_unicode_codepage(0) { }
     bool m_set;
     int *m_unicode_map_table;
+    unsigned long int m_unicode_codepage;
 };
 
 class RulesProperties {
@@ -328,21 +329,33 @@ class RulesProperties {
 
         if (from->m_uploadDirectory.m_set == true) {
             to->m_uploadDirectory.m_value = from->m_uploadDirectory.m_value;
+            to->m_uploadDirectory.m_set = true;
         }
 
         if (from->m_uploadTmpDirectory.m_set == true) {
             to->m_uploadTmpDirectory.m_value = \
                 from->m_uploadTmpDirectory.m_value;
+            to->m_uploadTmpDirectory.m_set = true;
         }
 
         if (from->m_secArgumentSeparator.m_set == true) {
             to->m_secArgumentSeparator.m_value = \
                 from->m_secArgumentSeparator.m_value;
+            to->m_secArgumentSeparator.m_set = true;
+        }
+
+        if (from->m_secWebAppId.m_set == true) {
+            to->m_secWebAppId.m_value = \
+                from->m_secWebAppId.m_value;
+            to->m_secWebAppId.m_set = true;
         }
 
         if (from->m_unicodeMapTable.m_set == true) {
             to->m_unicodeMapTable.m_unicode_map_table = \
                 from->m_unicodeMapTable.m_unicode_map_table;
+            to->m_unicodeMapTable.m_unicode_codepage = \
+                from->m_unicodeMapTable.m_unicode_codepage;
+            to->m_unicodeMapTable.m_set = true;
         }
 
         if (from->m_httpblKey.m_set == true) {
@@ -350,7 +363,7 @@ class RulesProperties {
             to->m_httpblKey.m_set = from->m_httpblKey.m_set;
         }
 
-        to->m_exceptions.merge(from->m_exceptions);
+        to->m_exceptions.merge(&from->m_exceptions);
 
         to->m_components.insert(to->m_components.end(),
             from->m_components.begin(), from->m_components.end());
@@ -361,8 +374,9 @@ class RulesProperties {
                 from->m_responseBodyTypeToBeInspected.m_value.clear();
             } else {
                 for (std::set<std::string>::iterator
-                        it = from->m_responseBodyTypeToBeInspected.m_value.begin();
-                        it != from->m_responseBodyTypeToBeInspected.m_value.end(); ++it) {
+                    it = from->m_responseBodyTypeToBeInspected.m_value.begin();
+                    it != from->m_responseBodyTypeToBeInspected.m_value.end();
+                    ++it) {
                     to->m_responseBodyTypeToBeInspected.m_value.insert(*it);
                 }
             }
@@ -379,7 +393,6 @@ class RulesProperties {
                 actions_to->push_back(action);
             }
         }
-
 
         if (to->m_auditLog) {
             std::string error;
@@ -421,27 +434,36 @@ class RulesProperties {
         std::vector<modsecurity::Rule *> *to,
         std::ostringstream *err) {
         int amount_of_rules = 0;
+        // TODO: std::vector could be replaced with something more efficient.
+        std::vector<int64_t> v;
         for (int i = 0; i < modsecurity::Phases::NUMBER_OF_PHASES; i++) {
             std::vector<modsecurity::Rule *> *rules_to = to+i;
+            v.reserve(rules_to->size());
+            for (size_t z = 0; z < rules_to->size(); z++) {
+                Rule *rule_ckc = rules_to->at(z);
+                if (rule_ckc->m_secMarker == true) {
+                    continue;
+                }
+                v.push_back(rule_ckc->m_ruleId);
+            }
+        }
+        std::sort (v.begin(), v.end());
+
+        for (int i = 0; i < modsecurity::Phases::NUMBER_OF_PHASES; i++) {
             std::vector<modsecurity::Rule *> *rules_from = from+i;
+            std::vector<modsecurity::Rule *> *rules_to = to+i;
             for (size_t j = 0; j < rules_from->size(); j++) {
                 Rule *rule = rules_from->at(j);
-                for (size_t z = 0; z < rules_to->size(); z++) {
-                    Rule *rule_ckc = rules_to->at(z);
-                    if (rule_ckc->m_ruleId == rule->m_ruleId &&
-                        rule_ckc->m_secMarker == false &&
-                        rule->m_secMarker == false) {
-                        if (err != NULL) {
-                            *err << "Rule id: " \
-                                 << std::to_string(rule->m_ruleId) \
-                                 << " is duplicated" << std::endl;
-                        }
-                        return -1;
+                if (std::binary_search(v.begin(), v.end(), rule->m_ruleId)) {
+                    if (err != NULL) {
+                        *err << "Rule id: " << std::to_string(rule->m_ruleId) \
+                            << " is duplicated" << std::endl;
                     }
+                    return -1;
                 }
                 amount_of_rules++;
-                rules_to->push_back(rule);
                 rule->refCountIncrease();
+                rules_to->push_back(rule);
             }
         }
         return amount_of_rules;
@@ -480,6 +502,7 @@ class RulesProperties {
     ConfigString m_uploadDirectory;
     ConfigString m_uploadTmpDirectory;
     ConfigString m_secArgumentSeparator;
+    ConfigString m_secWebAppId;
     std::vector<actions::Action *> m_defaultActions[8];
     std::vector<modsecurity::Rule *> m_rules[8];
     ConfigUnicodeMap m_unicodeMapTable;

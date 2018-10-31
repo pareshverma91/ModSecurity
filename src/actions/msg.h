@@ -15,9 +15,11 @@
 
 #include <string>
 #include <memory>
+#include <utility>
 
 #include "modsecurity/actions/action.h"
 #include "modsecurity/rule_message.h"
+#include "src/run_time_string.h"
 
 #ifndef SRC_ACTIONS_MSG_H_
 #define SRC_ACTIONS_MSG_H_
@@ -34,10 +36,15 @@ class Msg : public Action {
     explicit Msg(std::string action)
         : Action(action, RunTimeOnlyIfMatchKind) { }
 
+    explicit Msg(std::unique_ptr<RunTimeString> z)
+        : Action("msg", RunTimeOnlyIfMatchKind),
+            m_string(std::move(z)) { }
+
     bool evaluate(Rule *rule, Transaction *transaction,
         std::shared_ptr<RuleMessage> rm) override;
 
     std::string data(Transaction *Transaction);
+    std::unique_ptr<RunTimeString> m_string;
 };
 
 

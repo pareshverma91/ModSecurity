@@ -21,11 +21,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef WITH_LIBXML2
 #include <libxml/xmlschemas.h>
 #include <libxml/xpath.h>
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <libxml/xpathInternals.h>
+#endif
 
 #include <iostream>
 #include <string>
@@ -44,9 +46,15 @@
 namespace modsecurity {
 namespace Variables {
 
+#ifndef WITH_LIBXML2
 void XML::evaluate(Transaction *t,
     Rule *rule,
-    std::vector<const collection::Variable *> *l) {
+    std::vector<const VariableValue *> *l) { }
+#else
+
+void XML::evaluate(Transaction *t,
+    Rule *rule,
+    std::vector<const VariableValue *> *l) {
     xmlXPathContextPtr xpathCtx;
     xmlXPathObjectPtr xpathObj;
     xmlNodeSetPtr nodes;
@@ -56,13 +64,14 @@ void XML::evaluate(Transaction *t,
     size_t pos;
 
     param = m_name;
+    /*
     pos = m_name.find_first_of(":");
     if (pos == std::string::npos) {
         param = "";
     } else {
         param = std::string(m_name, pos+1, m_name.length() - (pos + 1));
     }
-
+    */
     /* Is there an XML document tree at all? */
     if (t->m_xml->m_data.doc == NULL) {
         /* Sorry, we've got nothing to give! */
@@ -73,42 +82,32 @@ void XML::evaluate(Transaction *t,
     xpathExpr = (const xmlChar*)param.c_str();
     xpathCtx = xmlXPathNewContext(t->m_xml->m_data.doc);
     if (xpathCtx == NULL) {
-#ifndef NO_LOGS
-        t->debug(1, "XML: Unable to create new XPath context. : ");
-#endif
+        ms_dbg_a(t, 1, "XML: Unable to create new XPath context. : ");
         return;
     }
 
     if (rule == NULL) {
-#ifndef NO_LOGS
-        t->debug(2, "XML: Can't look for xmlns, internal error.");
-#endif
+        ms_dbg_a(t, 2, "XML: Can't look for xmlns, internal error.");
     } else {
-        std::vector<actions::Action *> acts = rule->getActionsByName("xmlns");
+        std::vector<actions::Action *> acts = rule->getActionsByName("xmlns", t);
         for (auto &x : acts) {
             actions::XmlNS *z = (actions::XmlNS *)x;
             if (xmlXPathRegisterNs(xpathCtx, (const xmlChar*)z->m_scope.c_str(),
                     (const xmlChar*)z->m_href.c_str()) != 0) {
-#ifndef NO_LOGS
-                t->debug(1, "Failed to register XML namespace href \"" + \
+                ms_dbg_a(t, 1, "Failed to register XML namespace href \"" + \
                     z->m_href + "\" prefix \"" + z->m_scope + "\".");
-#endif
                 return;
             }
 
-#ifndef NO_LOGS
-            t->debug(4, "Registered XML namespace href \"" + z->m_href + \
+            ms_dbg_a(t, 4, "Registered XML namespace href \"" + z->m_href + \
                 "\" prefix \"" + z->m_scope + "\"");
-#endif
         }
     }
 
     /* Initialise XPath expression. */
     xpathObj = xmlXPathEvalExpression(xpathExpr, xpathCtx);
     if (xpathObj == NULL) {
-#ifndef NO_LOGS
-        t->debug(1, "XML: Unable to evaluate xpath expression.");
-#endif
+        ms_dbg_a(t, 1, "XML: Unable to evaluate xpath expression.");
         xmlXPathFreeContext(xpathCtx);
         return;
     }
@@ -126,10 +125,12 @@ void XML::evaluate(Transaction *t,
             xmlNodeGetContent(nodes->nodeTab[i]));
         if (content != NULL) {
             std::string *a = new std::string(content);
-            collection::Variable *var = new collection::Variable(&m_name,
+            VariableValue *var = new VariableValue(m_fullName,
                 a);
+            if (!m_keyExclusion.toOmit(*m_fullName)) {
+                l->push_back(var);
+            }
             delete a;
-            l->push_back(var);
             xmlFree(content);
          }
     }
@@ -137,6 +138,7 @@ void XML::evaluate(Transaction *t,
     xmlXPathFreeContext(xpathCtx);
 }
 
+#endif
 
 }  // namespace Variables
 }  // namespace modsecurity
