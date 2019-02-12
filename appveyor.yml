@@ -9,6 +9,9 @@ install:
 
 before_build:
     - ps: |
+        $path = [System.Environment]::GetEnvironmentVariable('PATH','Machine')
+        $path = ($path.Split(';') | Where-Object { $_ -ne 'ValueToRemove' }) -join ';'
+        [System.Environment]::SetEnvironmentVariable('PATH',$path,'Machine')
         # copy the required pkgs from the ModSecurity blob and install them (c++ & ModSecurity)
         Invoke-WebRequest -Uri https://modsecurity.blob.core.windows.net/windows-artifacts/vcredist_x64.exe -OutFile vcredist_x64.exe
         Start-Process vcredist_x64.exe -Wait -ArgumentList '/install /passive /norestart'
@@ -21,7 +24,6 @@ before_build:
 
 build_script:
     - cmd: ./build_release_amd64.bat
-        #blabla
 
 before_test:
     - ps: |
