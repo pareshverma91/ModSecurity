@@ -21,9 +21,12 @@
 @set SSDEEP_BIN=ssdeep-2.13.zip
 
 @set CMAKE_DIR=%WORK_DIR%\%CMAKE:~0,-4%\bin
-
+echo %CMAKE_DIR%
+echo %PATH%
 :: Aditional paths.
 @set PATH=%PATH%;%CMAKE_DIR%;"c:\program files\7-zip"
+echo after setting the path
+echo %PATH%
 
 
 :: @set VCARGS32="C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\vcvars32.bat"
