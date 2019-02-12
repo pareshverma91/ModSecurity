@@ -20,12 +20,9 @@ before_build:
         & ".\$python_proj_name\Scripts\activate.ps1"
 
 build_script:
-    #- cmd: ./build_release_amd64.bat
-    - ps: |
-        $path = [System.Environment]::GetEnvironmentVariable('PATH','Machine')
-        $path = ($path.Split(';') | Where-Object { $_ -ne 'ValueToRemove' }) -join ';'
-        [System.Environment]::SetEnvironmentVariable('PATH',$path,'Machine')
-        C:\projects\ModSecurity\iis\build_release_amd64.bat
+    - cmd: |
+        pathman /rs 'C:\Program Files (x86)\CMake\bin'
+        ./build_release_amd64.bat
 
 before_test:
     - ps: |
