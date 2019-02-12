@@ -22,6 +22,7 @@ before_build:
 
 build_script:
     - cmd: ./build_release_amd64.bat
+        #blabla
 
 before_test:
     - ps: |
