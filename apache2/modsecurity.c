@@ -240,6 +240,13 @@ int modsecurity_init(msc_engine *msce, apr_pool_t *mp) {
     return 1;
 }
 
+void modsecurity_handle_signals_for_reopen(int signum)
+{
+    if (signum == SIGUSR1) {
+        msc_waf_log_reopened = 1;
+    }
+}
+
 /**
  * Performs per-child (new process) initialisation.
  */
@@ -266,7 +273,10 @@ void modsecurity_child_init(msc_engine *msce) {
 
     set_lock_args(lock_args, WAFJSONLOG_LOCK_ID);
 
-    waf_create_lock(msce->wafjsonlog_lock, lock_args);    
+    waf_create_lock(msce->wafjsonlog_lock, lock_args); 
+
+    signal(SIGUSR1, modsecurity_handle_signals_for_reopen); 
+     
 #endif
 
     if (msce->geo_lock == NULL) {

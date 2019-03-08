@@ -171,6 +171,10 @@ extern DSOLOCAL int *unicode_map_table;
 #ifdef WAF_JSON_LOGGING_ENABLE
 extern DSOLOCAL char *msc_waf_resourceId;
 extern DSOLOCAL char *msc_waf_instanceId;
+extern DSOLOCAL sig_atomic_t msc_waf_log_reopened;
+extern DSOLOCAL apr_file_t *msc_waf_log_fd;
+extern DSOLOCAL char msc_waf_log_path[1024];
+extern DSOLOCAL cmd_parms *msc_waf_log_cmd;
 #endif
 
 #ifndef _WIN32
@@ -596,9 +600,6 @@ struct directory_config {
 
     /* Misc */
     const char          *data_dir;
-#ifdef WAF_JSON_LOGGING_ENABLE
-    apr_file_t          *wafjsonlog_fd;
-#endif
     const char          *webappid;
     const char          *sensor_id;
     const char          *httpBlkey;
