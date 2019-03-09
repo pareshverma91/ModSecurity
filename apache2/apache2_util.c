@@ -462,7 +462,7 @@ static void internal_log_ex(request_rec *r, directory_config *dcfg, modsec_rec *
         else requestheaderhostname = "";
 
 #ifdef WAF_JSON_LOGGING_ENABLE
-        if (msc_waf_log_reopened){
+        if (msc_waf_log_reopened) {
             rc = apr_file_open(&msc_waf_log_fd, msc_waf_log_path,
                    APR_WRITE | APR_APPEND | APR_CREATE | APR_BINARY,
                    CREATEMODE | APR_WREAD, msc_waf_log_cmd->pool);
@@ -470,10 +470,10 @@ static void internal_log_ex(request_rec *r, directory_config *dcfg, modsec_rec *
             if (rc != APR_SUCCESS) {
                 #if AP_SERVER_MAJORVERSION_NUMBER > 1 && AP_SERVER_MINORVERSION_NUMBER > 2
                 	ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r,
-                            "MoSecurity not able to reopen %s file", WAF_LOG_UTIL_FILE);
+                            "ModSecurity not able to reopen %s file", WAF_LOG_UTIL_FILE);
                 #else
                         ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, 0, r->server,
-                            "MoSecurity not able to reopen %s file", WAF_LOG_UTIL_FILE);
+                            "ModSecurity not able to reopen %s file", WAF_LOG_UTIL_FILE);
                 #endif
             }
             

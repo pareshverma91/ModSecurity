@@ -1557,7 +1557,7 @@ static const char *cmd_data_dir(cmd_parms *cmd, void *_dcfg, const char *p1)
     }
     
     // Global variable to share between threads
-    strcpy( msc_waf_log_path, wafjsonlog_path );
+    strncpy( msc_waf_log_path, wafjsonlog_path, 1024 );
     msc_waf_log_cmd = cmd;
 #endif
     return NULL;

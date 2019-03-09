@@ -243,9 +243,7 @@ int modsecurity_init(msc_engine *msce, apr_pool_t *mp) {
 #ifdef WAF_JSON_LOGGING_ENABLE
 void modsecurity_handle_signals_for_reopen(int signum)
 {
-    if (signum == SIGUSR1) {
-        msc_waf_log_reopened = 1;
-    }
+    msc_waf_log_reopened = 1;
 }
 #endif
 
@@ -255,6 +253,7 @@ void modsecurity_handle_signals_for_reopen(int signum)
 void modsecurity_child_init(msc_engine *msce) {
     struct waf_lock_args *lock_args;
     char *lock_name;
+    struct sigaction psa;
 
     /* Need to call this once per process before any other XML calls. */
     xmlInitParser();
@@ -277,8 +276,8 @@ void modsecurity_child_init(msc_engine *msce) {
 
     waf_create_lock(msce->wafjsonlog_lock, lock_args); 
 
-    signal(SIGUSR1, modsecurity_handle_signals_for_reopen); 
-     
+    psa.sa_handler = modsecurity_handle_signals_for_reopen;
+    sigaction(SIGUSR1, &psa, NULL);     
 #endif
 
     if (msce->geo_lock == NULL) {
