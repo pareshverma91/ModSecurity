@@ -253,7 +253,9 @@ void modsecurity_handle_signals_for_reopen(int signum)
 void modsecurity_child_init(msc_engine *msce) {
     struct waf_lock_args *lock_args;
     char *lock_name;
+#ifdef WAF_JSON_LOGGING_ENABLE
     struct sigaction psa;
+#endif
 
     /* Need to call this once per process before any other XML calls. */
     xmlInitParser();
