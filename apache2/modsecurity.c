@@ -255,6 +255,7 @@ void modsecurity_child_init(msc_engine *msce) {
     char *lock_name;
 #ifdef WAF_JSON_LOGGING_ENABLE
     struct sigaction psa;
+    sigset_t block_mask;
 #endif
 
     /* Need to call this once per process before any other XML calls. */
@@ -278,7 +279,10 @@ void modsecurity_child_init(msc_engine *msce) {
 
     waf_create_lock(msce->wafjsonlog_lock, lock_args); 
 
+    sigfillset (&block_mask);
     psa.sa_handler = modsecurity_handle_signals_for_reopen;
+    psa.sa_mask = block_mask;
+    psa.sa_flags = 0;
     sigaction(SIGUSR1, &psa, NULL);     
 #endif
 

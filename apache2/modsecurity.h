@@ -115,6 +115,10 @@ typedef struct msc_parm msc_parm;
 #define SECMARKER_ARGS                          "@noMatch"
 #define SECMARKER_BASE_ACTIONS                  "t:none,pass,marker:"
 
+#ifdef WAF_JSON_LOGGING_ENABLE
+#define WAF_LOG_PATH_LENGTH                     1024
+#endif
+
 #if !defined(OS2) && !defined(WIN32) && !defined(BEOS) && !defined(NETWARE)
 #include "unixd.h"
 #define __SET_MUTEX_PERMS
@@ -173,7 +177,7 @@ extern DSOLOCAL char *msc_waf_resourceId;
 extern DSOLOCAL char *msc_waf_instanceId;
 extern DSOLOCAL sig_atomic_t msc_waf_log_reopened;
 extern DSOLOCAL apr_file_t *msc_waf_log_fd;
-extern DSOLOCAL char msc_waf_log_path[1024];
+extern DSOLOCAL char msc_waf_log_path[WAF_LOG_PATH_LENGTH];
 extern DSOLOCAL cmd_parms *msc_waf_log_cmd;
 #endif
 

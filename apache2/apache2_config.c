@@ -1534,7 +1534,7 @@ static const char *cmd_data_dir(cmd_parms *cmd, void *_dcfg, const char *p1)
 {
 #ifdef WAF_JSON_LOGGING_ENABLE
     int rc;
-    char wafjsonlog_path[1024]; 
+    char wafjsonlog_path[WAF_LOG_PATH_LENGTH]; 
 #endif
     directory_config *dcfg = (directory_config *)_dcfg;
 
@@ -1557,7 +1557,7 @@ static const char *cmd_data_dir(cmd_parms *cmd, void *_dcfg, const char *p1)
     }
     
     // Global variable to share between threads
-    strncpy( msc_waf_log_path, wafjsonlog_path, 1024 );
+    strncpy( msc_waf_log_path, wafjsonlog_path, WAF_LOG_PATH_LENGTH );
     msc_waf_log_cmd = cmd;
 #endif
     return NULL;

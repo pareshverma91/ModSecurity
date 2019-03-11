@@ -97,7 +97,7 @@ char DSOLOCAL *msc_waf_resourceId = NULL;
 char DSOLOCAL *msc_waf_instanceId = NULL;
 sig_atomic_t DSOLOCAL msc_waf_log_reopened = 0;
 apr_file_t DSOLOCAL *msc_waf_log_fd = NULL;
-char DSOLOCAL msc_waf_log_path[1024] = ""; 
+char DSOLOCAL msc_waf_log_path[WAF_LOG_PATH_LENGTH] = ""; 
 cmd_parms DSOLOCAL *msc_waf_log_cmd = NULL;
 #endif
 
