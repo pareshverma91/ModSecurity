@@ -14,85 +14,41 @@
 
 #pragma once
 
-#define MODSECURITY_SECTION                        L"system.webServer/ModSecurity"
-#define MODSECURITY_SECTION_ENABLED                L"enabled"
-#define MODSECURITY_SECTION_CONFIGFILE               L"configFile"
-
 extern IHttpServer *                       g_pHttpServer;
 
 extern PVOID                               g_pModuleContext;
 
 struct directory_config; // forward declaration
 
-class MODSECURITY_STORED_CONTEXT : public IHttpStoredContext
+class ModSecurityStoredContext
+    : public IHttpStoredContext
 {
- public:
-    MODSECURITY_STORED_CONTEXT();
-    ~MODSECURITY_STORED_CONTEXT();
-    
-    static
-    HRESULT
-    GetConfig(
-        IHttpContext *   pContext,
-        MODSECURITY_STORED_CONTEXT ** ppModuleConfig
-    );
+private:
+    bool enabled = false;
+    std::wstring configPath;
 
-    // virtual
-    VOID
-    CleanupStoredContext(
-        VOID
-    )
-    {
+    // Needed to enable std::make_unique inside the factory static method.
+    // See https://seanmiddleditch.com/enabling-make_unique-with-private-constructors/ for details.
+    struct ConstructorTag { 
+        explicit ConstructorTag() = default; 
+    };
+
+public:
+    static ModSecurityStoredContext* GetConfiguration(IHttpContext* httpContext);
+
+    explicit ModSecurityStoredContext(IHttpContext* httpContext, ConstructorTag);
+
+    void CleanupStoredContext() override {
         delete this;
     }
 
-    BOOL   GetIsEnabled()
-    {
-        return m_bIsEnabled;
+    bool IsEnabled() const {
+        return enabled;
     }
 
-    WCHAR* GetPath()
-    {
-        return m_pszPath;
+    const std::wstring& GetConfigPath() const {
+        return configPath;
     }
-
-    HRESULT
-    Initialize(
-        IHttpContext *              pW3Context,
-        IAppHostConfigException **  ppException
-    );
 
     directory_config* config = nullptr;
-
-private:
-    HRESULT 
-    GetBooleanPropertyValue( 
-            IAppHostElement*            pElement,
-            WCHAR*                      pszPropertyName,
-            IAppHostPropertyException** pException,
-            BOOL*                       pBoolValue );
-
-    HRESULT 
-    GetDWORDPropertyValue( 
-            IAppHostElement*            pElement,
-            WCHAR*                      pszPropertyName,
-            IAppHostPropertyException** pException,
-            DWORD*                      pnValue );
-
-    HRESULT 
-    GetTimeSpanPropertyValue( 
-            IAppHostElement*            pElement,
-            WCHAR*                      pszPropertyName,
-            IAppHostPropertyException** pException,
-            ULONGLONG*                 pnValue );
-
-    HRESULT 
-    GetStringPropertyValue( 
-            IAppHostElement*            pElement,
-            WCHAR*                      pszPropertyName,
-            IAppHostPropertyException** pException,
-            WCHAR**                     ppszValue );
-
-    BOOL              m_bIsEnabled;
-    WCHAR*            m_pszPath;
 };

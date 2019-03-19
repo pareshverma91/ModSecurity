@@ -16,534 +16,171 @@
 
 #undef inline
 
+#include <memory>
+
 //  IIS7 Server API header file
 #include "httpserv.h"
 
 //  Project header files
+#include "string_conversion_utils.h"
 #include "mymodule.h"
 #include "mymodulefactory.h"
 #include "moduleconfig.h"
 
-HRESULT
-MODSECURITY_STORED_CONTEXT::Initialize(
-    IHttpContext *              pW3Context,
-    IAppHostConfigException **  ppException
-)
+static auto ReleaseAppHostProperty = [](IAppHostProperty* prop) {
+    prop->Release();
+};
+using AppHostPropertyPtr = std::unique_ptr<IAppHostProperty, decltype(ReleaseAppHostProperty)>;
+
+struct SafeVariant
 {
-    HRESULT                    hr                       = S_OK;
-    IAppHostAdminManager       *pAdminManager           = NULL;
-    IAppHostElement            *pSessionTrackingElement = NULL;
-    IAppHostPropertyException  *pPropertyException      = NULL;
-
-    PCWSTR pszConfigPath = pW3Context->GetMetadata()->GetMetaPath();
-    BSTR bstrUrlPath     = SysAllocString( pszConfigPath );
-
-    pAdminManager = g_pHttpServer->GetAdminManager();
-
-    if ( ( FAILED( hr ) ) || ( pAdminManager == NULL ) )
-    {
-        hr = E_UNEXPECTED;
-        goto Failure;   
+    SafeVariant() {
+        VariantInit(&var);
     }
 
-    // Get a handle to the section:
-    hr = pAdminManager->GetAdminSection(
-                                MODSECURITY_SECTION,
-                                bstrUrlPath,
-                                &pSessionTrackingElement );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
+    ~SafeVariant() {
+        VariantClear(&var);
     }
 
-    if ( pSessionTrackingElement == NULL )
-    {
-        hr = E_UNEXPECTED;
-        goto Failure;
+    VARIANT var;
+};
+
+static bool GetBooleanProperty(IAppHostElement* element, wchar_t* propertyName)
+{
+    auto prop = [&] {
+        IAppHostProperty* rawProperty = nullptr;
+        HRESULT hr = element->GetPropertyByName(propertyName, &rawProperty);
+        if (FAILED(hr)) {
+            throw std::runtime_error("Couldn't get ModSecurity configuration property "
+                + ConvertWideCharToString(propertyName)
+                + ", error code " + std::to_string(hr));
+        }
+        if (!rawProperty) {
+            throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
+                + ConvertWideCharToString(propertyName));
+        }
+        return AppHostPropertyPtr{ rawProperty, ReleaseAppHostProperty };
+    } ();
+
+    SafeVariant var;
+    HRESULT hr = prop->get_Value(&var.var);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Couldn't extract value from property bag, error code " + std::to_string(hr));
     }
 
-    // Get the property object for the 'enabled' attribute:
-    hr = GetBooleanPropertyValue( 
-                pSessionTrackingElement,
-                MODSECURITY_SECTION_ENABLED,
-                &pPropertyException,
-                &m_bIsEnabled);
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
+    IAppHostPropertyException* propertyException = nullptr;
+    hr = prop->get_Exception(&propertyException);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Got an exception while reading ModSecurity configuration property "
+            + ConvertWideCharToString(propertyName)
+            + ", error code " + std::to_string(hr));
+    }
+    if (propertyException) {
+        throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
+            + ConvertWideCharToString(propertyName));
     }
 
-    // If there is a config failure, we cannot continue execution:
-    if ( pPropertyException != NULL )
-    {
-
-        ppException = ( IAppHostConfigException** ) &pPropertyException;
-        goto Failure;
-    }
-
-    if ( m_bIsEnabled == FALSE )
-    {
-        // There is no point in reading any more of the config associated with the session
-        // tracking section, since this feature is not enabled for the current URL 
-        goto Failure;
-    }
-
-    // Get the property object for the 'configfile' attribute:
-    hr = GetStringPropertyValue( 
-                pSessionTrackingElement,
-                MODSECURITY_SECTION_CONFIGFILE,
-                &pPropertyException,
-                &m_pszPath);
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // If there is a config failure, we cannot continue execution:
-    if ( pPropertyException != NULL )
-    {
-
-        ppException = ( IAppHostConfigException** ) &pPropertyException;
-        goto Failure;
-    }
-
-Failure:
-    SysFreeString( bstrUrlPath );
-    return hr;
+    return (var.var.boolVal == VARIANT_TRUE);
 }
 
-HRESULT 
-MODSECURITY_STORED_CONTEXT::GetBooleanPropertyValue( 
-        IAppHostElement*            pElement,
-        WCHAR*                      pszPropertyName,
-        IAppHostPropertyException** pException,
-        BOOL*                       pBoolValue )
+static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* propertyName)
 {
-    HRESULT                 hr              = S_OK;
-    IAppHostProperty        *pProperty      = NULL;    
-    VARIANT                 vPropertyValue;
+    auto prop = [&] {
+        IAppHostProperty* rawProperty = nullptr;
+        HRESULT hr = element->GetPropertyByName(propertyName, &rawProperty);
+        if (FAILED(hr)) {
+            throw std::runtime_error("Couldn't get ModSecurity configuration property "
+                + ConvertWideCharToString(propertyName)
+                + ", error code " + std::to_string(hr));
+        }
+        if (!rawProperty) {
+            throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
+                + ConvertWideCharToString(propertyName));
+        }
+        return AppHostPropertyPtr{ rawProperty, ReleaseAppHostProperty };
+    } ();
 
-    if ( 
-           ( pElement        == NULL ) || 
-           ( pszPropertyName == NULL ) ||
-           ( pException      == NULL ) ||
-           ( pBoolValue      == NULL )
-       )
-    {
-        hr = E_INVALIDARG;
-        goto Failure;
+    SafeVariant var;
+    HRESULT hr = prop->get_Value(&var.var);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Couldn't extract value from property bag, error code " + std::to_string(hr));
     }
 
-    // Get the property object for the BOOLEAN attribute:
-    hr = pElement->GetPropertyByName( 
-                        pszPropertyName,
-                        &pProperty );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
+    IAppHostPropertyException* propertyException = nullptr;
+    hr = prop->get_Exception(&propertyException);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Got an exception while reading ModSecurity configuration property "
+            + ConvertWideCharToString(propertyName)
+            + ", error code " + std::to_string(hr));
+    }
+    if (propertyException) {
+        throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
+            + ConvertWideCharToString(propertyName));
     }
 
-    if ( pProperty == NULL )
-    {
-        hr = E_UNEXPECTED;
-        goto Failure;
-    }
+    const auto length = SysStringLen(var.var.bstrVal);
+    std::wstring result(var.var.bstrVal, length);
 
-    // Get the attribute value:
-    VariantInit( &vPropertyValue );
-
-    hr = pProperty->get_Value( &vPropertyValue );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // See it there is an exception that might be due to the actual value in the 
-    // config not meeting validation criteria
-    *pException = NULL;
-
-    hr = pProperty->get_Exception( pException );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // No need to continue if we got an exception...
-    if ( ( *pException ) != NULL )
-    {
-        goto Failure;
-    }
-
-    // Finally, get the value:
-    *pBoolValue = ( vPropertyValue.boolVal == VARIANT_TRUE ) ? TRUE : FALSE;
-    
-
-Failure:
-    VariantClear( &vPropertyValue );
-
-    if ( pProperty != NULL )
-    {
-        pProperty->Release();
-        pProperty = NULL;
-    }
-
-    return hr;
+    return result;
 }
 
-HRESULT 
-MODSECURITY_STORED_CONTEXT::GetDWORDPropertyValue( 
-        IAppHostElement*            pElement,
-        WCHAR*                      pszPropertyName,
-        IAppHostPropertyException** pException,
-        DWORD*                      pnValue )
+ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, ModSecurityStoredContext::ConstructorTag)
 {
-    HRESULT                 hr              = S_OK;
-    IAppHostProperty        *pProperty      = NULL;    
-    VARIANT                 vPropertyValue;
+    std::wstring configSection {httpContext->GetMetadata()->GetMetaPath()};
 
-    if ( 
-           ( pElement        == NULL ) || 
-           ( pszPropertyName == NULL ) ||
-           ( pException      == NULL ) ||
-           ( pnValue         == NULL )
-       )
-    {
-        hr = E_INVALIDARG;
-        goto Failure;
+    auto* adminManager = g_pHttpServer->GetAdminManager();
+    if (!adminManager) {
+        throw std::runtime_error("Unexpected error while getting admin manager.");
     }
 
-    // Get the property object for the INT attribute:
-    hr = pElement->GetPropertyByName( 
-                        pszPropertyName,
-                        &pProperty );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
+    IAppHostElement* sessionTrackingElement = nullptr;
+    HRESULT hr = adminManager->GetAdminSection(L"system.webServer/ModSecurity", &configSection[0], &sessionTrackingElement);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Couldn't get ModSecurity configuration file section, error code " + std::to_string(hr));
+    }
+    if (!sessionTrackingElement) {
+        throw std::runtime_error("Unexpected error while getting ModSecurity configuration file section.");
     }
 
-    if ( pProperty == NULL )
-    {
-        hr = E_UNEXPECTED;
-        goto Failure;
+    enabled = GetBooleanProperty(sessionTrackingElement, L"enabled");
+    if (!enabled) {
+        // No point in reading the rest of the config
+        return;
     }
 
-    // Get the attribute value:
-    VariantInit( &vPropertyValue );
-
-    hr = pProperty->get_Value( &vPropertyValue );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // See it there is an exception that might be due to the actual value in the 
-    // config not meeting validation criteria
-    *pException = NULL;
-
-    hr = pProperty->get_Exception( pException );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // No need to continue if we got an exception...
-    if ( ( *pException ) != NULL )
-    {
-        goto Failure;
-    }
-
-    // Finally, get the value:
-    *pnValue =  vPropertyValue.ulVal;  
-
-Failure:
-    VariantClear( &vPropertyValue );
-
-    if ( pProperty != NULL )
-    {
-        pProperty->Release();
-        pProperty = NULL;
-    }
-
-    return hr;
+    configPath = GetStringProperty(sessionTrackingElement, L"configFile");
 }
 
-HRESULT 
-MODSECURITY_STORED_CONTEXT::GetTimeSpanPropertyValue( 
-        IAppHostElement*            pElement,
-        WCHAR*                      pszPropertyName,
-        IAppHostPropertyException** pException,
-        ULONGLONG*                 pnValue )
+ModSecurityStoredContext* ModSecurityStoredContext::GetConfiguration(IHttpContext* httpContext)
 {
-    HRESULT                 hr              = S_OK;
-    IAppHostProperty        *pProperty      = NULL;    
-    VARIANT                 vPropertyValue;
-
-    if ( 
-           ( pElement        == NULL ) || 
-           ( pszPropertyName == NULL ) ||
-           ( pException      == NULL ) ||
-           ( pnValue         == NULL )
-       )
-    {
-        hr = E_INVALIDARG;
-        goto Failure;
+    IHttpModuleContextContainer* metadataContainer = httpContext->GetMetadata()->GetModuleContextContainer();
+    if (!metadataContainer) {
+        throw std::runtime_error("Couldn't get metadata container.");
     }
 
-    // Get the property object for the INT attribute:
-    hr = pElement->GetPropertyByName( 
-                        pszPropertyName,
-                        &pProperty );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    if ( pProperty == NULL )
-    {
-        hr = E_UNEXPECTED;
-        goto Failure;
-    }
-
-    // Get the attribute value:
-    VariantInit( &vPropertyValue );
-
-    hr = pProperty->get_Value( &vPropertyValue );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // See it there is an exception that might be due to the actual value in the 
-    // config not meeting validation criteria
-    *pException = NULL;
-
-    hr = pProperty->get_Exception( pException );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // No need to continue if we got an exception...
-    if ( ( *pException ) != NULL )
-    {
-        goto Failure;
-    }
-
-    // Finally, get the value:
-    *pnValue =  vPropertyValue.ullVal;  
-
-Failure:
-    VariantClear( &vPropertyValue );
-
-    if ( pProperty != NULL )
-    {
-        pProperty->Release();
-        pProperty = NULL;
-    }
-
-    return hr;
-}
-
-HRESULT 
-MODSECURITY_STORED_CONTEXT::GetStringPropertyValue( 
-        IAppHostElement*            pElement,
-        WCHAR*                      pszPropertyName,
-        IAppHostPropertyException** pException,
-        WCHAR**                     ppszValue )
-{
-    HRESULT                 hr              = S_OK;
-    IAppHostProperty        *pProperty      = NULL;    
-    DWORD                   dwLength;
-    VARIANT                 vPropertyValue;
-
-    if ( 
-           ( pElement        == NULL ) || 
-           ( pszPropertyName == NULL ) ||
-           ( pException      == NULL ) ||
-           ( ppszValue       == NULL )
-       )
-    {
-        hr = E_INVALIDARG;
-        goto Failure;
-    }
-
-    *ppszValue = NULL;
-
-    // Get the property object for the string attribute:
-    hr = pElement->GetPropertyByName( 
-                        pszPropertyName,
-                        &pProperty );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    if ( pProperty == NULL )
-    {
-        hr = E_UNEXPECTED;
-        goto Failure;
-    }
-
-    // Get the attribute value:
-    VariantInit( &vPropertyValue );
-
-    hr = pProperty->get_Value( &vPropertyValue );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // See it there is an exception that might be due to the actual value in the 
-    // config not meeting validation criteria
-    *pException = NULL;
-
-    hr = pProperty->get_Exception( pException );
-
-    if ( FAILED( hr ) )
-    {
-        goto Failure;
-    }
-
-    // No need to continue if we got an exception...
-    if ( ( *pException ) != NULL )
-    {
-        goto Failure;
-    }
-
-    // Finally, get the value:
-    dwLength = SysStringLen( vPropertyValue.bstrVal );
-    *ppszValue = new WCHAR[ dwLength + 1 ];
-
-    if ( (*ppszValue) == NULL )
-    {
-        hr = E_OUTOFMEMORY;
-        goto Failure;
-    }
-
-    wcsncpy(
-        *ppszValue,
-        vPropertyValue.bstrVal,
-        dwLength );
-
-    (*ppszValue)[ dwLength ] = L'\0';
-    
-Failure:
-    VariantClear( &vPropertyValue );
-
-    if ( pProperty != NULL )
-    {
-        pProperty->Release();
-        pProperty = NULL;
-    }
-
-    return hr;
-}
-
-MODSECURITY_STORED_CONTEXT::~MODSECURITY_STORED_CONTEXT()
-{
-    if ( m_pszPath != NULL )
-    {
-        delete [] m_pszPath;
-        m_pszPath = NULL;
-    }
-}
-
-MODSECURITY_STORED_CONTEXT::MODSECURITY_STORED_CONTEXT():
-    m_bIsEnabled ( FALSE ),
-    m_pszPath( NULL )
-{
-}
-
-HRESULT
-MODSECURITY_STORED_CONTEXT::GetConfig(
-    IHttpContext *   pContext,
-    MODSECURITY_STORED_CONTEXT ** ppModuleConfig
-)
-{
-    HRESULT                          hr                 = S_OK;
-    MODSECURITY_STORED_CONTEXT * pModuleConfig      = NULL;
-    IHttpModuleContextContainer *    pMetadataContainer = NULL;
-    IAppHostConfigException *        pException         = NULL;
-
-    pMetadataContainer = pContext->GetMetadata()->GetModuleContextContainer();
-
-    if ( pMetadataContainer == NULL )
-    {
-        hr = E_UNEXPECTED;
-        return hr;
-    }
-
-    pModuleConfig = (MODSECURITY_STORED_CONTEXT *)pMetadataContainer->GetModuleContext( g_pModuleContext );    
-    if ( pModuleConfig != NULL )
-    {
-        //
+    ModSecurityStoredContext* context = (ModSecurityStoredContext*)metadataContainer->GetModuleContext(g_pModuleContext);
+    if (context) {
         // We found stored data for this module for the metadata
         // object which is different for unique configuration path
-        //
-        *ppModuleConfig = pModuleConfig;
-        return S_OK;
+        return context;
     }
 
-    //
     // If we reach here, that means this is first request or first
     // request after a configuration change IIS core will throw stored context away
     // if a change notification arrives for this metadata path
-    //
-    pModuleConfig = new MODSECURITY_STORED_CONTEXT();
-    if ( pModuleConfig == NULL )
-    {
-        return E_OUTOFMEMORY;
-    }
+    auto newContext = std::make_unique<ModSecurityStoredContext>(httpContext, ConstructorTag{});
 
-    //
-    // Read module configuration data and store in MODSECURITY_STORED_CONTEXT
-    //
-    hr = pModuleConfig->Initialize( pContext, &pException );
-    if ( FAILED( hr )  || pException != NULL )
-    {
-        pModuleConfig->CleanupStoredContext();
-
-        pModuleConfig = NULL;
-        hr = E_UNEXPECTED;
-
-        return hr;
-    }
-
-    //
-    // Store MODSECURITY_STORED_CONTEXT data as metadata stored context
-    //
-    hr = pMetadataContainer->SetModuleContext( pModuleConfig,
-                                               g_pModuleContext );
-    if ( FAILED( hr ) )
-    {
-        pModuleConfig->CleanupStoredContext();
-        pModuleConfig = NULL;
-
-        //
+    // Store ModSecurityStoredContext data as metadata stored context
+    HRESULT hr = metadataContainer->SetModuleContext(newContext.get(), g_pModuleContext);
+    if (FAILED(hr)) {
         // It is possible that some other thread stored context before this thread
-        // could do. Check returned hr and return context stored by other thread
-        //
-        if ( hr == HRESULT_FROM_WIN32( ERROR_ALREADY_ASSIGNED ) )
-        {
-            *ppModuleConfig = (MODSECURITY_STORED_CONTEXT *)pMetadataContainer->GetModuleContext( g_pModuleContext );
-            return S_OK;
+        // could do. Check returned value and return context stored by other thread
+        if (hr == HRESULT_FROM_WIN32(ERROR_ALREADY_ASSIGNED)) {
+            return (ModSecurityStoredContext*)metadataContainer->GetModuleContext(g_pModuleContext);
         }
+
+        throw std::runtime_error("Couldn't store module configuration, error code: " + std::to_string(hr));
     }
 
-    *ppModuleConfig = pModuleConfig;
-    return hr;
+    return newContext.release();
 }

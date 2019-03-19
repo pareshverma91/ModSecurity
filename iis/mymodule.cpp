@@ -390,23 +390,14 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
     }
 
     CriticalSectionLock lock{cs};
-    MODSECURITY_STORED_CONTEXT* config = nullptr;
-    HRESULT hr = MODSECURITY_STORED_CONTEXT::GetConfig(httpContext, &config);
-    if (FAILED(hr))
-    {
-        return RQ_NOTIFICATION_CONTINUE;
-    }
-
-    // If module is disabled, don't go any further
-    //
-    if (!config->GetIsEnabled())
-    {
+    ModSecurityStoredContext* config = ModSecurityStoredContext::GetConfiguration(httpContext);
+    if (!config->IsEnabled()) {
         return RQ_NOTIFICATION_CONTINUE;
     }
 
     if (config->config == nullptr)
     {
-        const auto path = ConvertWideCharToString(config->GetPath());
+        const auto path = ConvertWideCharToString(config->GetConfigPath().c_str());
         config->config = modsecGetDefaultConfig();
 
         const auto apppath = ConvertWideCharToString(httpContext->GetApplication()->GetApplicationPhysicalPath());
@@ -672,7 +663,7 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
 #endif
     c->remote_host = NULL;
 
-    hr = SaveRequestBodyToRequestRec(context);
+    HRESULT hr = SaveRequestBodyToRequestRec(context);
     if (FAILED(hr)) {
         context->provider->SetErrorStatus(hr);
         return RQ_NOTIFICATION_FINISH_REQUEST;
