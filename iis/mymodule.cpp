@@ -28,6 +28,7 @@
 #include "httpserv.h"
 
 //  Project header files
+#include "string_conversion_utils.h"
 #include "mymodule.h"
 #include "mymodulefactory.h"
 
@@ -405,37 +406,17 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
 
     if (config->config == nullptr)
     {
-        char *path;
-        USHORT pathlen;
-
-        hr = config->GlobalWideCharToMultiByte(config->GetPath(), wcslen(config->GetPath()), &path, &pathlen);
-        if (FAILED(hr))
-        {
-            return RQ_NOTIFICATION_FINISH_REQUEST;
-        }
-
+        const auto path = ConvertWideCharToString(config->GetPath());
         config->config = modsecGetDefaultConfig();
 
-        PCWSTR servpath = httpContext->GetApplication()->GetApplicationPhysicalPath();
-        char *apppath;
-        USHORT apppathlen;
+        const auto apppath = ConvertWideCharToString(httpContext->GetApplication()->GetApplicationPhysicalPath());
 
-        hr = config->GlobalWideCharToMultiByte((WCHAR *)servpath, wcslen(servpath), &apppath, &apppathlen);
-        if (FAILED(hr))
+        if (!path.empty())
         {
-            delete path;
-            return RQ_NOTIFICATION_FINISH_REQUEST;
-        }
-
-        if (path[0] != 0)
-        {
-            const char * err = modsecProcessConfig(config->config, path, apppath);
-
-            if (err != NULL)
+            const char* err = modsecProcessConfig(config->config, path.c_str(), apppath.c_str());
+            if (err != nullptr)
             {
                 WriteEventViewerLog(err, EVENTLOG_ERROR_TYPE);
-                delete apppath;
-                delete path;
                 return RQ_NOTIFICATION_CONTINUE;
             }
 
@@ -446,9 +427,6 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
                 modsecStatusEngineCall();
             }
         }
-
-        delete apppath;
-        delete path;
     }
 
     ConnRecPtr connRec = MakeConnReq();

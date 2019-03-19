@@ -62,13 +62,6 @@ class MODSECURITY_STORED_CONTEXT : public IHttpStoredContext
         IAppHostConfigException **  ppException
     );
 
-    DWORD 
-    GlobalWideCharToMultiByte(
-            WCHAR*  pSource,
-            DWORD   dwLengthSource,
-            CHAR**  ppszDestination,
-            USHORT*  pdwLengthDestination );
-
     directory_config* config = nullptr;
 
 private:
