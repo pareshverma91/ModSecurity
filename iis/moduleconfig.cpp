@@ -126,16 +126,14 @@ ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, Mo
     }
 
     const std::string configPath = ConvertWideCharToString(GetStringProperty(configElement.get(), L"configFile").c_str());
+    const std::string appPath = ConvertWideCharToString(httpContext->GetApplication()->GetApplicationPhysicalPath());
 
     // Synchronize the process of ModSec internal configuration creation as it may otherwise incur contention and races
     CriticalSectionLock lock{cs};
     config = modsecGetDefaultConfig();
-    if (!configPath.empty())
-    {
-        const std::string appPath = ConvertWideCharToString(httpContext->GetApplication()->GetApplicationPhysicalPath());
+    if (!configPath.empty()) {
         const char* err = modsecProcessConfig(config, configPath.c_str(), appPath.c_str());
-        if (err)
-        {
+        if (err) {
             throw std::runtime_error(err);
         }
 
