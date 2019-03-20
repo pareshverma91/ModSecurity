@@ -118,6 +118,7 @@ static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* name)
 CriticalSection ModSecurityStoredContext::cs;
 ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, ModSecurityStoredContext::ConstructorTag)
 {
+    CriticalSectionLock lock{cs};
     auto configElement = GetConfigElement(g_pHttpServer->GetAdminManager(), httpContext);
     enabled = GetBooleanProperty(configElement.get(), L"enabled");
     if (!enabled) {
@@ -142,7 +143,6 @@ ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, Mo
 
 ModSecurityStoredContext* ModSecurityStoredContext::GetConfiguration(IHttpContext* httpContext)
 {
-    CriticalSectionLock lock{cs};
     IHttpModuleContextContainer* metadataContainer = httpContext->GetMetadata()->GetModuleContextContainer();
     if (!metadataContainer) {
         throw std::runtime_error("Couldn't get metadata container.");
