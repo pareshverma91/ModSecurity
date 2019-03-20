@@ -383,6 +383,7 @@ static HRESULT SaveRequestBodyToRequestRec(RequestStoredContext* rsc)
 
 REQUEST_NOTIFICATION_STATUS
 CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* provider)
+try
 {
     if (httpContext == nullptr || httpContext->GetRequest() == nullptr)
     {
@@ -698,6 +699,11 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
     }
 
     return RQ_NOTIFICATION_CONTINUE;
+}
+catch (const std::exception& exc)
+{
+    WriteEventViewerLog(exc.what(), EVENTLOG_ERROR_TYPE);
+    return RQ_NOTIFICATION_FINISH_REQUEST;
 }
 
 CMyHttpModule::CMyHttpModule()
