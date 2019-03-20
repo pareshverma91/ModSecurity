@@ -25,7 +25,7 @@ class ModSecurityStoredContext
 {
 private:
     bool enabled = false;
-    std::wstring configPath;
+    directory_config* config = nullptr;
 
     // Needed to enable std::make_unique inside the factory static method.
     // See https://seanmiddleditch.com/enabling-make_unique-with-private-constructors/ for details.
@@ -46,9 +46,7 @@ public:
         return enabled;
     }
 
-    const std::wstring& GetConfigPath() const {
-        return configPath;
-    }
-
-    directory_config* config = nullptr;
+    directory_config* GetDirectoryConfig() const {
+        return config;
+    }  
 };

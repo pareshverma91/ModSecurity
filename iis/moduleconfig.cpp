@@ -26,6 +26,7 @@
 #include "httpserv.h"
 
 //  Project header files
+#include "api.h"
 #include "string_conversion_utils.h"
 #include "mymodule.h"
 #include "mymodulefactory.h"
@@ -123,7 +124,19 @@ ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, Mo
         return;
     }
 
-    configPath = GetStringProperty(configElement.get(), L"configFile");
+    config = modsecGetDefaultConfig();
+    const std::string configPath = ConvertWideCharToString(GetStringProperty(configElement.get(), L"configFile").c_str());
+    if (!configPath.empty())
+    {
+        const std::string appPath = ConvertWideCharToString(httpContext->GetApplication()->GetApplicationPhysicalPath());
+        const char* err = modsecProcessConfig(config, configPath.c_str(), appPath.c_str());
+        if (err)
+        {
+            throw std::runtime_error(err);
+        }
+
+        modsecReportRemoteLoadedRules();
+    }
 }
 
 ModSecurityStoredContext* ModSecurityStoredContext::GetConfiguration(IHttpContext* httpContext)

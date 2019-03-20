@@ -391,39 +391,16 @@ try
     }
 
     CriticalSectionLock lock{cs};
-    ModSecurityStoredContext* config = ModSecurityStoredContext::GetConfiguration(httpContext);
-    if (!config->IsEnabled()) {
+    ModSecurityStoredContext* modsecCtx = ModSecurityStoredContext::GetConfiguration(httpContext);
+    if (!modsecCtx->IsEnabled()) {
         return RQ_NOTIFICATION_CONTINUE;
     }
 
-    if (config->config == nullptr)
-    {
-        const auto path = ConvertWideCharToString(config->GetConfigPath().c_str());
-        config->config = modsecGetDefaultConfig();
-
-        const auto apppath = ConvertWideCharToString(httpContext->GetApplication()->GetApplicationPhysicalPath());
-
-        if (!path.empty())
-        {
-            const char* err = modsecProcessConfig(config->config, path.c_str(), apppath.c_str());
-            if (err != nullptr)
-            {
-                WriteEventViewerLog(err, EVENTLOG_ERROR_TYPE);
-                return RQ_NOTIFICATION_CONTINUE;
-            }
-
-            modsecReportRemoteLoadedRules();
-            if (!statusCallAlreadySent)
-            {
-                statusCallAlreadySent = true;
-                modsecStatusEngineCall();
-            }
-        }
-    }
+    directory_config* config = modsecCtx->GetDirectoryConfig();
 
     ConnRecPtr connRec = MakeConnReq();
     conn_rec* c = connRec.get();
-    RequestRecPtr requestRec = MakeRequestRec(c, config->config);
+    RequestRecPtr requestRec = MakeRequestRec(c, config);
     request_rec* r = requestRec.get();
 
     auto rsc = std::make_unique<RequestStoredContext>();
@@ -431,7 +408,7 @@ try
     rsc->requestRec = requestRec;
     rsc->httpContext = httpContext;
     rsc->provider = provider;
-    rsc->responseProcessingEnabled = (config->config->resbody_access == 1);
+    rsc->responseProcessingEnabled = (config->resbody_access == 1);
     RequestStoredContext* context = rsc.get();
 
     StoreIISContext(r, rsc.get());
@@ -670,7 +647,7 @@ try
         return RQ_NOTIFICATION_FINISH_REQUEST;
     }
 
-    if (config->config->is_enabled == MODSEC_DETECTION_ONLY)
+    if (config->is_enabled == MODSEC_DETECTION_ONLY)
     {
         // We post the processing task to the thread pool to happen in the background.
         // We store the future to track and wait for this processing in case if we also
