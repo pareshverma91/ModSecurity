@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include "critical_section.h"
+
 extern IHttpServer *                       g_pHttpServer;
 
 extern PVOID                               g_pModuleContext;
@@ -24,6 +26,7 @@ class ModSecurityStoredContext
     : public IHttpStoredContext
 {
 private:
+    static CriticalSection cs;
     bool enabled = false;
     directory_config* config = nullptr;
 

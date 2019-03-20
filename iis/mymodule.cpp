@@ -390,7 +390,6 @@ try
         return RQ_NOTIFICATION_FINISH_REQUEST;
     }
 
-    CriticalSectionLock lock{cs};
     ModSecurityStoredContext* modsecCtx = ModSecurityStoredContext::GetConfiguration(httpContext);
     if (!modsecCtx->IsEnabled()) {
         return RQ_NOTIFICATION_CONTINUE;
@@ -662,10 +661,7 @@ try
     }
     else
     {
-        lock.unlock();
         int status = modsecProcessRequest(r);
-        lock.lock();
-
         if (status != DECLINED)
         {
             httpContext->GetResponse()->SetStatus(status, "ModSecurity Action");

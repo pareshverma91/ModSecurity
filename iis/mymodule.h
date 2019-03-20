@@ -17,7 +17,6 @@
 #define ASIO_STANDALONE
 #include "asio/thread_pool.hpp"
 
-#include "critical_section.h"
 #include "event_logger.h"
 
 //  The module implementation.
@@ -38,7 +37,6 @@ public:
     BOOL WriteEventViewerLog(LPCSTR szNotification, WORD category = EVENTLOG_INFORMATION_TYPE);
 
 private:
-    CriticalSection cs;
     EventLogger logger;
     asio::thread_pool threadPool;
     DWORD pageSize = 0;

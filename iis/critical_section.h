@@ -54,4 +54,4 @@ private:
     CRITICAL_SECTION cs;
 };
 
-using CriticalSectionLock = std::unique_lock<CriticalSection>;
+using CriticalSectionLock = std::lock_guard<CriticalSection>;
