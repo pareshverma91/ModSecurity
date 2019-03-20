@@ -110,7 +110,6 @@ static bool GetBooleanProperty(IAppHostElement* element, wchar_t* name)
 static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* name)
 {
     const auto var = GetProperty(element, name);
-
     const auto length = SysStringLen(var.bstrVal);
     return std::wstring(var.bstrVal, length);
 }
