@@ -16,7 +16,11 @@
 
 #undef inline
 
+// C++ Standard Library smart pointers
 #include <memory>
+
+// For _variant_t wrapper
+#include <comdef.h>
 
 //  IIS7 Server API header file
 #include "httpserv.h"
@@ -27,81 +31,56 @@
 #include "mymodulefactory.h"
 #include "moduleconfig.h"
 
-static auto ReleaseAppHostProperty = [](IAppHostProperty* prop) {
-    prop->Release();
-};
-using AppHostPropertyPtr = std::unique_ptr<IAppHostProperty, decltype(ReleaseAppHostProperty)>;
-
-struct SafeVariant
+template <class T>
+struct InterfaceReleaser
 {
-    SafeVariant() {
-        VariantInit(&var);
+    void operator() (T* interfacePtr) const {
+        interfacePtr->Release();
     }
-
-    ~SafeVariant() {
-        VariantClear(&var);
-    }
-
-    VARIANT var;
 };
 
-static bool GetBooleanProperty(IAppHostElement* element, wchar_t* propertyName)
+template <class T>
+using InterfaceUniquePtr = std::unique_ptr<T, InterfaceReleaser<T>>;
+
+using AppHostElementPtr = InterfaceUniquePtr<IAppHostElement>;
+using AppHostPropertyPtr = InterfaceUniquePtr<IAppHostProperty>;
+
+static AppHostElementPtr GetConfigElement(IAppHostAdminManager* adminManager, IHttpContext* httpContext)
 {
-    auto prop = [&] {
-        IAppHostProperty* rawProperty = nullptr;
-        HRESULT hr = element->GetPropertyByName(propertyName, &rawProperty);
-        if (FAILED(hr)) {
-            throw std::runtime_error("Couldn't get ModSecurity configuration property "
-                + ConvertWideCharToString(propertyName)
-                + ", error code " + std::to_string(hr));
-        }
-        if (!rawProperty) {
-            throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
-                + ConvertWideCharToString(propertyName));
-        }
-        return AppHostPropertyPtr{ rawProperty, ReleaseAppHostProperty };
-    } ();
-
-    SafeVariant var;
-    HRESULT hr = prop->get_Value(&var.var);
+    std::wstring configSection {httpContext->GetMetadata()->GetMetaPath()};
+    IAppHostElement* configElement = nullptr;
+    HRESULT hr = adminManager->GetAdminSection(L"system.webServer/ModSecurity", &configSection[0], &configElement);
     if (FAILED(hr)) {
-        throw std::runtime_error("Couldn't extract value from property bag, error code " + std::to_string(hr));
+        throw std::runtime_error("Couldn't get ModSecurity configuration file section, error code " + std::to_string(hr));
+    }
+    if (!configElement) {
+        throw std::runtime_error("Unexpected error while getting ModSecurity configuration file section.");
     }
 
-    IAppHostPropertyException* propertyException = nullptr;
-    hr = prop->get_Exception(&propertyException);
-    if (FAILED(hr)) {
-        throw std::runtime_error("Got an exception while reading ModSecurity configuration property "
-            + ConvertWideCharToString(propertyName)
-            + ", error code " + std::to_string(hr));
-    }
-    if (propertyException) {
-        throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
-            + ConvertWideCharToString(propertyName));
-    }
-
-    return (var.var.boolVal == VARIANT_TRUE);
+    return {configElement, {}};
 }
 
-static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* propertyName)
+static AppHostPropertyPtr GetPropertyPtr(IAppHostElement* configElement, wchar_t* name)
 {
-    auto prop = [&] {
-        IAppHostProperty* rawProperty = nullptr;
-        HRESULT hr = element->GetPropertyByName(propertyName, &rawProperty);
-        if (FAILED(hr)) {
-            throw std::runtime_error("Couldn't get ModSecurity configuration property "
-                + ConvertWideCharToString(propertyName)
-                + ", error code " + std::to_string(hr));
-        }
-        if (!rawProperty) {
-            throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
-                + ConvertWideCharToString(propertyName));
-        }
-        return AppHostPropertyPtr{ rawProperty, ReleaseAppHostProperty };
-    } ();
+    IAppHostProperty* prop = nullptr;
+    HRESULT hr = configElement->GetPropertyByName(name, &prop);
+    if (FAILED(hr)) {
+        throw std::runtime_error("Couldn't get ModSecurity configuration property "
+            + ConvertWideCharToString(name)
+            + ", error code " + std::to_string(hr));
+    }
+    if (!prop) {
+        throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
+            + ConvertWideCharToString(name));
+    }
+    return {prop, {}};
+}
 
-    SafeVariant var;
-    HRESULT hr = prop->get_Value(&var.var);
+static _variant_t GetProperty(IAppHostElement* configElement, wchar_t* name)
+{
+    auto prop = GetPropertyPtr(configElement, name);
+    _variant_t var;
+    HRESULT hr = prop->get_Value(&var);
     if (FAILED(hr)) {
         throw std::runtime_error("Couldn't extract value from property bag, error code " + std::to_string(hr));
     }
@@ -110,45 +89,41 @@ static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* propert
     hr = prop->get_Exception(&propertyException);
     if (FAILED(hr)) {
         throw std::runtime_error("Got an exception while reading ModSecurity configuration property "
-            + ConvertWideCharToString(propertyName)
+            + ConvertWideCharToString(name)
             + ", error code " + std::to_string(hr));
     }
     if (propertyException) {
         throw std::runtime_error("Unexpected error while getting ModSecurity configuration property "
-            + ConvertWideCharToString(propertyName));
+            + ConvertWideCharToString(name));
     }
 
-    const auto length = SysStringLen(var.var.bstrVal);
-    std::wstring result(var.var.bstrVal, length);
+    return var;
+}
 
-    return result;
+static bool GetBooleanProperty(IAppHostElement* element, wchar_t* name)
+{
+    _variant_t var = GetProperty(element, name);
+    return (var.boolVal == VARIANT_TRUE);
+}
+
+static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* name)
+{
+    _variant_t var = GetProperty(element, name);
+
+    const auto length = SysStringLen(var.bstrVal);
+    return std::wstring(var.bstrVal, length);
 }
 
 ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, ModSecurityStoredContext::ConstructorTag)
 {
-    std::wstring configSection {httpContext->GetMetadata()->GetMetaPath()};
-
-    auto* adminManager = g_pHttpServer->GetAdminManager();
-    if (!adminManager) {
-        throw std::runtime_error("Unexpected error while getting admin manager.");
-    }
-
-    IAppHostElement* sessionTrackingElement = nullptr;
-    HRESULT hr = adminManager->GetAdminSection(L"system.webServer/ModSecurity", &configSection[0], &sessionTrackingElement);
-    if (FAILED(hr)) {
-        throw std::runtime_error("Couldn't get ModSecurity configuration file section, error code " + std::to_string(hr));
-    }
-    if (!sessionTrackingElement) {
-        throw std::runtime_error("Unexpected error while getting ModSecurity configuration file section.");
-    }
-
-    enabled = GetBooleanProperty(sessionTrackingElement, L"enabled");
+    auto configElement = GetConfigElement(g_pHttpServer->GetAdminManager(), httpContext);
+    enabled = GetBooleanProperty(configElement.get(), L"enabled");
     if (!enabled) {
         // No point in reading the rest of the config
         return;
     }
 
-    configPath = GetStringProperty(sessionTrackingElement, L"configFile");
+    configPath = GetStringProperty(configElement.get(), L"configFile");
 }
 
 ModSecurityStoredContext* ModSecurityStoredContext::GetConfiguration(IHttpContext* httpContext)
