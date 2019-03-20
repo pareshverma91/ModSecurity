@@ -118,7 +118,6 @@ static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* name)
 CriticalSection ModSecurityStoredContext::cs;
 ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, ModSecurityStoredContext::ConstructorTag)
 {
-    CriticalSectionLock lock{cs};
     auto configElement = GetConfigElement(g_pHttpServer->GetAdminManager(), httpContext);
     enabled = GetBooleanProperty(configElement.get(), L"enabled");
     if (!enabled) {
@@ -126,8 +125,11 @@ ModSecurityStoredContext::ModSecurityStoredContext(IHttpContext* httpContext, Mo
         return;
     }
 
-    config = modsecGetDefaultConfig();
     const std::string configPath = ConvertWideCharToString(GetStringProperty(configElement.get(), L"configFile").c_str());
+
+    // Synchronize the process of ModSec internal configuration creation as it may otherwise incur contention and races
+    CriticalSectionLock lock{cs};
+    config = modsecGetDefaultConfig();
     if (!configPath.empty())
     {
         const std::string appPath = ConvertWideCharToString(httpContext->GetApplication()->GetApplicationPhysicalPath());
