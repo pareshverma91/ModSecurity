@@ -47,7 +47,7 @@ using AppHostPropertyPtr = InterfaceUniquePtr<IAppHostProperty>;
 
 static AppHostElementPtr GetConfigElement(IAppHostAdminManager* adminManager, IHttpContext* httpContext)
 {
-    std::wstring configSection {httpContext->GetMetadata()->GetMetaPath()};
+    const std::wstring configSection {httpContext->GetMetadata()->GetMetaPath()};
     IAppHostElement* configElement = nullptr;
     HRESULT hr = adminManager->GetAdminSection(L"system.webServer/ModSecurity", &configSection[0], &configElement);
     if (FAILED(hr)) {
@@ -102,13 +102,13 @@ static _variant_t GetProperty(IAppHostElement* configElement, wchar_t* name)
 
 static bool GetBooleanProperty(IAppHostElement* element, wchar_t* name)
 {
-    _variant_t var = GetProperty(element, name);
-    return (var.boolVal == VARIANT_TRUE);
+    const auto var = GetProperty(element, name);
+    return var.boolVal == VARIANT_TRUE;
 }
 
 static std::wstring GetStringProperty(IAppHostElement* element, wchar_t* name)
 {
-    _variant_t var = GetProperty(element, name);
+    const auto var = GetProperty(element, name);
 
     const auto length = SysStringLen(var.bstrVal);
     return std::wstring(var.bstrVal, length);
