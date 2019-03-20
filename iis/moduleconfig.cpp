@@ -47,7 +47,7 @@ using AppHostPropertyPtr = InterfaceUniquePtr<IAppHostProperty>;
 
 static AppHostElementPtr GetConfigElement(IAppHostAdminManager* adminManager, IHttpContext* httpContext)
 {
-    const std::wstring configSection {httpContext->GetMetadata()->GetMetaPath()};
+    std::wstring configSection {httpContext->GetMetadata()->GetMetaPath()};
     IAppHostElement* configElement = nullptr;
     HRESULT hr = adminManager->GetAdminSection(L"system.webServer/ModSecurity", &configSection[0], &configElement);
     if (FAILED(hr)) {
