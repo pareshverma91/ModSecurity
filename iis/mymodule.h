@@ -42,6 +42,5 @@ private:
     EventLogger logger;
     asio::thread_pool threadPool;
     DWORD pageSize = 0;
-    bool statusCallAlreadySent = false;
 };
 
