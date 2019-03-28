@@ -24,7 +24,9 @@ CORE_LIBS="$CORE_LIBS \
     @YAJL_LIBS@ \
     @SSDEEP_LDFLAGS@ \
     -lstdc++ \
-    /usr/lib/libprotobuf.a"
+    -Wl,-Bstatic
+    -lprotobuf
+    -Wl,-Bdynamic"
 
 
 ngx_addon_name=ngx_http_modsecurity
