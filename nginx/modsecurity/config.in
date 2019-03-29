@@ -28,7 +28,6 @@ CORE_LIBS="$CORE_LIBS \
     -lprotobuf
     -Wl,-Bdynamic"
 
-
 ngx_addon_name=ngx_http_modsecurity
 
 CORE_MODULES="$CORE_MODULES"
