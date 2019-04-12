@@ -23,7 +23,9 @@ CORE_LIBS="$CORE_LIBS \
     @APXS_LIBS@ \
     @YAJL_LIBS@ \
     @SSDEEP_LDFLAGS@ \
-    -lstdc++"
+    -lstdc++ \
+    -Wl,-Bstatic
+    -Wl,-Bdynamic"
 
 ngx_addon_name=ngx_http_modsecurity
 
