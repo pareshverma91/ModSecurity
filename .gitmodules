@@ -5,3 +5,4 @@
 [submodule "jsoncons"]
 	path = jsoncons
 	url = https://github.com/danielaparker/jsoncons.git
+	branch = tags/v0.122.0

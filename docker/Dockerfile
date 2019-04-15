@@ -9,12 +9,8 @@ RUN apt-get install -y  \
     m4 \
     libtool
 
-# Install google protobuf 3.5.1
-RUN mkdir -p /tmp/jsoncons/
-RUN curl -o /tmp/jsoncons/jsoncons-0.122.0.zip -OL https://github.com/danielaparker/jsoncons/archive/v0.122.0.zip
-RUN unzip /tmp/jsoncons/jsoncons-0.122.0.zip -d /tmp/jsoncons
-WORKDIR /tmp/jsoncons/jsoncons-0.122.0/include
-COPY jsoncons /usr/include
+# Install jsoncons 
+RUN git submodule update --init --recursie 
 
 RUN apt-get install -y \
         apache2-dev \

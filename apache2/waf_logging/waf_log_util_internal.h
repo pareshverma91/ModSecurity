@@ -4,8 +4,8 @@
 #include <fstream>
 #include <unordered_map>
 #include <exception>
-#include <jsoncons/json.hpp>
-#include <jsoncons/json_options.hpp>
+#include "../../jsoncons/include/jsoncons/json.hpp"
+#include "../../jsoncons/include/jsoncons/json_options.hpp"
 
 // For convenience
 using jsoncons::ojson;
