@@ -71,7 +71,7 @@ class MODSECURITY_STORED_CONTEXT : public IHttpStoredContext
 
     directory_config* config = nullptr;
 
-    BOOL configLoadingFailed = false;
+    bool configLoadingFailed = false;
 
 private:
     HRESULT 

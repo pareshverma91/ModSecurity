@@ -798,7 +798,7 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
     HRESULT hr = MODSECURITY_STORED_CONTEXT::GetConfig(httpContext, &config);
     if (FAILED(hr))
     {
-        httpContext->GetResponse()->SetStatus(500, "WAF internal error");
+        httpContext->GetResponse()->SetStatus(500, "WAF internal error. Unable to get config.");
         httpContext->SetRequestHandled();
         return RQ_NOTIFICATION_FINISH_REQUEST;
     }
@@ -810,12 +810,17 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
         return RQ_NOTIFICATION_CONTINUE;
     }
 
+    auto reportConfigurationError = [config, httpContext] {
+        config->configLoadingFailed = true;
+        httpContext->GetResponse()->SetStatus(500, "WAF internal error. Invalid configuration.");
+        httpContext->SetRequestHandled();
+        return RQ_NOTIFICATION_FINISH_REQUEST;
+    };
+
     // If we previously failed to load the config, don't spam the event log by trying and failing again
     if (config->configLoadingFailed)
     {
-        httpContext->GetResponse()->SetStatus(500, "WAF internal error");
-        httpContext->SetRequestHandled();
-        return RQ_NOTIFICATION_FINISH_REQUEST;
+        return reportConfigurationError();
     }
 
     if (config->config == nullptr)
@@ -826,10 +831,7 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
         hr = config->GlobalWideCharToMultiByte(config->GetPath(), wcslen(config->GetPath()), &path, &pathlen);
         if (FAILED(hr))
         {
-            config->configLoadingFailed = true;
-            httpContext->GetResponse()->SetStatus(500, "WAF internal error");
-            httpContext->SetRequestHandled();
-            return RQ_NOTIFICATION_FINISH_REQUEST;
+            return reportConfigurationError();
         }
 
         config->config = modsecGetDefaultConfig();
@@ -841,11 +843,7 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
         hr = config->GlobalWideCharToMultiByte((WCHAR *)servpath, wcslen(servpath), &apppath, &apppathlen);
         if (FAILED(hr))
         {
-            config->configLoadingFailed = true;
-            httpContext->GetResponse()->SetStatus(500, "WAF internal error");
-            httpContext->SetRequestHandled();
-            delete path;
-            return RQ_NOTIFICATION_FINISH_REQUEST;
+            return reportConfigurationError();
         }
 
         if (path[0] != 0)
@@ -858,10 +856,7 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
                 delete apppath;
                 delete path;
 
-                config->configLoadingFailed = true;
-                httpContext->GetResponse()->SetStatus(500, "WAF internal error");
-                httpContext->SetRequestHandled();
-                return RQ_NOTIFICATION_FINISH_REQUEST;
+                return reportConfigurationError();
             }
 
             modsecReportRemoteLoadedRules();
