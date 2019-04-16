@@ -856,7 +856,6 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
                 WriteEventViewerLog(err, EVENTLOG_ERROR_TYPE);
                 delete apppath;
                 delete path;
-
                 return reportConfigurationError();
             }
 
