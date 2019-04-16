@@ -843,6 +843,7 @@ CMyHttpModule::OnBeginRequest(IHttpContext* httpContext, IHttpEventProvider* pro
         hr = config->GlobalWideCharToMultiByte((WCHAR *)servpath, wcslen(servpath), &apppath, &apppathlen);
         if (FAILED(hr))
         {
+            delete path;
             return reportConfigurationError();
         }
 
