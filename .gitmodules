@@ -2,7 +2,3 @@
 	path = iis/asio
 	url = https://github.com/chriskohlhoff/asio.git
 	branch = tags/asio-1-12-2
-[submodule "jsoncons"]
-	path = jsoncons
-	url = https://github.com/danielaparker/jsoncons.git
-	branch = tags/v0.122.0
