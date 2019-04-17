@@ -586,7 +586,7 @@ AC_ARG_ENABLE(waf_json_logging,
                              [Enable waf json logging support. This is enabled by default]),
 [
   if test "$enableval" != "no"; then
-    waf_json_logging="-I"`pwd`"/apache2/waf_logging -I"`pwd`"/jsoncons/include -DWAF_JSON_LOGGING_ENABLE"
+    waf_json_logging="-I"`pwd`"/apache2/waf_logging -DWAF_JSON_LOGGING_ENABLE"
     MODSEC_EXTRA_CFLAGS="$MODSEC_EXTRA_CFLAGS $waf_json_logging"
   else
     waf_json_logging=""

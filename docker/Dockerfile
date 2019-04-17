@@ -10,7 +10,10 @@ RUN apt-get install -y  \
     libtool
 
 # Install jsoncons 
-RUN git submodule update --init --recursie 
+RUN mkdir -p /tmp/jsoncons/
+RUN curl -o /tmp/jsoncons/jsoncons-0.122.0.zip -OL https://github.com/danielaparker/jsoncons/archive/v0.122.0.zip
+RUN unzip /tmp/jsoncons/jsoncons-0.122.0.zip -d /tmp/jsoncons
+RUN cp -r /tmp/jsoncons/jsoncons-0.122.0/include/jsoncons /usr/include/
 
 RUN apt-get install -y \
         apache2-dev \
