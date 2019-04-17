@@ -99,12 +99,6 @@ int generate_json(char** result_json, char* resourceId, char* operationName, cha
         return WAF_LOG_UTIL_FAILED;
     }
 
-    // remove the last space between two }}
-    auto found = json_string.find(' ', json_string.length()-2);
-    if (found != string::npos){
-        json_string.erase(found, 1);
-    }
-
     *result_json = strdup((json_string + "\n").c_str());
     return WAF_LOG_UTIL_SUCCESS; 
 }
