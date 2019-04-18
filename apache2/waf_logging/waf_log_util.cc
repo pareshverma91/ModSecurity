@@ -80,18 +80,17 @@ waf_logging::waf_log set_waf_format(char* resourceId, char* operationName, char*
 		waf_unique_id[strlen(waf_unique_id) - 1] = '\0';
 	}
 
-    waf_logging::waf_log waf_log{resourceId, operationName, category, waf_logging::property{ instanceId, clientIP, clientPort, requestUri, ruleSetType, ruleSetVersion, ruleId+1, message_str, action_str, site_str, waf_logging::detail{ details_messages, details_data+1, details_file+1, details_line+1 }, hostname, waf_unique_id+1}};
-    return waf_log;
+    return {resourceId, operationName, category, waf_logging::property{ instanceId, clientIP, clientPort, requestUri, ruleSetType, ruleSetVersion, ruleId+1, message_str, action_str, site_str, waf_logging::detail{ details_messages, details_data+1, details_file+1, details_line+1 }, hostname, waf_unique_id+1}};
 }
 
 // Main function:  get fields from modsec, set the protobuf object and write to file in json.
 int generate_json(char** result_json, char* resourceId, char* operationName, char* category, char* instanceId, char* clientIP, char* clientPort, const char* requestUri, char* ruleSetType, char* ruleSetVersion, char* ruleId, char* messages, int action, int site, char* details_messages, char* details_data, char* details_file, char* details_line, const char* hostname, char* waf_unique_id) {
     string json_string;
     char* json_str;
-		waf_logging::waf_log waf_log;
     
     try {
         // Set Waf format.
+		    waf_logging::waf_log waf_log;
         waf_log = set_waf_format(resourceId, operationName, category, instanceId, clientIP, clientPort, requestUri, ruleSetType, ruleSetVersion, ruleId, messages, action, site, details_messages, details_data, details_file, details_line, hostname, waf_unique_id); 
         json_string = to_json_string(waf_log);       
     }
