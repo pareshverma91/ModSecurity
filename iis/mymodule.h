@@ -12,8 +12,10 @@
 * directly using the email address security@modsecurity.org.
 */
 
-#ifndef __MY_MODULE_H__
-#define __MY_MODULE_H__
+#pragma once
+
+#define ASIO_STANDALONE
+#include "asio/thread_pool.hpp"
 
 #include "critical_section.h"
 #include "event_logger.h"
@@ -31,23 +33,15 @@ public:
     REQUEST_NOTIFICATION_STATUS
     OnBeginRequest(IHttpContext*, IHttpEventProvider*) override;
 
-    REQUEST_NOTIFICATION_STATUS
-    OnSendResponse(IHttpContext*, ISendResponseProvider*) override;
-
-    REQUEST_NOTIFICATION_STATUS
-    OnPostEndRequest(IHttpContext*, IHttpEventProvider*) override;
-
     void Dispose() override;
-
-    HRESULT ReadFileChunk(HTTP_DATA_CHUNK* chunk, char* buf);
 
     BOOL WriteEventViewerLog(LPCSTR szNotification, WORD category = EVENTLOG_INFORMATION_TYPE);
 
 private:
     CriticalSection cs;
     EventLogger logger;
+    asio::thread_pool threadPool{12};
     DWORD pageSize = 0;
     bool statusCallAlreadySent = false;
 };
 
-#endif
